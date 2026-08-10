@@ -32,6 +32,18 @@ content-to-editable-ppt-skill/
 ├─ README.md
 ├─ LICENSE
 ├─ NOTICE
+├─ docs/
+│  ├─ architecture/v2.0/
+│  ├─ contracts/v1.0/
+│  ├─ development/v1.4/
+│  ├─ runtime/
+│  │  ├─ v1.0/
+│  │  └─ v1.1/
+│  ├─ specifications/
+│  │  ├─ v1.0/
+│  │  ├─ v1.1/
+│  │  └─ v1.2/
+│  └─ testing/v1.0/
 └─ content-to-editable-ppt/
    ├─ SKILL.md
    ├─ agents/
@@ -49,9 +61,35 @@ content-to-editable-ppt-skill/
 - 分离布局规划与独立视觉审核角色；
 - 使用确定性 Schema、运行状态和交付门槛。
 
+## 开发文档
+
+### 权威层级
+
+1. [总体架构与开发计划 v2.0](docs/architecture/v2.0/overall-architecture-and-development-plan.md) 决定当前阶段、模块边界和 Windows-only 范围。
+2. 对应产品、Runtime 和 Agent 专项规范定义实现要求。
+3. [Artifact、State 与权威数据契约 v1.0](docs/contracts/v1.0/artifact-state-authority-contract.md) 定义 Source of Truth、写权限和状态分离。
+4. [测试与验收计划 v1.0](docs/testing/v1.0/test-and-acceptance-plan.md) 定义 P0–P6 Gate、证据和 Release 完成标准。
+
+### 当前产品规格（v1.2）
+
+- [需求规格说明](docs/specifications/v1.2/requirements.md)
+- [功能规格说明](docs/specifications/v1.2/functional-specification.md)
+- [Agent 职责与交接契约](docs/specifications/v1.2/agent-handoff-contract.md)
+- [非功能需求与质量指标](docs/specifications/v1.2/non-functional-requirements.md)
+
+### Runtime 与实现规范
+
+- [单页 Runtime 执行与错误恢复规范 v1.1](docs/runtime/v1.1/single-slide-runtime-and-error-recovery.md)
+- [运行环境安装与引导规范 v1.1](docs/runtime/v1.1/environment-setup-and-bootstrap.md)
+- [增量开发文档 v1.4](docs/development/v1.4/development-guide.md)
+
+`docs/specifications/v1.0/`、`docs/specifications/v1.1/` 和 `docs/runtime/v1.0/` 保留为历史基线。新开发和验收以 v1.2 产品规格、v1.1 Runtime 规范、v2.0 总体架构和 v1.0 测试计划为准。
+
+这些文档是开发和验收的完整权威规格。Skill 运行目录中的 `SKILL.md`、`references/`、`agents/` 和 `schemas/` 只保留实际执行所需的精简规则与机器可验证契约。
+
 ## 下一阶段
 
-下一阶段将在不破坏现有构建与 QA 基础设施的前提下，设计内容输入、多页规划、主题系统、页面类型和完整演示文稿审核契约。相关接口会在实现和验证后再写入正式使用说明。
+按总体架构 v2.0 与测试计划进入 P0 Baseline Freeze，完成 6 个固定单页 Baseline 及所需证据后，再进入 P0.5 Single-Slide Runtime Hardening。
 
 ## 开发验证
 
