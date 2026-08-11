@@ -55,6 +55,7 @@ def initial_state(*, task_id: str, deck_id: str) -> dict[str, Any]:
             "candidate_outline_sha256": None,
             "confirmation_sha256": None,
             "approved_outline_sha256": None,
+            "slide_content_manifest_sha256": None,
         },
         "history": [],
     }

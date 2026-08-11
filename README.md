@@ -4,12 +4,12 @@
 
 ## 当前状态
 
-本仓库已完成 P0 Baseline Freeze。当前版本继承了 `Image to Editable PPT` 项目中可复用的 PowerPoint 构建、字体审计、资产处理、渲染、结构 QA 和视觉审核基础设施，并冻结了 6 个单页回归样例及其当前真实质量状态。
+本仓库已完成 P0 Baseline Freeze 和 P0.5 Runtime Hardening，并正在完成 P1 Host Content Planning Gate。当前代码已经包含材料路由、材料完整性、Candidate Outline、用户确认、Approved Outline 和确定性 Approved Slide Content 投影契约。
 
-当前继承的可执行流程仍以“参考图片 → 可编辑单页 PPT”为主。以下能力尚未实现，不能视为当前承诺：
+当前支持“材料 → 待确认大纲 → 冻结页面文字”和“参考图片 → 可编辑单页 PPT”两套独立基础流程。以下能力尚未实现，不能视为当前承诺：
 
-- 主题、文档或大纲的结构化输入；
-- 多页叙事规划与页面类型选择；
+- Wireframe 和页面视觉设计；
+- 从冻结页面内容自动生成完整多页 PPT；
 - 跨页主题、字体和版式一致性；
 - 图表、引用和来源管理；
 - 面向完整演示文稿的多页视觉审核。
@@ -23,7 +23,7 @@ $content-to-editable-ppt
 content-to-editable-ppt/
 ```
 
-在内容输入和多页输出契约完成前，该调用名主要用于开发、验证和扩展继承的运行时，不应对外宣称已经支持完整的内容到多页 PPT 工作流。
+该调用名可以用于 P1 内容规划和继承的单页重建 Runtime，但不应对外宣称已经支持完整的内容到多页 PPT 工作流。
 
 ## 当前仓库结构
 
@@ -106,9 +106,9 @@ content-to-editable-ppt-skill/
 .\tools\baseline\baseline.ps1 -Action Verify -All -PythonPath <python.exe>
 ```
 
-## 下一阶段
+## 当前阶段
 
-按总体架构 v2.0 与测试计划进入 P0.5 Single-Slide Runtime Hardening。P0 中冻结的视觉失败、零资产目录重试、Planner/Reviewer 语义引用摩擦和不受支持的背景移除操作均作为 P0.5 输入。
+当前正在执行 P1 Content Planning Final Gate。通过后下一阶段是 P2 Wireframe；在 P2–P5 完成前，P1 输出只到 Approved Outline 和 Approved Slide Content。
 
 ## 开发验证
 
