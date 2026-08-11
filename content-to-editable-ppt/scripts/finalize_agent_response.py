@@ -11,6 +11,7 @@ from typing import Any
 from agent_common import SCHEMA_DIR, load_call_bundle, provenance_entry, stage_directory
 from asset_common import AssetError, atomic_write_bytes, atomic_write_json, failure, load_contract, log_event, sha256_file, success
 from schema_utils import ContractError, cross_validate, is_safe_relative_path, load_json, validate_schema, validate_semantics
+from shared_validator import validate_documents
 
 
 COMPONENT = "finalize_agent_response"
@@ -164,10 +165,8 @@ def _finalize_initial(args: argparse.Namespace, response: dict[str, Any]) -> dic
     request = _load_call_input(args.call_dir, "request.json")
     artifacts = response["artifacts"]
     layout, crops, asset_manifest = artifacts["layout"], artifacts["crops"], artifacts["asset_manifest"]
-    for kind, document in (("layout", layout), ("crops", crops), ("asset_manifest", asset_manifest)):
-        validate_schema(kind, document, args.schema_dir)
-        validate_semantics(kind, document)
-    cross_validate({"request": request, "layout": layout, "crops": crops, "asset_manifest": asset_manifest})
+    documents = {"request": request, "layout": layout, "crops": crops, "asset_manifest": asset_manifest}
+    validate_documents(documents, {}, profile="candidate", schema_dir=args.schema_dir)
     _validate_no_full_page_raster(layout, crops, asset_manifest)
     _validate_representation_decisions(response, layout, crops, asset_manifest)
 

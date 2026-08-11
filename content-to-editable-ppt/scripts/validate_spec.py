@@ -6,11 +6,12 @@ import sys
 from pathlib import Path
 
 import yaml
-from schema_utils import ContractError, SCHEMA_FILES, cross_validate, load_json, load_yaml, validate_build_ready, validate_schema, validate_semantics
+from schema_utils import ContractError, SCHEMA_FILES, load_json, load_yaml
+from shared_validator import validate_documents
 
 
 def parser() -> argparse.ArgumentParser:
-    result = argparse.ArgumentParser(description="Validate v1.3 Content to Editable PPT contracts.")
+    result = argparse.ArgumentParser(description="Validate Content to Editable PPT contracts through the shared validation framework.")
     result.add_argument("--schema-dir", type=Path, default=Path(__file__).resolve().parents[1] / "schemas")
     result.add_argument("--phase", choices=("preflight", "build-ready"), default="preflight")
     for kind in SCHEMA_FILES:
@@ -29,12 +30,9 @@ def main() -> int:
             if not path.is_file():
                 raise FileNotFoundError(path)
             document = load_yaml(path) if kind == "agent_role" else load_json(path)
-            validate_schema(kind, document, args.schema_dir)
-            validate_semantics(kind, document)
             documents[kind] = document
-        cross_validate(documents)
-        if args.phase == "build-ready" and "asset_manifest" in documents:
-            validate_build_ready(selected["asset_manifest"], documents["asset_manifest"])
+        profile = "pre_build" if args.phase == "build-ready" else "candidate"
+        validate_documents(documents, selected, profile=profile, schema_dir=args.schema_dir)
         print(json.dumps({"status": "ok", "component": "validate_spec", "phase": args.phase, "validated": sorted(documents), "error": None}, ensure_ascii=False))
         return 0
     except FileNotFoundError as exc:
