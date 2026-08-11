@@ -4,11 +4,11 @@
 
 ## 当前状态
 
-本仓库已完成 P0 Baseline Freeze、P0.5 Runtime Hardening 和 P1 Host Content Planning Gate。当前代码支持材料路由、材料完整性、Candidate Outline、用户修改/确认、Approved Outline 和确定性 Approved Slide Content 投影。
+本仓库已完成 P0 Baseline Freeze、P0.5 Runtime Hardening、P1 Host Content Planning 和 P2 Host Wireframe 基线。当前代码支持材料路由、内容确认与冻结、Host 页面分区规划、确定性 Wireframe 校验和低保真 SVG 渲染。
 
-当前支持“材料 → 待确认大纲 → 冻结页面文字”和“参考图片 → 可编辑单页 PPT”两套独立基础流程。以下能力尚未实现，不能视为当前承诺：
+当前支持“材料 → 待确认大纲 → 冻结页面文字 → Wireframe SVG”和“参考图片 → 可编辑单页 PPT”两套独立基础流程。以下能力尚未实现，不能视为当前承诺：
 
-- Wireframe 和页面视觉设计；
+- 最终页面视觉设计和设计图片生成；
 - 从冻结页面内容自动生成完整多页 PPT；
 - 跨页主题、字体和版式一致性；
 - 图表、引用和来源管理；
@@ -122,9 +122,19 @@ python .\content-to-editable-ppt\scripts\manage_content_plan.py project-slide-co
 
 [P1 Gate 报告](reports/p1/p1-content-planning-gate.json) 记录 D03、D05、D08、Canonical Hash、确认与投影验收结果。
 
+## P2 Wireframe
+
+P2 使用 Host 生成每页 Wireframe Spec，并通过确定性 Validator 与 SVG Renderer 固化页面分区。Spec 只引用 Approved Content Identity；SVG 是低保真结构预览，不是最终 Design Image。
+
+```powershell
+python .\content-to-editable-ppt\scripts\validate_wireframe.py --help
+python .\content-to-editable-ppt\scripts\manage_wireframe.py --help
+python .\content-to-editable-ppt\scripts\render_wireframe.py --help
+```
+
 ## 下一阶段
 
-下一阶段是 P2 Wireframe。在 P2–P5 完成前，Content-to-PPT 输出只到 Approved Outline 和 Approved Slide Content，不能宣称已经完成完整多页 PowerPoint 生成。
+下一阶段是 P3 Visual Design。在 P3–P5 完成前，Content-to-PPT 输出只到 Approved Slide Content 和 Wireframe SVG，不能宣称已经完成完整多页 PowerPoint 生成。
 
 ## 开发验证
 
