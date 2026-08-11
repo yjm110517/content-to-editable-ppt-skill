@@ -45,6 +45,14 @@ SCHEMA_FILES = {
     "approved_outline": "approved-outline.schema.json",
     "approved_slide_content": "approved-slide-content.schema.json",
     "content_plan_state": "content-plan-state.schema.json",
+    "wireframe_layout_requirements": "wireframe-layout-requirements.schema.json",
+    "wireframe_spec": "wireframe-spec.schema.json",
+    "wireframe_manifest": "wireframe-manifest.schema.json",
+    "wireframe_validation_report": "wireframe-validation-report.schema.json",
+    "wireframe_correction_record": "wireframe-correction-record.schema.json",
+    "wireframe_preview": "wireframe-preview.schema.json",
+    "wireframe_feedback": "wireframe-feedback.schema.json",
+    "wireframe_state": "wireframe-state.schema.json",
 }
 
 SUPPORTED_SCHEMA_VERSIONS = {
@@ -64,6 +72,14 @@ SUPPORTED_SCHEMA_VERSIONS = {
     "approved_outline": {"1.0"},
     "approved_slide_content": {"1.0"},
     "content_plan_state": {"1.0"},
+    "wireframe_layout_requirements": {"1.0"},
+    "wireframe_spec": {"1.0"},
+    "wireframe_manifest": {"1.0"},
+    "wireframe_validation_report": {"1.0"},
+    "wireframe_correction_record": {"1.0"},
+    "wireframe_preview": {"1.0"},
+    "wireframe_feedback": {"1.0"},
+    "wireframe_state": {"1.0"},
 }
 
 
