@@ -30,6 +30,7 @@ content-to-editable-ppt/
 ```text
 content-to-editable-ppt-skill/
 ├─ README.md
+├─ DECISIONS.md
 ├─ LICENSE
 ├─ NOTICE
 ├─ docs/
@@ -66,9 +67,10 @@ content-to-editable-ppt-skill/
 ### 权威层级
 
 1. [总体架构与开发计划 v2.0](docs/architecture/v2.0/overall-architecture-and-development-plan.md) 决定当前阶段、模块边界和 Windows-only 范围。
-2. 对应产品、Runtime 和 Agent 专项规范定义实现要求。
-3. [Artifact、State 与权威数据契约 v1.0](docs/contracts/v1.0/artifact-state-authority-contract.md) 定义 Source of Truth、写权限和状态分离。
-4. [测试与验收计划 v1.0](docs/testing/v1.0/test-and-acceptance-plan.md) 定义 P0–P6 Gate、证据和 Release 完成标准。
+2. [Architecture Decision Log](DECISIONS.md) 记录已经接受的关键决策、原因、后果和变更规则。
+3. 对应产品、Runtime 和 Agent 专项规范定义实现要求。
+4. [Artifact、State 与权威数据契约 v1.0](docs/contracts/v1.0/artifact-state-authority-contract.md) 定义 Source of Truth、写权限和状态分离。
+5. [测试与验收计划 v1.0](docs/testing/v1.0/test-and-acceptance-plan.md) 定义 P0–P6 Gate、证据和 Release 完成标准。
 
 ### 当前产品规格（v1.2）
 
