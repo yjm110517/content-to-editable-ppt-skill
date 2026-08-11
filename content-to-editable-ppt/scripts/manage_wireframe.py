@@ -73,6 +73,7 @@ def parser() -> argparse.ArgumentParser:
     accept.add_argument("--artifact-id", required=True)
     accept.add_argument("--revision", type=int, required=True)
     accept.add_argument("--previous-manifest", type=Path)
+    accept.add_argument("--changed-slide-id", action="append", default=[])
     accept.add_argument("--timestamp-utc")
     render = commands.add_parser("render")
     render.add_argument("--state", type=Path, required=True)
@@ -180,7 +181,11 @@ def _accept(args: argparse.Namespace) -> tuple[dict[str, Any], dict[str, Any]]:
     approved = load_json(args.approved_outline.resolve())
     layout = load_json(args.layout_requirements.resolve())
     previous = load_json(args.previous_manifest.resolve()) if args.previous_manifest else None
-    manifest = build_manifest(approved_outline=approved, specs=load_specs(args.spec_dir.resolve()), layout_requirements=layout, output_ratio=args.output_ratio, artifact_id=args.artifact_id, revision=args.revision, parent_sha256=canonical_sha256(previous) if previous else None, previous_manifest=previous, created_at_utc=args.timestamp_utc)
+    changed = set(args.changed_slide_id)
+    expected_changed = set(state["pending_revision_slide_ids"])
+    if changed != expected_changed:
+        raise ContractError([error("--changed-slide-id", "changed slides must exactly match current user feedback", "revision_scope_mismatch")])
+    manifest = build_manifest(approved_outline=approved, slide_content_manifest_sha256=state["current_artifacts"]["slide_content_manifest_sha256"], specs=load_specs(args.spec_dir.resolve()), layout_requirements=layout, output_ratio=args.output_ratio, artifact_id=args.artifact_id, revision=args.revision, parent_sha256=canonical_sha256(previous) if previous else None, previous_manifest=previous, changed_slide_ids=changed, created_at_utc=args.timestamp_utc)
     write_json(args.manifest_output.resolve(), manifest)
     state["current_artifacts"]["wireframe_manifest_sha256"] = canonical_sha256(manifest)
     validate_schema("wireframe_state", state, SCHEMA_DIR)
@@ -259,7 +264,7 @@ def _feedback(args: argparse.Namespace) -> dict[str, Any]:
         if feedback["affected_slide_ids"]:
             raise ContractError([error("$.affected_slide_ids", "accepted/continue cannot list changed slides", "invalid_feedback")])
         event = "feedback_continue"
-    state = advance(state, event=event, user_evidence_sha256=feedback["user_message_sha256"])
+    state = advance(state, event=event, user_evidence_sha256=feedback["user_message_sha256"], affected_slide_ids=feedback["affected_slide_ids"] if event == "feedback_changes_requested" else None)
     validate_schema("wireframe_state", state, SCHEMA_DIR)
     replace_json(args.state.resolve(), state)
     return state

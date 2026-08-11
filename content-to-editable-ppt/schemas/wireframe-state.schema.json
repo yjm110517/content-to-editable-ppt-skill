@@ -4,7 +4,7 @@
   "title": "P2 Wireframe State",
   "type": "object",
   "additionalProperties": false,
-  "required": ["schema_version", "canonicalization_version", "task_id", "deck_id", "state", "active_pass_id", "budgets", "counters", "current_artifacts", "page_results", "history"],
+  "required": ["schema_version", "canonicalization_version", "task_id", "deck_id", "state", "active_pass_id", "pending_revision_slide_ids", "budgets", "counters", "current_artifacts", "page_results", "history"],
   "properties": {
     "schema_version": {"const": "1.0"},
     "canonicalization_version": {"const": "p1-rfc8785-nfc-1"},
@@ -12,6 +12,7 @@
     "deck_id": {"type": "string", "minLength": 1},
     "state": {"$ref": "#/$defs/state"},
     "active_pass_id": {"oneOf": [{"type": "string", "minLength": 1}, {"type": "null"}]},
+    "pending_revision_slide_ids": {"type": "array", "uniqueItems": true, "items": {"type": "string", "minLength": 1}},
     "budgets": {
       "type": "object", "additionalProperties": false,
       "required": ["max_contract_corrections_per_pass", "max_host_invocations_per_pass", "absolute_host_model_invocation_ceiling"],

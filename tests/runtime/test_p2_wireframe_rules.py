@@ -75,8 +75,8 @@ class P2WireframeRulesTests(unittest.TestCase):
 
     def test_order_only_change_reuses_page_spec(self) -> None:
         document = spec(order=1)
-        first = build_manifest(approved_outline=approved(1), specs=[document], layout_requirements=requirements(), output_ratio="16:9", artifact_id="m1", revision=1, created_at_utc=NOW)
-        second = build_manifest(approved_outline=approved(2), specs=[document], layout_requirements=requirements(), output_ratio="16:9", artifact_id="m2", revision=2, previous_manifest=first, created_at_utc=NOW)
+        first = build_manifest(approved_outline=approved(1), slide_content_manifest_sha256=H, specs=[document], layout_requirements=requirements(), output_ratio="16:9", artifact_id="m1", revision=1, created_at_utc=NOW)
+        second = build_manifest(approved_outline=approved(2), slide_content_manifest_sha256=H, specs=[document], layout_requirements=requirements(), output_ratio="16:9", artifact_id="m2", revision=2, previous_manifest=first, created_at_utc=NOW)
         self.assertEqual(second["slides"][0]["order"], 2)
         self.assertEqual(second["slides"][0]["build_status"], "reused")
         self.assertEqual(first["slides"][0]["spec_sha256"], second["slides"][0]["spec_sha256"])

@@ -51,10 +51,7 @@ def wireframe_input_payload(*, slide_content: dict[str, Any], page: dict[str, An
 def expected_authority(*, approved_outline: dict[str, Any], slide_content: dict[str, Any], page: dict[str, Any], layout_requirements: dict[str, Any], output_ratio: str) -> dict[str, str]:
     payload = wireframe_input_payload(slide_content=slide_content, page=page, layout_requirements=layout_requirements, output_ratio=output_ratio)
     return {
-        "approved_outline_sha256": canonical_sha256(approved_outline),
-        "approved_slide_content_sha256": canonical_sha256(slide_content),
         "slide_content_payload_sha256": payload["slide_content_payload_sha256"],
-        "layout_requirements_sha256": canonical_sha256(layout_requirements),
         "layout_constraints_sha256": payload["layout_constraints_sha256"],
         "page_metadata_sha256": payload["page_metadata_sha256"],
         "wireframe_input_sha256": canonical_sha256(payload),
@@ -325,15 +322,16 @@ def apply_correction(*, specs: list[dict[str, Any]], report: dict[str, Any], cor
     return updated
 
 
-def build_manifest(*, approved_outline: dict[str, Any], specs: list[dict[str, Any]], layout_requirements: dict[str, Any], output_ratio: str, artifact_id: str, revision: int, parent_sha256: str | None = None, previous_manifest: dict[str, Any] | None = None, created_at_utc: str | None = None) -> dict[str, Any]:
+def build_manifest(*, approved_outline: dict[str, Any], slide_content_manifest_sha256: str, specs: list[dict[str, Any]], layout_requirements: dict[str, Any], output_ratio: str, artifact_id: str, revision: int, parent_sha256: str | None = None, previous_manifest: dict[str, Any] | None = None, changed_slide_ids: set[str] | None = None, created_at_utc: str | None = None) -> dict[str, Any]:
     specs_by_id = {item["slide_id"]: item for item in specs}
     previous = {item["slide_id"]: item for item in previous_manifest["slides"]} if previous_manifest else {}
     slides = []
+    changed = changed_slide_ids or set()
     for page in sorted(approved_outline["pages"], key=lambda item: item["order"]):
         spec = specs_by_id[page["slide_id"]]
         digest = canonical_sha256(spec)
         old = previous.get(page["slide_id"])
-        reused = bool(old and old["wireframe_input_sha256"] == spec["authority"]["wireframe_input_sha256"])
+        reused = bool(old and page["slide_id"] not in changed and old["wireframe_input_sha256"] == spec["authority"]["wireframe_input_sha256"])
         if reused and old["spec_sha256"] != digest:
             raise ContractError([error(f"$.slides.{page['slide_id']}", "unchanged page input must reuse the previous Spec", "unexpected_page_rebuild")])
         slides.append({
@@ -342,6 +340,6 @@ def build_manifest(*, approved_outline: dict[str, Any], specs: list[dict[str, An
             "svg_path": old["svg_path"] if reused else None, "svg_sha256": old["svg_sha256"] if reused else None,
             "build_status": "reused" if reused else "rebuilt",
         })
-    result = {"schema_version": "1.0", "canonicalization_version": "p1-rfc8785-nfc-1", "artifact_id": artifact_id, "deck_id": approved_outline["deck_id"], "revision": revision, "parent_sha256": parent_sha256, "output_ratio": output_ratio, "layout_requirements_sha256": canonical_sha256(layout_requirements), "slides": slides, "created_at_utc": created_at_utc or utc_now()}
+    result = {"schema_version": "1.0", "canonicalization_version": "p1-rfc8785-nfc-1", "artifact_id": artifact_id, "deck_id": approved_outline["deck_id"], "revision": revision, "parent_sha256": parent_sha256, "output_ratio": output_ratio, "approved_outline_sha256": canonical_sha256(approved_outline), "slide_content_manifest_sha256": slide_content_manifest_sha256, "layout_requirements_sha256": canonical_sha256(layout_requirements), "slides": slides, "created_at_utc": created_at_utc or utc_now()}
     validate_schema("wireframe_manifest", result, SCHEMA_DIR)
     return result

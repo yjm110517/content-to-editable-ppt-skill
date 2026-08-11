@@ -49,6 +49,7 @@ def initial_state(*, task_id: str, deck_id: str, absolute_host_model_invocation_
         "deck_id": deck_id,
         "state": "received",
         "active_pass_id": None,
+        "pending_revision_slide_ids": [],
         "budgets": {
             "max_contract_corrections_per_pass": 2,
             "max_host_invocations_per_pass": 3,
@@ -108,6 +109,7 @@ def advance(
     user_evidence_sha256: str | None = None,
     host_model_invocation_id: str | None = None,
     pass_id: str | None = None,
+    affected_slide_ids: list[str] | None = None,
     timestamp_utc: str | None = None,
 ) -> dict[str, Any]:
     current = state.get("state")
@@ -123,6 +125,10 @@ def advance(
     counters = updated["counters"]
     if event in {"start_revision_planning", "feedback_changes_requested", "feedback_continue"} and not user_evidence_sha256:
         raise WireframeStateError(f"event {event} requires user evidence")
+    if event == "feedback_changes_requested":
+        if not affected_slide_ids or len(affected_slide_ids) != len(set(affected_slide_ids)):
+            raise WireframeStateError("Wireframe change feedback requires unique affected Slide IDs")
+        updated["pending_revision_slide_ids"] = list(affected_slide_ids)
     if event == "start_initial_planning":
         if counters["host_wireframe_initial_pass_count"] != 0:
             raise WireframeStateError("automatic Host Wireframe regeneration is forbidden")
@@ -146,6 +152,8 @@ def advance(
         _consume_host_invocation(updated, host_model_invocation_id, correction=False)
     elif event == "start_contract_correction":
         _consume_host_invocation(updated, host_model_invocation_id, correction=True)
+    elif event in {"complete_without_feedback", "feedback_continue"}:
+        updated["pending_revision_slide_ids"] = []
     if counters["automatic_wireframe_redesign_count"] or counters["layout_planner_calls"] or counters["reviewer_calls"] or counters["image_generation_calls"]:
         raise WireframeStateError("P2 forbids automatic redesign and Specialist Agent calls")
     if artifact_kind:

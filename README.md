@@ -132,6 +132,8 @@ python .\content-to-editable-ppt\scripts\manage_wireframe.py --help
 python .\content-to-editable-ppt\scripts\render_wireframe.py --help
 ```
 
+[P2 Gate 报告](reports/p2/p2-wireframe-gate.json) 记录 D03/D05/D08、Host 调用预算、Contract Correction、页面复用、SVG 确定性与 P0/P0.5/P1 回归结果。
+
 ## 下一阶段
 
 下一阶段是 P3 Visual Design。在 P3–P5 完成前，Content-to-PPT 输出只到 Approved Slide Content 和 Wireframe SVG，不能宣称已经完成完整多页 PowerPoint 生成。
