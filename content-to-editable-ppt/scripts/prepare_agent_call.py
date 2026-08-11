@@ -18,9 +18,24 @@ from agent_common import (
     stage_directory,
 )
 from asset_common import AssetError, atomic_write_bytes, atomic_write_json, failure, load_contract, log_event, success
+from schema_utils import load_json
 
 
 COMPONENT = "prepare_agent_call"
+
+
+def _validate_content_authority(path: Path) -> None:
+    document = load_json(path)
+    items = document.get("text_items")
+    if not isinstance(items, list) or not items:
+        raise AssetError("content authority requires a non-empty text_items array", path=str(path), code="content_authority")
+    ids: set[str] = set()
+    for index, item in enumerate(items):
+        if not isinstance(item, dict) or not isinstance(item.get("id"), str) or not item["id"] or not isinstance(item.get("text"), str):
+            raise AssetError("content authority text items require string id and text", path=f"$.text_items[{index}]", code="content_authority")
+        if item["id"] in ids:
+            raise AssetError("content authority IDs must be unique", path=f"$.text_items[{index}].id", code="content_authority")
+        ids.add(item["id"])
 
 
 def parser() -> argparse.ArgumentParser:
@@ -30,6 +45,7 @@ def parser() -> argparse.ArgumentParser:
     result.add_argument("--work-root", type=Path, required=True)
     result.add_argument("--request", type=Path, required=True)
     result.add_argument("--source", type=Path, required=True)
+    result.add_argument("--content-authority", type=Path)
     result.add_argument("--iteration-dir", type=Path)
     result.add_argument("--render", type=Path)
     result.add_argument("--layout", type=Path)
@@ -53,8 +69,10 @@ def parser() -> argparse.ArgumentParser:
 def _inputs(args: argparse.Namespace) -> dict[str, Path]:
     schema = args.schema_dir.resolve()
     if args.role == "planner" and args.mode == "initial":
+        if args.content_authority is None:
+            raise AssetError("Planner initial mode requires --content-authority", path="--content-authority", code="cli_error", exit_code=2)
         return {
-            "request.json": args.request, "source.png": args.source,
+            "request.json": args.request, "source.png": args.source, "source-content.json": args.content_authority,
             "layout.schema.json": schema / "layout.schema.json",
             "crops.schema.json": schema / "crops.schema.json",
             "asset-manifest.schema.json": schema / "asset-manifest.schema.json",
@@ -63,11 +81,11 @@ def _inputs(args: argparse.Namespace) -> dict[str, Path]:
             "planner-response.schema.json": schema / "planner-response.schema.json",
         }
     if args.role == "planner" and args.mode == "revision":
-        if args.iteration_dir is None:
-            raise AssetError("revision requires --iteration-dir", path="--iteration-dir", code="cli_error", exit_code=2)
+        if args.iteration_dir is None or args.content_authority is None:
+            raise AssetError("revision requires --iteration-dir and --content-authority", path="$", code="cli_error", exit_code=2)
         iteration = args.iteration_dir
         return {
-            "request.json": args.request, "source.png": args.source,
+            "request.json": args.request, "source.png": args.source, "source-content.json": args.content_authority,
             "layout.json": iteration / "layout.json", "crops.json": iteration / "crops.json",
             "asset_manifest.json": iteration / "asset_manifest.json", "qa_report.json": iteration / "qa_report.json",
             "review_report.json": iteration / "review_report.json", "review_evaluation.json": iteration / "review_evaluation.json",
@@ -106,6 +124,11 @@ def main() -> int:
             raise AssetError("request must be directly inside work-root", path=str(request_path), code="path_escape")
         if args.source.resolve() != (work_root / request["source_image"]).resolve():
             raise AssetError("source does not match request source_image", path=str(args.source), code="input_mismatch")
+        if args.role == "planner":
+            authority = args.content_authority.resolve() if args.content_authority else None
+            if authority is None or authority.parent != work_root or authority.name != "source-content.json":
+                raise AssetError("Planner content authority must be work-root/source-content.json", path="--content-authority", code="path_escape")
+            _validate_content_authority(authority)
         expected_output = expected_call_dir(work_root, args.iteration, args.role, args.call_id)
         if args.output_dir.resolve() != expected_output:
             raise AssetError("output-dir must match .agent-calls/<iteration>/<role>/<call-id>", path=str(args.output_dir), code="path_escape")

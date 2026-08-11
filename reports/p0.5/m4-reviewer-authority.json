@@ -1,0 +1,53 @@
+{
+  "schema_version": "1.0",
+  "milestone": "M4",
+  "status": "pass",
+  "agent_calls": {
+    "planner": 0,
+    "reviewer": 1,
+    "reviewer_retries": 0
+  },
+  "gates": {
+    "runtime_unit_tests": {
+      "status": "pass",
+      "tests": 29
+    },
+    "json_schemas": {
+      "status": "pass",
+      "schemas": 22
+    },
+    "canonical_content": {
+      "status": "pass",
+      "comparison_source": "editable_pptx_xml",
+      "normalization": ["unicode_nfc", "crlf_to_lf", "explicit_joiner", "soft_layout_breaks_only"],
+      "b01_as_is": {
+        "status": "expected_content_failure",
+        "missing": ["footer"]
+      },
+      "passing_cases": ["B02", "B03", "B04", "B05", "B06"]
+    },
+    "reviewer_failure_fixtures": {
+      "status": "pass",
+      "maximum_technical_retries": 2,
+      "major_or_critical_route": "revision_required",
+      "technical_failure_route_when_all_gates_pass": "delivered_with_warnings",
+      "warning": "visual review incomplete"
+    },
+    "frozen_replay": {
+      "status": "pass",
+      "cases": ["B01", "B02", "B03", "B04", "B05", "B06"],
+      "agent_calls": 0
+    },
+    "b01_reviewer_live_smoke": {
+      "status": "pass",
+      "contract_outcome": "revision_required",
+      "reviewer_recommendation": "revise",
+      "issue_count": 2,
+      "raw_response_sha256": "faf3dfa7cf1adcaf158af6ed725cfa8e9ee42d7a8ef8e0752ee0f2dfb6c62fff",
+      "call_record_sha256": "1fe6f68e51d937fdde260b6cff3aa9e098e23695cdc29c40556829c37e2d5c65",
+      "schema_valid": true,
+      "runtime_references_valid": true,
+      "repeated": false
+    }
+  }
+}

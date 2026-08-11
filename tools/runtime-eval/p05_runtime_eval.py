@@ -12,7 +12,7 @@ ROOT = Path(__file__).resolve().parents[2]
 SCRIPT_DIR = ROOT / "content-to-editable-ppt" / "scripts"
 sys.path.insert(0, str(SCRIPT_DIR))
 
-from text_identity import build_compatibility_map, compatibility_view, compare_authority
+from text_identity import build_compatibility_map, compatibility_view, compare_authority, layout_with_ppt_text
 
 
 def parser() -> argparse.ArgumentParser:
@@ -36,7 +36,8 @@ def _audit(case_id: str, output_root: Path) -> dict:
     authority = json.loads((case_root / "evidence" / "baseline-source-content.json").read_text(encoding="utf-8"))
     mapping = build_compatibility_map(layout, authority)
     view = compatibility_view(layout, mapping, strict=False)
-    comparison = compare_authority(authority, view)
+    extracted = layout_with_ppt_text(view, case_root / "evidence" / "final" / "baseline-final.pptx")
+    comparison = compare_authority(authority, extracted)
     result = {"case_id": case_id, "mapping": mapping, "comparison": comparison, "agent_calls": 0}
     output_root.mkdir(parents=True, exist_ok=True)
     (output_root / f"{case_id}-text-identity-audit.json").write_text(json.dumps(result, ensure_ascii=False, indent=2), encoding="utf-8")

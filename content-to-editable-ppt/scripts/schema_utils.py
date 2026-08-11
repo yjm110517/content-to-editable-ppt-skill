@@ -33,6 +33,8 @@ SCHEMA_FILES = {
     "reviewer_response": "reviewer-response.schema.json",
     "runtime_manifest": "runtime-manifest.schema.json",
     "runtime_error": "runtime-error.schema.json",
+    "reviewer_technical_failure": "reviewer-technical-failure.schema.json",
+    "content_authority_report": "content-authority-report.schema.json",
     "text_identity_map": "text-identity-map.schema.json",
 }
 
@@ -41,6 +43,8 @@ SUPPORTED_SCHEMA_VERSIONS = {
     "run_state": {"1.3", "1.4"},
     "runtime_manifest": {"1.0"},
     "runtime_error": {"1.0"},
+    "reviewer_technical_failure": {"1.0"},
+    "content_authority_report": {"1.0"},
     "text_identity_map": {"1.0"},
 }
 
@@ -284,12 +288,12 @@ def validate_semantics(kind: str, document: dict[str, Any]) -> None:
             "input_pending": {"planning", "failed"}, "planning": {"spec_ready", "failed"},
             "spec_ready": {"building", "failed"}, "building": {"structural_pass", "structural_fail", "failed"},
             "structural_fail": {"planning", "failed"}, "structural_pass": {"reviewing", "failed"},
-            "reviewing": {"review_evaluating", "failed"},
-            "review_evaluating": {"review_pass", "review_revise", "review_fail", "review_warning_candidate", "failed"},
+            "reviewing": {"review_evaluating", "delivered_with_warnings", "failed"},
+            "review_evaluating": {"review_pass", "review_revise", "review_fail", "review_warning_candidate", "delivered_with_warnings", "failed"},
             "review_revise": {"planning", "failed"}, "review_pass": {"packaging", "failed"},
             "review_fail": {"failed"}, "review_warning_candidate": {"awaiting_user_acceptance", "failed"},
             "awaiting_user_acceptance": {"packaging", "failed"}, "packaging": {"delivered", "failed"},
-            "delivered": set(), "failed": set(),
+            "delivered": set(), "delivered_with_warnings": set(), "failed": set(),
         }
         for index, item in enumerate(document["history"]):
             if item["to"] not in allowed[item["from"]]:

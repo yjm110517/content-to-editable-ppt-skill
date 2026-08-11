@@ -11,7 +11,7 @@ from typing import Any
 from asset_common import AssetError, atomic_write_json, contains_reparse_point, sha256_file
 
 
-TERMINAL_STATES = {"delivered", "failed"}
+TERMINAL_STATES = {"delivered", "delivered_with_warnings", "failed"}
 
 
 def utc_now() -> str:
