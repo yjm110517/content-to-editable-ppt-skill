@@ -4,7 +4,7 @@
 
 ## 当前状态
 
-本仓库已完成 P0 Baseline Freeze 和 P0.5 Runtime Hardening，并正在完成 P1 Host Content Planning Gate。当前代码已经包含材料路由、材料完整性、Candidate Outline、用户确认、Approved Outline 和确定性 Approved Slide Content 投影契约。
+本仓库已完成 P0 Baseline Freeze、P0.5 Runtime Hardening 和 P1 Host Content Planning Gate。当前代码支持材料路由、材料完整性、Candidate Outline、用户修改/确认、Approved Outline 和确定性 Approved Slide Content 投影。
 
 当前支持“材料 → 待确认大纲 → 冻结页面文字”和“参考图片 → 可编辑单页 PPT”两套独立基础流程。以下能力尚未实现，不能视为当前承诺：
 
@@ -106,9 +106,25 @@ content-to-editable-ppt-skill/
 .\tools\baseline\baseline.ps1 -Action Verify -All -PythonPath <python.exe>
 ```
 
-## 当前阶段
+## P1 Content Planning
 
-当前正在执行 P1 Content Planning Final Gate。通过后下一阶段是 P2 Wireframe；在 P2–P5 完成前，P1 输出只到 Approved Outline 和 Approved Slide Content。
+P1 开发入口：
+
+```powershell
+python .\content-to-editable-ppt\scripts\manage_content_plan.py init --task-id <id> --deck-id <id> --state <state.json>
+python .\content-to-editable-ppt\scripts\manage_content_plan.py route --state <state.json> --route <route.json>
+python .\content-to-editable-ppt\scripts\manage_content_plan.py resolve-materials --state <state.json> --materials <materials.json>
+python .\content-to-editable-ppt\scripts\manage_content_plan.py submit-candidate --state <state.json> --candidate <candidate.json> --deck-request <request.json> --materials <materials.json>
+python .\content-to-editable-ppt\scripts\manage_content_plan.py request-confirmation --state <state.json>
+python .\content-to-editable-ppt\scripts\manage_content_plan.py record-outline-response --state <state.json> --candidate <candidate.json> --confirmation <confirmation.json> --approved-output <approved.json>
+python .\content-to-editable-ppt\scripts\manage_content_plan.py project-slide-content --state <state.json> --outline <approved.json> --output-dir <content-dir>
+```
+
+[P1 Gate 报告](reports/p1/p1-content-planning-gate.json) 记录 D03、D05、D08、Canonical Hash、确认与投影验收结果。
+
+## 下一阶段
+
+下一阶段是 P2 Wireframe。在 P2–P5 完成前，Content-to-PPT 输出只到 Approved Outline 和 Approved Slide Content，不能宣称已经完成完整多页 PowerPoint 生成。
 
 ## 开发验证
 

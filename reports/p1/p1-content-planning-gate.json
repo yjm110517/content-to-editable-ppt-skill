@@ -1,0 +1,60 @@
+{
+  "schema_version": "1.0",
+  "phase": "P1",
+  "status": "pass",
+  "baseline_commit": "707fd60e7d8c3f7f8e89adec223ea091b787f52c",
+  "gates": {
+    "runtime_and_p1_tests": {"status": "pass", "tests": 61},
+    "json_schemas": {"status": "pass", "schemas": 31},
+    "canonical_hash": {
+      "status": "pass",
+      "version": "p1-rfc8785-nfc-1",
+      "rfc8785_vector": "pass",
+      "nfc_equivalence": "pass",
+      "nfc_key_collision_rejection": "pass",
+      "float_and_unsafe_integer_rejection": "pass"
+    },
+    "routing_and_materials": {
+      "status": "pass",
+      "routes": ["content_to_ppt", "image_to_editable_ppt", "needs_clarification"],
+      "clarification_loop": "pass",
+      "required_unreadable_material": "blocking",
+      "optional_unreadable_material": "warning",
+      "ignore_authorization_binding": "pass",
+      "external_research_default": "not_authorized"
+    },
+    "outline_and_confirmation": {
+      "status": "pass",
+      "candidate_contains_exact_slide_text": true,
+      "stale_confirmation_rejected": true,
+      "user_revision_creates_new_artifact": true,
+      "approved_outline_preserves_candidate_pages": true
+    },
+    "deterministic_projection": {
+      "status": "pass",
+      "host_calls_after_confirmation": 0,
+      "content_projection_drift": 0,
+      "overwrite_existing_revision_rejected": true,
+      "parent_slide_content_binding": "pass"
+    },
+    "frozen_cases": {
+      "status": "pass",
+      "D03": {"pages": 3, "host_planning_passes": 1, "host_revision_passes": 1, "approved_outline_sha256": "227ab049c0690f454d08681ec8edb3c3107210723be05934661d066d83123673", "slide_content_manifest_sha256": "3030a26691bc4b5c92e82d00dd4160dcc00da1c9a2e5828e78c2ee6d3d068bcf"},
+      "D05": {"pages": 5, "host_planning_passes": 1, "host_revision_passes": 0, "approved_outline_sha256": "a3fba3904167a23c9aa67dd0b6d1975302a72623619876f1c446c4d79ce5ead5", "slide_content_manifest_sha256": "6071e1556755dc82c91c4f561208ca0442d995556fbbcb33a9fd3469e7de1b44"},
+      "D08": {"pages": 8, "host_planning_passes": 1, "host_revision_passes": 0, "approved_outline_sha256": "b5c74a72e346ef6bdcf40d6ce937751c67324c6f86d7cd5f83face51e7a51e23", "slide_content_manifest_sha256": "f6c98a5e4ab93d6b45e48ae116e715b2a232480f7fe2b4bfeb5dd3c185074195"}
+    },
+    "regression": {
+      "status": "pass",
+      "p0_baseline_unchanged": true,
+      "p05_frozen_replay_cases": ["B01", "B02", "B03", "B04", "B05", "B06"],
+      "p05_agent_calls": 0
+    }
+  },
+  "budgets": {
+    "automatic_host_regeneration": 0,
+    "layout_planner_calls": 0,
+    "visual_reviewer_calls": 0
+  },
+  "blocking_issues": 0,
+  "next_phase": "P2 Wireframe"
+}
