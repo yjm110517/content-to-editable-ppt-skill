@@ -24,13 +24,14 @@
     },
     "current_artifacts": {
       "type": "object", "additionalProperties": false,
-      "required": ["task_route_sha256", "materials_sha256", "candidate_outline_sha256", "confirmation_sha256", "approved_outline_sha256"],
+      "required": ["task_route_sha256", "materials_sha256", "candidate_outline_sha256", "confirmation_sha256", "approved_outline_sha256", "slide_content_manifest_sha256"],
       "properties": {
         "task_route_sha256": {"$ref": "#/$defs/nullable_hash"},
         "materials_sha256": {"$ref": "#/$defs/nullable_hash"},
         "candidate_outline_sha256": {"$ref": "#/$defs/nullable_hash"},
         "confirmation_sha256": {"$ref": "#/$defs/nullable_hash"},
-        "approved_outline_sha256": {"$ref": "#/$defs/nullable_hash"}
+        "approved_outline_sha256": {"$ref": "#/$defs/nullable_hash"},
+        "slide_content_manifest_sha256": {"$ref": "#/$defs/nullable_hash"}
       }
     },
     "history": {"type": "array", "items": {"$ref": "#/$defs/history"}}

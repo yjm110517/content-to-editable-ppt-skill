@@ -184,6 +184,8 @@ def approved_outline_from(
 ) -> dict[str, Any]:
     if confirmation["status"] != "confirmed":
         raise ContractError([error("$.status", "only a confirmed response can promote an outline")])
+    if (revision == 1 and parent_sha256 is not None) or (revision > 1 and parent_sha256 is None):
+        raise ContractError([error("$.parent_sha256", "Approved Outline revision/parent relationship is invalid")])
     return {
         "schema_version": "1.0",
         "canonicalization_version": "p1-rfc8785-nfc-1",

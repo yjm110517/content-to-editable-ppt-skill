@@ -8,6 +8,7 @@ from typing import Any
 from canonical_artifact import canonical_sha256
 from content_plan_rules import approved_outline_from, route_event, validate_candidate_outline, validate_material_understanding, validate_outline_confirmation, validate_task_route
 from content_plan_state import ContentPlanStateError, advance, initial_state
+from deterministic_project_slide_content import build_projection, load_parent_hashes, write_projection
 from schema_utils import ContractError, load_json, validate_schema
 
 
@@ -49,6 +50,14 @@ def parser() -> argparse.ArgumentParser:
     response.add_argument("--approved-output", type=Path)
     response.add_argument("--approved-revision", type=int, default=1)
     response.add_argument("--parent-approved-sha256")
+    projection = commands.add_parser("project-slide-content")
+    projection.add_argument("--state", type=Path, required=True)
+    projection.add_argument("--outline", type=Path, required=True)
+    projection.add_argument("--output-dir", type=Path, required=True)
+    projection.add_argument("--parent-content-dir", type=Path)
+    projection.add_argument("--timestamp-utc")
+    verify = commands.add_parser("verify")
+    verify.add_argument("--state", type=Path, required=True)
     return result
 
 
@@ -148,6 +157,24 @@ def _record_response(
     return _save_state(state_path, state), approved
 
 
+def _project_content(state_path: Path, outline_path: Path, output_dir: Path, parent_content_dir: Path | None, timestamp_utc: str | None) -> tuple[dict[str, Any], dict[str, Any]]:
+    state = load_json(state_path)
+    approved = load_json(outline_path)
+    validate_schema("approved_outline", approved, SCHEMA_DIR)
+    approved_hash = canonical_sha256(approved)
+    if state["state"] != "outline_approved" or state["current_artifacts"]["approved_outline_sha256"] != approved_hash:
+        raise ContentPlanStateError("projection requires the current Approved Outline authority")
+    if approved["revision"] > 1 and parent_content_dir is None:
+        raise ContentPlanStateError("Approved Outline revision requires parent slide content")
+    slides, manifest = build_projection(approved, frozen_at_utc=timestamp_utc, parent_hashes=load_parent_hashes(parent_content_dir) if parent_content_dir else None)
+    projected_state = advance(state, event="start_projection")
+    projected_state = advance(projected_state, event="projection_complete", artifact_kind="slide_content_manifest", artifact_sha256=canonical_sha256(manifest))
+    projected_state = advance(projected_state, event="complete_p1")
+    validate_schema("content_plan_state", projected_state, SCHEMA_DIR)
+    write_projection(output_dir, slides, manifest)
+    return _save_state(state_path, projected_state), manifest
+
+
 def main() -> int:
     args = parser().parse_args()
     try:
@@ -167,9 +194,16 @@ def main() -> int:
         elif args.action == "request-confirmation":
             state = _request_confirmation(args.state.resolve())
             details = {}
-        else:
+        elif args.action == "record-outline-response":
             state, approved = _record_response(args.state.resolve(), args.candidate.resolve(), args.confirmation.resolve(), args.approved_output.resolve() if args.approved_output else None, args.approved_revision, args.parent_approved_sha256)
             details = {"approved_outline": str(args.approved_output.resolve()) if approved else None}
+        elif args.action == "project-slide-content":
+            state, manifest = _project_content(args.state.resolve(), args.outline.resolve(), args.output_dir.resolve(), args.parent_content_dir.resolve() if args.parent_content_dir else None, args.timestamp_utc)
+            details = {"slides": len(manifest["slides"]), "manifest_sha256": canonical_sha256(manifest)}
+        else:
+            state = load_json(args.state.resolve())
+            validate_schema("content_plan_state", state, SCHEMA_DIR)
+            details = {"complete": state["state"] in {"p1_complete", "p1_bypassed"}}
         print(json.dumps({"status": "ok", "state": state["state"], "counters": state["counters"], **details}, ensure_ascii=False))
         return 0
     except (ContractError, ContentPlanStateError) as exc:

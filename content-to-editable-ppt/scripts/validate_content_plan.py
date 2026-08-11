@@ -10,7 +10,7 @@ from schema_utils import ContractError, load_json, validate_schema
 
 def parser() -> argparse.ArgumentParser:
     result = argparse.ArgumentParser(description="Validate a P1 content planning artifact")
-    result.add_argument("--profile", choices=("route", "deck-request", "materials", "candidate", "confirmation", "approved-outline"), required=True)
+    result.add_argument("--profile", choices=("route", "deck-request", "materials", "candidate", "confirmation", "approved-outline", "slide-content", "state"), required=True)
     result.add_argument("--input", type=Path, required=True)
     result.add_argument("--schema-dir", type=Path, default=Path(__file__).resolve().parents[1] / "schemas")
     result.add_argument("--deck-request", type=Path)
@@ -41,9 +41,15 @@ def main() -> int:
                 raise ContractError([{"path": "$", "code": "missing_input", "message": "confirmation validation requires --candidate"}])
             validate_outline_confirmation(load_json(args.candidate), document, args.schema_dir.resolve())
             details = {"confirmation_status": document["status"]}
-        else:
+        elif args.profile == "approved-outline":
             validate_schema("approved_outline", document, args.schema_dir.resolve())
             details = {"page_count": len(document["pages"])}
+        elif args.profile == "slide-content":
+            validate_schema("approved_slide_content", document, args.schema_dir.resolve())
+            details = {"slide_id": document["slide_id"]}
+        else:
+            validate_schema("content_plan_state", document, args.schema_dir.resolve())
+            details = {"state": document["state"]}
         print(json.dumps({"status": "ok", "profile": args.profile, **details}, ensure_ascii=False))
         return 0
     except ContractError as exc:

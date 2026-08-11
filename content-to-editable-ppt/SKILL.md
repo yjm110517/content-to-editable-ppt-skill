@@ -1,13 +1,25 @@
 ---
 name: content-to-editable-ppt
-description: Maintain and extend the reusable PowerPoint construction, asset processing, rendering, and QA runtime for a future topic, document, or outline to editable PPT workflow. Use when Codex is developing or validating this repository; the inherited executable workflow currently rebuilds reference images and must not be represented as complete content-to-multipage generation.
+description: Plan and freeze presentation content from user materials, or rebuild a reference image with the reusable PowerPoint construction, rendering, and QA runtime. Use for P1 material-to-approved-content workflows and repository development; do not claim complete multi-page PPT generation before later gates are implemented.
 ---
 
 # Content to Editable PPT
 
 ## Development status
 
-Treat this Skill as a bootstrap runtime. Its current executable contracts are inherited from a reference-image-to-editable-slide workflow. Do not claim support for topic, document, or outline input, multi-slide narrative planning, theme generation, charts, citations, or presentation-wide review until those contracts are implemented and validated.
+The Skill has two independent entry paths. P1 supports routing readable user materials into a confirmed Outline and deterministically frozen per-slide content. The inherited executable Runtime rebuilds reference images as editable single slides. Wireframes, visual design, Deck orchestration, assembly, charts, citations, and presentation-wide review are not yet complete.
+
+## Route content planning
+
+1. Read [references/task-routing.md](references/task-routing.md) and record `content_to_ppt`, `image_to_editable_ppt`, or `needs_clarification`.
+2. For Content-to-PPT, read [references/content-planning.md](references/content-planning.md), record material readiness, and stop on unreadable required material unless the user authorizes ignoring it.
+3. In one initial Host planning pass, produce Material Understanding and a Candidate Outline whose titles and Content Blocks are the exact proposed slide text.
+4. Render the deterministic Outline preview and stop for mandatory user confirmation.
+5. Create a new Candidate revision only after an explicit user change request. Never regenerate automatically.
+6. Read [references/outline-contract.md](references/outline-contract.md), bind confirmation to the Candidate canonical hash, and promote only a `confirmed` Candidate.
+7. Project Approved Slide Content deterministically. Do not call the Host, Layout Planner, or Visual Reviewer after confirmation.
+
+Image-to-Editable-PPT bypasses every P1 Outline stage and continues through the inherited single-slide workflow below.
 
 ## Core requirements
 
@@ -70,6 +82,8 @@ Never describe a structural QA pass as final completion. `run_pipeline.py` retur
 - Record input, specification, asset, tool, renderer, model, prompt, rubric, parameter, and call provenance where required by the current contract.
 
 ## Follow the execution contract
+
+Read [references/task-routing.md](references/task-routing.md), [references/content-planning.md](references/content-planning.md), and [references/outline-contract.md](references/outline-contract.md) for P1 tasks. Do not load reconstruction references until the route actually enters the single-slide Runtime.
 
 Read [references/agent-orchestration.md](references/agent-orchestration.md) before invoking or implementing a deterministic command. Follow its path, output, logging, and exit-code rules.
 
