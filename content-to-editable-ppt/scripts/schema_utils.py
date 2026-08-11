@@ -37,6 +37,14 @@ SCHEMA_FILES = {
     "content_authority_report": "content-authority-report.schema.json",
     "issue_attribution": "issue-attribution.schema.json",
     "text_identity_map": "text-identity-map.schema.json",
+    "task_route": "task-route.schema.json",
+    "deck_request": "deck-request.schema.json",
+    "material_understanding": "material-understanding.schema.json",
+    "candidate_outline": "candidate-outline.schema.json",
+    "outline_confirmation": "outline-confirmation.schema.json",
+    "approved_outline": "approved-outline.schema.json",
+    "approved_slide_content": "approved-slide-content.schema.json",
+    "content_plan_state": "content-plan-state.schema.json",
 }
 
 SUPPORTED_SCHEMA_VERSIONS = {
@@ -48,6 +56,14 @@ SUPPORTED_SCHEMA_VERSIONS = {
     "content_authority_report": {"1.0"},
     "issue_attribution": {"1.0"},
     "text_identity_map": {"1.0"},
+    "task_route": {"1.0"},
+    "deck_request": {"1.0"},
+    "material_understanding": {"1.0"},
+    "candidate_outline": {"1.0"},
+    "outline_confirmation": {"1.0"},
+    "approved_outline": {"1.0"},
+    "approved_slide_content": {"1.0"},
+    "content_plan_state": {"1.0"},
 }
 
 

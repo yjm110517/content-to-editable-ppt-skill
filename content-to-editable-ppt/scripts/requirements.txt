@@ -4,4 +4,5 @@ python-pptx==1.0.2
 jsonschema==4.26.0
 defusedxml==0.7.1
 PyYAML==6.0.2
+rfc8785==0.1.4
 pywin32==311; sys_platform == "win32"
