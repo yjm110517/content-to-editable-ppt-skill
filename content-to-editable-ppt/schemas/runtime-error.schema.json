@@ -1,0 +1,19 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "runtime-error.schema.json",
+  "title": "P0.5 Runtime Error",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["schema_version", "code", "category", "stage", "recoverable", "issue_scope", "normalized_message", "attempt"],
+  "properties": {
+    "schema_version": {"const": "1.0"},
+    "code": {"type": "string", "minLength": 1},
+    "category": {"enum": ["environment_failure", "technical_failure", "local_spec_failure", "global_semantic_failure", "content_failure", "visual_failure", "unrecoverable_failure"]},
+    "stage": {"type": "string", "minLength": 1},
+    "recoverable": {"type": "boolean"},
+    "issue_scope": {"enum": ["environment", "stage", "element", "asset", "page", "delivery"]},
+    "artifact_path": {"type": ["string", "null"]},
+    "normalized_message": {"type": "string", "minLength": 1},
+    "attempt": {"type": "integer", "minimum": 0}
+  }
+}
