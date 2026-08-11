@@ -1,0 +1,180 @@
+{
+  "baseline_version": "p0-v1",
+  "cases": [
+    {
+      "artifacts": {
+        "final_pptx_sha256": "2a3cadb541c176d504ef8ea21761f6093e5947153e6c500cf55a275fc055e68e",
+        "final_render_sha256": "f670f3bd0d4e4f5654243ea05141226eab2f5ecc14750a3e11411fad351b7f85",
+        "source_sha256": "dfce2f9627f04b2d295983eb0a13241306f41fbdc71d81ccab70f3c084fba7f0"
+      },
+      "case_id": "B01",
+      "counts": {
+        "asset_count": 0,
+        "crop_entry_count": 0,
+        "planner_calls": 3,
+        "reviewer_calls": 3,
+        "runtime_asset_count": 0,
+        "technical_retries": 1,
+        "visual_revisions": 2
+      },
+      "final_iteration": 3,
+      "outcome": {
+        "structural_qa": "pass",
+        "visual_review": "fail"
+      }
+    },
+    {
+      "artifacts": {
+        "final_pptx_sha256": "fcbeb171daae186c09b7f55d36289faa7d32fef9f7b491bc999e8e4ed67a7de8",
+        "final_render_sha256": "8e954e68f091286286c39752a81cec7f0885a8a0849391a9c7b95bd2963f23b2",
+        "source_sha256": "6389249a048864900312fed74ba7615b810a7950f11a78e73a8e3566547d2937"
+      },
+      "case_id": "B02",
+      "counts": {
+        "asset_count": 6,
+        "crop_entry_count": 6,
+        "planner_calls": 3,
+        "reviewer_calls": 3,
+        "runtime_asset_count": 6,
+        "technical_retries": 0,
+        "visual_revisions": 2
+      },
+      "final_iteration": 3,
+      "outcome": {
+        "structural_qa": "pass",
+        "visual_review": "pass"
+      }
+    },
+    {
+      "artifacts": {
+        "final_pptx_sha256": "69d4371840ad842a6876ccf5c5624b7249e11faca9f2183977b5b8f1619e3571",
+        "final_render_sha256": "73ba2fb3ec241e812d996d9afcdd2acc65bcd8fe30fc8da8fc3911dad1f72c76",
+        "source_sha256": "c9e0e40148f09a90291c19345cbbe8c7eda74154b67aea4f6e8ad4ed237b3518"
+      },
+      "case_id": "B03",
+      "counts": {
+        "asset_count": 1,
+        "crop_entry_count": 1,
+        "planner_calls": 3,
+        "reviewer_calls": 3,
+        "runtime_asset_count": 1,
+        "technical_retries": 0,
+        "visual_revisions": 2
+      },
+      "final_iteration": 3,
+      "outcome": {
+        "structural_qa": "pass",
+        "visual_review": "fail"
+      }
+    },
+    {
+      "artifacts": {
+        "final_pptx_sha256": "fa258cdab646be0f7c273a4afeebdc3fb7d146786462582755f98d6f0b463f68",
+        "final_render_sha256": "df7a975230095795071eb7d761ae68b530f5dd66b1b2932a22b86d7cb4b5cad1",
+        "source_sha256": "6b29847d97f00ab25e1e21d660efb0b747aa4c7e7faabb382c1e0875bfb89c1f"
+      },
+      "case_id": "B04",
+      "counts": {
+        "asset_count": 0,
+        "crop_entry_count": 0,
+        "planner_calls": 2,
+        "reviewer_calls": 2,
+        "runtime_asset_count": 0,
+        "technical_retries": 1,
+        "visual_revisions": 1
+      },
+      "final_iteration": 2,
+      "outcome": {
+        "structural_qa": "pass",
+        "visual_review": "pass"
+      }
+    },
+    {
+      "artifacts": {
+        "final_pptx_sha256": "a048bb0796f28f5a565ef228e55c13f102adcb47e125ac84b4ce66ddef3a180e",
+        "final_render_sha256": "39c992805f927a7544277b841e7d70906d730791ea8aa673d2b27d785ea26777",
+        "source_sha256": "6d57e27959ceba2dcb7778e39f25355c1d8c7f1cb0823768fff5ed477ce5b826"
+      },
+      "case_id": "B05",
+      "counts": {
+        "asset_count": 13,
+        "crop_entry_count": 13,
+        "planner_calls": 1,
+        "reviewer_calls": 0,
+        "runtime_asset_count": 13,
+        "technical_retries": 0,
+        "visual_revisions": 0
+      },
+      "final_iteration": 1,
+      "outcome": {
+        "structural_qa": "pass",
+        "visual_review": "technical_failure"
+      }
+    },
+    {
+      "artifacts": {
+        "final_pptx_sha256": "a0ad81577ee833699aaa32e6d9ad9fb12fe34cdde29c5494b02a345ae8dbce98",
+        "final_render_sha256": "08c0ef62f00246da8c9d5cbf483390498eca6447669c0462695526409d4a271a",
+        "source_sha256": "27bdf97e88734b9ea235224e11c122d67d364e1ab80acd8fff3203a9374c32b6"
+      },
+      "case_id": "B06",
+      "counts": {
+        "asset_count": 0,
+        "crop_entry_count": 0,
+        "planner_calls": 1,
+        "reviewer_calls": 1,
+        "runtime_asset_count": 0,
+        "technical_retries": 1,
+        "visual_revisions": 0
+      },
+      "final_iteration": 1,
+      "outcome": {
+        "structural_qa": "pass",
+        "visual_review": "pass"
+      }
+    }
+  ],
+  "environment": {
+    "captured_at_utc": "2026-08-11T05:14:52Z",
+    "font_policy": [
+      "Microsoft YaHei"
+    ],
+    "iteration_policy": {
+      "max_total_iterations": 3,
+      "max_visual_revisions": 2
+    },
+    "lockfiles": {
+      "pnpm_lock_sha256": "1bdfc79ae5632684ef2e65f744aa98ac172ece9a1313489f34ed2ee875b8ddc3",
+      "requirements_sha256": "ee18acc9815a26ea4b306f3b6a095bc8fee5ebdbe7ada42124abde97f0ef4a67"
+    },
+    "node": {
+      "executable": "${NORMALIZED_RUNTIME_PATH}/node.exe",
+      "version": "24.14.0"
+    },
+    "operating_system": "Microsoft Windows [Version 10.0.19045.6466]",
+    "pnpm": {
+      "executable": "${NORMALIZED_RUNTIME_PATH}/pnpm",
+      "version": "11.16.0"
+    },
+    "powerpoint": {
+      "duration_ms": 4021,
+      "executable": "${NORMALIZED_POWERPOINT_PATH}/POWERPNT.EXE",
+      "png_sha256": "34865d4743c36acff69b113e043455e2a1c4bcf515f33f20a57bdcc7bb379865",
+      "powerpoint_version": "16.0",
+      "pptx_sha256": "aa7a6d012e608ee28b9d40ab0585c802d3cc0f98a3035bce3f4e09478461bae8",
+      "status": "pass"
+    },
+    "python": {
+      "executable": "${NORMALIZED_RUNTIME_PATH}/python.exe",
+      "version": "3.12.13"
+    },
+    "runtime_tree_sha256": "a429054315e00770cbe98e2dcf2979d1a9e2957a39440d78af2770a56e475c24",
+    "source_runtime_commit": "dbd8f15fdfa7bc0c6558a68b6f4bf5cbd146d9e9"
+  },
+  "iteration_policy": {
+    "max_total_iterations": 3,
+    "max_visual_revisions": 2
+  },
+  "runtime_tree_sha256": "a429054315e00770cbe98e2dcf2979d1a9e2957a39440d78af2770a56e475c24",
+  "source_runtime_commit": "dbd8f15fdfa7bc0c6558a68b6f4bf5cbd146d9e9"
+}

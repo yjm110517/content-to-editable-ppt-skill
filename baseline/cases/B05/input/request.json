@@ -1,0 +1,28 @@
+{
+  "schema_version": "1.3",
+  "task_id": "p0-b05",
+  "topic": "AI 驱动的学习闭环",
+  "source_image": "source.png",
+  "output_ratio": "16:9",
+  "typography_interaction": "match-source",
+  "typography": {
+    "title_font": "Microsoft YaHei",
+    "title_size_pt": 34,
+    "body_font": "Microsoft YaHei",
+    "body_size_pt": 18
+  },
+  "editability_policy": "text-and-structure",
+  "user_requirements": [
+    "Keep every readable label editable.",
+    "Crop polished source icons as independent runtime assets.",
+    "Preserve the closed directional learning loop and visual hierarchy."
+  ],
+  "review_policy": {
+    "max_iterations": 3,
+    "pass_score": 90,
+    "warning_floor_score": 85,
+    "min_content_accuracy": 98,
+    "required_editability_score": 100,
+    "critical_policy": "by_recoverability"
+  }
+}

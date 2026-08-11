@@ -1,0 +1,11 @@
+{
+  "case_id": "B01",
+  "max_total_iterations": 3,
+  "max_visual_revisions": 2,
+  "node_executable": "${NORMALIZED_RUNTIME_PATH}/node.exe",
+  "node_version": "v24.14.0",
+  "planner_call_dir": ".agent-calls/01/planner/planner-b01-i01",
+  "prepared_at_utc": "2026-08-11T05:14:54Z",
+  "python_executable": "${NORMALIZED_RUNTIME_PATH}/python.exe",
+  "python_version": "Python 3.12.13"
+}

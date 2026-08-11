@@ -1,0 +1,66 @@
+{
+  "artifact_role": "baseline_evidence",
+  "runtime_contract": false,
+  "case_id": "B02",
+  "revision": 1,
+  "status": "frozen",
+  "source_sha256": "6389249a048864900312fed74ba7615b810a7950f11a78e73a8e3566547d2937",
+  "text_items": [
+    {
+      "id": "title",
+      "text": "团队能力地图"
+    },
+    {
+      "id": "subtitle",
+      "text": "六个能力模块共同支撑稳定交付"
+    },
+    {
+      "id": "card-1-title",
+      "text": "目标管理"
+    },
+    {
+      "id": "card-1-body",
+      "text": "把方向转化为可衡量结果"
+    },
+    {
+      "id": "card-2-title",
+      "text": "数据洞察"
+    },
+    {
+      "id": "card-2-body",
+      "text": "用证据发现关键变化"
+    },
+    {
+      "id": "card-3-title",
+      "text": "质量保障"
+    },
+    {
+      "id": "card-3-body",
+      "text": "在交付前发现结构问题"
+    },
+    {
+      "id": "card-4-title",
+      "text": "创新实验"
+    },
+    {
+      "id": "card-4-body",
+      "text": "用小步试验降低不确定性"
+    },
+    {
+      "id": "card-5-title",
+      "text": "协同共创"
+    },
+    {
+      "id": "card-5-body",
+      "text": "让角色边界和交接清晰"
+    },
+    {
+      "id": "card-6-title",
+      "text": "持续改进"
+    },
+    {
+      "id": "card-6-body",
+      "text": "让每次复盘产生新行动"
+    }
+  ]
+}

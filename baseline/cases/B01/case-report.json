@@ -1,0 +1,76 @@
+{
+  "artifacts": {
+    "final_pptx_sha256": "2a3cadb541c176d504ef8ea21761f6093e5947153e6c500cf55a275fc055e68e",
+    "final_render_sha256": "f670f3bd0d4e4f5654243ea05141226eab2f5ecc14750a3e11411fad351b7f85",
+    "source_sha256": "dfce2f9627f04b2d295983eb0a13241306f41fbdc71d81ccab70f3c084fba7f0"
+  },
+  "captured_at_utc": "2026-08-11T06:17:57Z",
+  "case_id": "B01",
+  "content_comparison": {
+    "expected_count": 9,
+    "missing_text": [
+      "目标清晰 · 行动可追踪 · 结果可验证"
+    ],
+    "ppt_text_shape_count": 12
+  },
+  "counts": {
+    "asset_count": 0,
+    "crop_entry_count": 0,
+    "planner_calls": 3,
+    "reviewer_calls": 3,
+    "runtime_asset_count": 0,
+    "technical_retries": 1,
+    "visual_revisions": 2
+  },
+  "final_iteration": 3,
+  "known_issues": [
+    {
+      "category": "content",
+      "description": "Missing frozen text: 目标清晰 · 行动可追踪 · 结果可验证"
+    },
+    {
+      "category": "runtime_technical_retry",
+      "description": "Runtime required a same-iteration technical retry after an initial pipeline start failed."
+    }
+  ],
+  "max_total_iterations": 3,
+  "max_visual_revisions": 2,
+  "outcome": {
+    "structural_qa": "pass",
+    "visual_review": "fail"
+  },
+  "public_safety": {
+    "creator": "content-to-editable-ppt-skill",
+    "external_relationships": [],
+    "findings": [],
+    "sanitized_pptx_sha256": "2a3cadb541c176d504ef8ea21761f6093e5947153e6c500cf55a275fc055e68e",
+    "sanitized_render_verification": {
+      "duration_ms": 4393,
+      "render_sha256": "f670f3bd0d4e4f5654243ea05141226eab2f5ecc14750a3e11411fad351b7f85",
+      "status": "pass"
+    },
+    "source_pptx_sha256": "eab3b0f81069800d815541e125fcdf5dd5bb44c5dc364c5e6825af9058affcc5",
+    "status": "pass"
+  },
+  "schema_version": "p0-v1",
+  "source_runtime_commit": "dbd8f15fdfa7bc0c6558a68b6f4bf5cbd146d9e9",
+  "timings": {
+    "components_ms": {
+      "apply_review_patch": 797023,
+      "audit_fonts": 2205105,
+      "build_slide": 2205415,
+      "crop_assets": 2243627,
+      "evaluate_review": 1955183,
+      "finalize_agent_response": 2999666,
+      "manage_run_state": 3776283,
+      "prepare_agent_call": 3029149,
+      "render_ppt": 2211659,
+      "run_pipeline": 2252301,
+      "run_review_checkpoint": 1816633,
+      "sanitize_svg": 2243628,
+      "validate_assets": 2204968,
+      "verify_ppt": 2207940
+    },
+    "total_observed_ms": 3776283
+  }
+}

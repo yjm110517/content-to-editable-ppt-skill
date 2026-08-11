@@ -1,0 +1,65 @@
+{
+  "artifacts": {
+    "final_pptx_sha256": "fcbeb171daae186c09b7f55d36289faa7d32fef9f7b491bc999e8e4ed67a7de8",
+    "final_render_sha256": "8e954e68f091286286c39752a81cec7f0885a8a0849391a9c7b95bd2963f23b2",
+    "source_sha256": "6389249a048864900312fed74ba7615b810a7950f11a78e73a8e3566547d2937"
+  },
+  "captured_at_utc": "2026-08-11T06:30:07Z",
+  "case_id": "B02",
+  "content_comparison": {
+    "expected_count": 14,
+    "missing_text": [],
+    "ppt_text_shape_count": 14
+  },
+  "counts": {
+    "asset_count": 6,
+    "crop_entry_count": 6,
+    "planner_calls": 3,
+    "reviewer_calls": 3,
+    "runtime_asset_count": 6,
+    "technical_retries": 0,
+    "visual_revisions": 2
+  },
+  "final_iteration": 3,
+  "known_issues": [],
+  "max_total_iterations": 3,
+  "max_visual_revisions": 2,
+  "outcome": {
+    "structural_qa": "pass",
+    "visual_review": "pass"
+  },
+  "public_safety": {
+    "creator": "content-to-editable-ppt-skill",
+    "external_relationships": [],
+    "findings": [],
+    "sanitized_pptx_sha256": "fcbeb171daae186c09b7f55d36289faa7d32fef9f7b491bc999e8e4ed67a7de8",
+    "sanitized_render_verification": {
+      "duration_ms": 3985,
+      "render_sha256": "8e954e68f091286286c39752a81cec7f0885a8a0849391a9c7b95bd2963f23b2",
+      "status": "pass"
+    },
+    "source_pptx_sha256": "cc0d2c42ed243187949416f34bd8b1d54742975c08958d6618188412c5e546a5",
+    "status": "pass"
+  },
+  "schema_version": "p0-v1",
+  "source_runtime_commit": "dbd8f15fdfa7bc0c6558a68b6f4bf5cbd146d9e9",
+  "timings": {
+    "components_ms": {
+      "apply_review_patch": 1589736,
+      "audit_fonts": 2983850,
+      "build_slide": 2984263,
+      "crop_assets": 2983907,
+      "evaluate_review": 2685191,
+      "finalize_agent_response": 3665880,
+      "manage_run_state": 4490542,
+      "prepare_agent_call": 3907706,
+      "render_ppt": 2990122,
+      "run_pipeline": 2992127,
+      "run_review_checkpoint": 2711301,
+      "sanitize_svg": 2983833,
+      "validate_assets": 2983873,
+      "verify_ppt": 2986255
+    },
+    "total_observed_ms": 4490542
+  }
+}

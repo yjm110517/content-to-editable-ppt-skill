@@ -1,0 +1,8 @@
+{
+  "creator": "content-to-editable-ppt-skill",
+  "external_relationships": [],
+  "findings": [],
+  "sanitized_pptx_sha256": "69d4371840ad842a6876ccf5c5624b7249e11faca9f2183977b5b8f1619e3571",
+  "source_pptx_sha256": "def7ea39eb99ad85d7423978d7e7f156000d2159381798d2fa314a4155ca2c9b",
+  "status": "pass"
+}

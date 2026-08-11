@@ -1,0 +1,69 @@
+{
+  "artifacts": {
+    "final_pptx_sha256": "a0ad81577ee833699aaa32e6d9ad9fb12fe34cdde29c5494b02a345ae8dbce98",
+    "final_render_sha256": "08c0ef62f00246da8c9d5cbf483390498eca6447669c0462695526409d4a271a",
+    "source_sha256": "27bdf97e88734b9ea235224e11c122d67d364e1ab80acd8fff3203a9374c32b6"
+  },
+  "captured_at_utc": "2026-08-11T05:51:05Z",
+  "case_id": "B06",
+  "content_comparison": {
+    "expected_count": 7,
+    "missing_text": [],
+    "ppt_text_shape_count": 7
+  },
+  "counts": {
+    "asset_count": 0,
+    "crop_entry_count": 0,
+    "planner_calls": 1,
+    "reviewer_calls": 1,
+    "runtime_asset_count": 0,
+    "technical_retries": 1,
+    "visual_revisions": 0
+  },
+  "final_iteration": 1,
+  "known_issues": [
+    {
+      "category": "runtime_technical_retry",
+      "description": "Runtime required a same-iteration technical retry after an initial pipeline start failed."
+    }
+  ],
+  "max_total_iterations": 3,
+  "max_visual_revisions": 2,
+  "outcome": {
+    "structural_qa": "pass",
+    "visual_review": "pass"
+  },
+  "public_safety": {
+    "creator": "content-to-editable-ppt-skill",
+    "external_relationships": [],
+    "findings": [],
+    "sanitized_pptx_sha256": "a0ad81577ee833699aaa32e6d9ad9fb12fe34cdde29c5494b02a345ae8dbce98",
+    "sanitized_render_verification": {
+      "duration_ms": 3785,
+      "render_sha256": "08c0ef62f00246da8c9d5cbf483390498eca6447669c0462695526409d4a271a",
+      "status": "pass"
+    },
+    "source_pptx_sha256": "db1f8a056fd592a44150e7e6d0dd0d59011e237aad9f39897fbaf30f0953304a",
+    "status": "pass"
+  },
+  "schema_version": "p0-v1",
+  "source_runtime_commit": "dbd8f15fdfa7bc0c6558a68b6f4bf5cbd146d9e9",
+  "timings": {
+    "components_ms": {
+      "audit_fonts": 23,
+      "build_slide": 388,
+      "crop_assets": 716,
+      "evaluate_review": 0,
+      "finalize_agent_response": 982497,
+      "manage_run_state": 2080943,
+      "prepare_agent_call": 1194843,
+      "render_ppt": 6201,
+      "run_pipeline": 8538,
+      "run_review_checkpoint": 0,
+      "sanitize_svg": 716,
+      "validate_assets": 13,
+      "verify_ppt": 166
+    },
+    "total_observed_ms": 2080943
+  }
+}

@@ -1,0 +1,33 @@
+{
+  "schema_version": "1.3",
+  "task_id": "p0-b01",
+  "iteration": 1,
+  "role": "planner",
+  "role_version": "1.3.0",
+  "model_selection_mode": "runtime-default",
+  "requested_model": null,
+  "config_sha256": "7c743b7d13c8c40925840939aaf16682deb1ef191aad269e782ecd70630decb2",
+  "prompt_sha256": "a26692f810e4e017b26993019dd69a37d77cacff95820b8d9c2a3d0d2ae64fe1",
+  "output_schema_sha256": "6267525451ce5f1d38b55a4e29d97c87eb490889a2434a7bde83a91d4adefe98",
+  "input_sha256": {
+    "request.json": "a6bb7cf725be27a4120929d910d46a5ed3d9e629b01de235817c4d5d9d9b3705",
+    "source.png": "dfce2f9627f04b2d295983eb0a13241306f41fbdc71d81ccab70f3c084fba7f0",
+    "layout.json": "310d2bd6a8fd61135b53196cad44c78345b6d997a8fc41b2fd9253bcd3a9c4ec",
+    "crops.json": "8bd333db816756df58090cdff9052eaeb572c3317d303a5e2e6fa9de8d8951ff",
+    "asset_manifest.json": "a7bf89dfc83781e9c058cbb5a733aebffaf4997ef75c4a81409b1f3037f15a0c",
+    "qa_report.json": "b8e5203dac9b79c3af4693e57fbb13c8f0dc2fc97f6512f708a532365bab5c98",
+    "review_report.json": "af1720cdcc423684d4ccd9554bb81a648c1e97960f3c389dd39b7007bcf564da",
+    "review_evaluation.json": "dfd1871ab7dfeb5cf39db83e24b7d99a40bc829138ceb01fab1a74a149428a8a",
+    "review-patch.schema.json": "287eb20a3818106cb036f407a99b63e58dc87f7d36673e9302b00d7a059891f6",
+    "planner-response.schema.json": "6267525451ce5f1d38b55a4e29d97c87eb490889a2434a7bde83a91d4adefe98"
+  },
+  "parameters": {
+    "temperature": 0.2,
+    "top_p": 1.0,
+    "seed": null
+  },
+  "call_id": "planner-b01-r01",
+  "context_id": "/root/planner_b01_r01:p0-b01:revision:r01",
+  "parent_context_id": null,
+  "status": "succeeded"
+}

@@ -1,0 +1,256 @@
+{
+  "schema_version": "1.3",
+  "run_id": "p0-b03",
+  "iteration": 3,
+  "hashes": {
+    "layout_sha256": "85269a1d1dc94816a6ff58d7aca90012b5ceaafa2482d055eab97522faf4d3c9",
+    "asset_manifest_sha256": "916a972a7c69be357b347da33601954989704694096a6e6b811ab6af406e0603",
+    "output_pptx_sha256": "def7ea39eb99ad85d7423978d7e7f156000d2159381798d2fa314a4155ca2c9b"
+  },
+  "output_pptx": "p0-b03-editable.pptx",
+  "expected_element_count": 17,
+  "built_element_count": 17,
+  "missing_element_ids": [],
+  "unexpected_element_ids": [],
+  "build_order": [
+    "bg-circle-top-right",
+    "bg-circle-bottom-left",
+    "conclusion-card",
+    "landscape-panel-image",
+    "principles-badge",
+    "title",
+    "subtitle",
+    "conclusion-heading",
+    "bullet-dot-1",
+    "bullet-text-1",
+    "bullet-dot-2",
+    "bullet-text-2",
+    "bullet-dot-3",
+    "bullet-text-3",
+    "bullet-dot-4",
+    "bullet-text-4",
+    "principles-text"
+  ],
+  "element_map": [
+    {
+      "element_id": "bg-circle-top-right",
+      "type": "shape",
+      "object_names": [
+        "ivt:bg-circle-top-right"
+      ],
+      "object_count": 1
+    },
+    {
+      "element_id": "bg-circle-bottom-left",
+      "type": "shape",
+      "object_names": [
+        "ivt:bg-circle-bottom-left"
+      ],
+      "object_count": 1
+    },
+    {
+      "element_id": "title",
+      "type": "text",
+      "object_names": [
+        "ivt:title"
+      ],
+      "object_count": 1
+    },
+    {
+      "element_id": "subtitle",
+      "type": "text",
+      "object_names": [
+        "ivt:subtitle"
+      ],
+      "object_count": 1
+    },
+    {
+      "element_id": "landscape-panel-image",
+      "type": "image",
+      "object_names": [
+        "ivt:landscape-panel-image"
+      ],
+      "object_count": 1
+    },
+    {
+      "element_id": "conclusion-card",
+      "type": "shape",
+      "object_names": [
+        "ivt:conclusion-card"
+      ],
+      "object_count": 1
+    },
+    {
+      "element_id": "conclusion-heading",
+      "type": "text",
+      "object_names": [
+        "ivt:conclusion-heading"
+      ],
+      "object_count": 1
+    },
+    {
+      "element_id": "bullet-dot-1",
+      "type": "shape",
+      "object_names": [
+        "ivt:bullet-dot-1"
+      ],
+      "object_count": 1
+    },
+    {
+      "element_id": "bullet-text-1",
+      "type": "text",
+      "object_names": [
+        "ivt:bullet-text-1"
+      ],
+      "object_count": 1
+    },
+    {
+      "element_id": "bullet-dot-2",
+      "type": "shape",
+      "object_names": [
+        "ivt:bullet-dot-2"
+      ],
+      "object_count": 1
+    },
+    {
+      "element_id": "bullet-text-2",
+      "type": "text",
+      "object_names": [
+        "ivt:bullet-text-2"
+      ],
+      "object_count": 1
+    },
+    {
+      "element_id": "bullet-dot-3",
+      "type": "shape",
+      "object_names": [
+        "ivt:bullet-dot-3"
+      ],
+      "object_count": 1
+    },
+    {
+      "element_id": "bullet-text-3",
+      "type": "text",
+      "object_names": [
+        "ivt:bullet-text-3"
+      ],
+      "object_count": 1
+    },
+    {
+      "element_id": "bullet-dot-4",
+      "type": "shape",
+      "object_names": [
+        "ivt:bullet-dot-4"
+      ],
+      "object_count": 1
+    },
+    {
+      "element_id": "bullet-text-4",
+      "type": "text",
+      "object_names": [
+        "ivt:bullet-text-4"
+      ],
+      "object_count": 1
+    },
+    {
+      "element_id": "principles-badge",
+      "type": "shape",
+      "object_names": [
+        "ivt:principles-badge"
+      ],
+      "object_count": 1
+    },
+    {
+      "element_id": "principles-text",
+      "type": "text",
+      "object_names": [
+        "ivt:principles-text"
+      ],
+      "object_count": 1
+    }
+  ],
+  "assets": [
+    {
+      "asset_id": "landscape-panel",
+      "type": "png",
+      "sha256": "c12375706fc96959142b02046467fb55811139e1014d3346c853f140dc43cb73"
+    }
+  ],
+  "typography": {
+    "text_element_count": 8,
+    "run_count": 8,
+    "explicit_run_font_count": 0,
+    "inherited_run_font_count": 8,
+    "unresolved_font_count": 0,
+    "non_default_fit_elements": [
+      "title",
+      "subtitle",
+      "conclusion-heading",
+      "bullet-text-1",
+      "bullet-text-2",
+      "bullet-text-3",
+      "bullet-text-4",
+      "principles-text"
+    ],
+    "font_resolutions": [
+      {
+        "element_id": "title",
+        "run_index": 0,
+        "font_face": "Microsoft YaHei",
+        "font_size_pt": 34,
+        "source": "style"
+      },
+      {
+        "element_id": "subtitle",
+        "run_index": 0,
+        "font_face": "Microsoft YaHei",
+        "font_size_pt": 16,
+        "source": "style"
+      },
+      {
+        "element_id": "conclusion-heading",
+        "run_index": 0,
+        "font_face": "Microsoft YaHei",
+        "font_size_pt": 22,
+        "source": "style"
+      },
+      {
+        "element_id": "bullet-text-1",
+        "run_index": 0,
+        "font_face": "Microsoft YaHei",
+        "font_size_pt": 16,
+        "source": "style"
+      },
+      {
+        "element_id": "bullet-text-2",
+        "run_index": 0,
+        "font_face": "Microsoft YaHei",
+        "font_size_pt": 16,
+        "source": "style"
+      },
+      {
+        "element_id": "bullet-text-3",
+        "run_index": 0,
+        "font_face": "Microsoft YaHei",
+        "font_size_pt": 16,
+        "source": "style"
+      },
+      {
+        "element_id": "bullet-text-4",
+        "run_index": 0,
+        "font_face": "Microsoft YaHei",
+        "font_size_pt": 16,
+        "source": "style"
+      },
+      {
+        "element_id": "principles-text",
+        "run_index": 0,
+        "font_face": "Microsoft YaHei",
+        "font_size_pt": 14,
+        "source": "style"
+      }
+    ]
+  },
+  "connections": [],
+  "warnings": []
+}

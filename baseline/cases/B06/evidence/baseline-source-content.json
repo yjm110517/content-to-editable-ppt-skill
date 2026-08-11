@@ -1,0 +1,38 @@
+{
+  "artifact_role": "baseline_evidence",
+  "runtime_contract": false,
+  "case_id": "B06",
+  "revision": 1,
+  "status": "frozen",
+  "source_sha256": "27bdf97e88734b9ea235224e11c122d67d364e1ab80acd8fff3203a9374c32b6",
+  "text_items": [
+    {
+      "id": "title",
+      "text": "保持简单，才能持续复用"
+    },
+    {
+      "id": "subtitle",
+      "text": "Zero-Asset Baseline"
+    },
+    {
+      "id": "left-title",
+      "text": "结构清晰"
+    },
+    {
+      "id": "left-body",
+      "text": "只使用原生文字与形状"
+    },
+    {
+      "id": "right-title",
+      "text": "路径最短"
+    },
+    {
+      "id": "right-body",
+      "text": "不产生裁切或图片资产"
+    },
+    {
+      "id": "footer",
+      "text": "输入明确 → 构建直接 → 证据完整"
+    }
+  ]
+}

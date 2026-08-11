@@ -1,0 +1,106 @@
+{
+  "artifact_role": "baseline_evidence",
+  "runtime_contract": false,
+  "case_id": "B05",
+  "revision": 1,
+  "status": "frozen",
+  "source_sha256": "6d57e27959ceba2dcb7778e39f25355c1d8c7f1cb0823768fff5ed477ce5b826",
+  "text_items": [
+    {
+      "id": "title",
+      "text": "AI 驱动的学习闭环"
+    },
+    {
+      "id": "subtitle",
+      "text": "让目标、行动与反馈持续连接"
+    },
+    {
+      "id": "input",
+      "text": "学习输入"
+    },
+    {
+      "id": "input-1",
+      "text": "课程资料"
+    },
+    {
+      "id": "input-2",
+      "text": "学习行为"
+    },
+    {
+      "id": "input-3",
+      "text": "评价标准"
+    },
+    {
+      "id": "output",
+      "text": "智能输出"
+    },
+    {
+      "id": "output-1",
+      "text": "知识地图"
+    },
+    {
+      "id": "output-2",
+      "text": "能力画像"
+    },
+    {
+      "id": "output-3",
+      "text": "行动建议"
+    },
+    {
+      "id": "step-1",
+      "text": "明确目标"
+    },
+    {
+      "id": "step-1-body",
+      "text": "定义成果"
+    },
+    {
+      "id": "step-2",
+      "text": "连接资源"
+    },
+    {
+      "id": "step-2-body",
+      "text": "获取知识"
+    },
+    {
+      "id": "step-3",
+      "text": "智能练习"
+    },
+    {
+      "id": "step-3-body",
+      "text": "即时支持"
+    },
+    {
+      "id": "step-4",
+      "text": "同伴协作"
+    },
+    {
+      "id": "step-4-body",
+      "text": "共同建构"
+    },
+    {
+      "id": "step-5",
+      "text": "多元评估"
+    },
+    {
+      "id": "step-5-body",
+      "text": "发现差距"
+    },
+    {
+      "id": "step-6",
+      "text": "迭代提升"
+    },
+    {
+      "id": "step-6-body",
+      "text": "持续成长"
+    },
+    {
+      "id": "center",
+      "text": "学习者"
+    },
+    {
+      "id": "footer",
+      "text": "每一次反馈，都让下一轮学习更精准"
+    }
+  ]
+}
