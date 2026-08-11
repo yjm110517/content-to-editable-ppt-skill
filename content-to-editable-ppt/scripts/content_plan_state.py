@@ -23,6 +23,8 @@ TRANSITIONS = {
     ("awaiting_outline_confirmation", "changes_requested"): "candidate_revision",
     ("candidate_revision", "candidate_revised"): "candidate_ready",
     ("awaiting_outline_confirmation", "outline_confirmed"): "outline_approved",
+    ("awaiting_outline_confirmation", "outline_rejected"): "outline_rejected",
+    ("outline_approved", "approved_outline_recorded"): "outline_approved",
     ("outline_approved", "start_projection"): "projecting_slide_content",
     ("projecting_slide_content", "projection_complete"): "slide_content_frozen",
     ("slide_content_frozen", "complete_p1"): "p1_complete",
@@ -71,8 +73,12 @@ def advance(
     target = TRANSITIONS.get((current, event))
     if target is None:
         raise ContentPlanStateError(f"event {event} is invalid from {current}")
-    if event in {"changes_requested", "candidate_revised"} and not user_evidence_sha256:
+    if event in {"changes_requested", "candidate_revised", "outline_confirmed", "outline_rejected"} and not user_evidence_sha256:
         raise ContentPlanStateError(f"event {event} requires user evidence")
+    if event == "candidate_revised":
+        requested = next((item["user_evidence_sha256"] for item in reversed(state["history"]) if item["event"] == "changes_requested"), None)
+        if requested != user_evidence_sha256:
+            raise ContentPlanStateError("candidate revision does not bind the latest user change request")
     updated = copy.deepcopy(state)
     counters = updated["counters"]
     if event == "initial_candidate_ready":
