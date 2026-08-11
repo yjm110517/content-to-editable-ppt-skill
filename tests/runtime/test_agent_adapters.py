@@ -8,7 +8,7 @@ from pathlib import Path
 ROOT = Path(__file__).resolve().parents[2]
 sys.path.insert(0, str(ROOT / "content-to-editable-ppt" / "scripts"))
 
-from agent_adapters import AgentBudgetError, AgentCallLedger, FailureAdapter, FixtureAdapter, LiveAdapter
+from agent_adapters import AgentAdapterError, AgentBudgetError, AgentCallLedger, FailureAdapter, FixtureAdapter, LiveAdapter, TimeoutControllerAdapter, TimeoutTestAdapter
 
 
 class AgentAdapterTests(unittest.TestCase):
@@ -34,6 +34,13 @@ class AgentAdapterTests(unittest.TestCase):
         ledger = AgentCallLedger()
         with self.assertRaisesRegex(RuntimeError, "reviewer_timeout"):
             FailureAdapter("reviewer_timeout").invoke(role="reviewer", call_id="failure-1", ledger=ledger)
+        self.assertEqual(ledger.live_call_count, 0)
+
+    def test_timeout_controller_uses_real_deadline_without_live_budget(self) -> None:
+        ledger = AgentCallLedger()
+        with self.assertRaises(AgentAdapterError) as raised:
+            TimeoutControllerAdapter(TimeoutTestAdapter(sleep_seconds=0.05), timeout_seconds=0.01).invoke(role="reviewer", call_id="timeout-1", ledger=ledger)
+        self.assertEqual(raised.exception.code, "reviewer_timeout")
         self.assertEqual(ledger.live_call_count, 0)
 
 

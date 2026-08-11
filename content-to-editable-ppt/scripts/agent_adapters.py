@@ -3,6 +3,7 @@ from __future__ import annotations
 import copy
 import json
 import time
+from concurrent.futures import ThreadPoolExecutor, TimeoutError as FutureTimeoutError
 from dataclasses import dataclass, field
 from pathlib import Path
 from typing import Any, Callable
@@ -72,6 +73,29 @@ class TimeoutTestAdapter:
         ledger.reserve(role=role, call_id=call_id, live=False)
         time.sleep(self.sleep_seconds)
         return {"status": "unexpected_completion"}
+
+
+class TimeoutControllerAdapter:
+    mode = "timeout_controller"
+
+    def __init__(self, adapter: Any, timeout_seconds: float = 5.0):
+        self.adapter = adapter
+        self.timeout_seconds = timeout_seconds
+
+    def invoke(self, *, role: str, call_id: str, ledger: AgentCallLedger) -> dict[str, Any]:
+        executor = ThreadPoolExecutor(max_workers=1)
+        future = executor.submit(self.adapter.invoke, role=role, call_id=call_id, ledger=ledger)
+        try:
+            result = future.result(timeout=self.timeout_seconds)
+            executor.shutdown(wait=True)
+            return result
+        except FutureTimeoutError as exc:
+            future.cancel()
+            executor.shutdown(wait=False, cancel_futures=True)
+            error = AgentAdapterError("reviewer_timeout", f"Reviewer exceeded {self.timeout_seconds:g}s timeout")
+            error.timeout_seconds = self.timeout_seconds
+            error.exit_code = None
+            raise error from exc
 
 
 class LiveAdapter:
