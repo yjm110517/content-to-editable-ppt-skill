@@ -15,8 +15,12 @@
     "route": {"enum": ["content_to_ppt", "image_to_editable_ppt", "needs_clarification"]},
     "intent_summary": {"type": "string", "minLength": 1},
     "evidence": {"type": "array", "minItems": 1, "uniqueItems": true, "items": {"type": "string", "minLength": 1}},
+    "clarification_message_sha256": {"$ref": "#/$defs/hash"},
     "created_at_utc": {"$ref": "#/$defs/timestamp"}
   },
+  "allOf": [
+    {"if": {"properties": {"revision": {"minimum": 2}}, "required": ["revision"]}, "then": {"required": ["clarification_message_sha256"]}}
+  ],
   "$defs": {
     "hash": {"type": "string", "pattern": "^[a-f0-9]{64}$"},
     "timestamp": {"type": "string", "format": "date-time", "pattern": "Z$"}

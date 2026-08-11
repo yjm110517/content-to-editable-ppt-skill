@@ -49,9 +49,10 @@
     },
     "authorization": {
       "type": "object", "additionalProperties": false,
-      "required": ["material_id", "user_message_sha256", "authorized_at_utc"],
+      "required": ["material_id", "material_record_sha256", "user_message_sha256", "authorized_at_utc"],
       "properties": {
         "material_id": {"type": "string", "minLength": 1},
+        "material_record_sha256": {"$ref": "#/$defs/hash"},
         "user_message_sha256": {"$ref": "#/$defs/hash"},
         "authorized_at_utc": {"$ref": "#/$defs/timestamp"}
       }
