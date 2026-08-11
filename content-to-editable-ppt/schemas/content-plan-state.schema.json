@@ -39,7 +39,7 @@
     "hash": {"type": "string", "pattern": "^[a-f0-9]{64}$"},
     "nullable_hash": {"oneOf": [{"$ref": "#/$defs/hash"}, {"type": "null"}]},
     "timestamp": {"type": "string", "format": "date-time", "pattern": "Z$"},
-    "state": {"enum": ["received", "routing", "awaiting_route_clarification", "p1_bypassed", "material_intake", "awaiting_material_resolution", "materials_ready", "candidate_ready", "awaiting_outline_confirmation", "candidate_revision", "outline_approved", "projecting_slide_content", "slide_content_frozen", "p1_complete"]},
+    "state": {"enum": ["received", "routing", "awaiting_route_clarification", "p1_bypassed", "material_intake", "awaiting_material_resolution", "materials_ready", "candidate_ready", "awaiting_outline_confirmation", "candidate_revision", "outline_rejected", "outline_approved", "projecting_slide_content", "slide_content_frozen", "p1_complete"]},
     "history": {
       "type": "object", "additionalProperties": false,
       "required": ["from", "to", "event", "artifact_kind", "artifact_sha256", "user_evidence_sha256", "timestamp_utc"],

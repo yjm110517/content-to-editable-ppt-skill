@@ -6,7 +6,7 @@ from pathlib import Path
 from typing import Any
 
 from canonical_artifact import canonical_sha256
-from content_plan_rules import route_event, validate_material_understanding, validate_task_route
+from content_plan_rules import approved_outline_from, route_event, validate_candidate_outline, validate_material_understanding, validate_outline_confirmation, validate_task_route
 from content_plan_state import ContentPlanStateError, advance, initial_state
 from schema_utils import ContractError, load_json, validate_schema
 
@@ -35,6 +35,20 @@ def parser() -> argparse.ArgumentParser:
     materials.add_argument("--state", type=Path, required=True)
     materials.add_argument("--materials", type=Path, required=True)
     materials.add_argument("--resolution-sha256")
+    candidate = commands.add_parser("submit-candidate")
+    candidate.add_argument("--state", type=Path, required=True)
+    candidate.add_argument("--candidate", type=Path, required=True)
+    candidate.add_argument("--deck-request", type=Path, required=True)
+    candidate.add_argument("--materials", type=Path, required=True)
+    confirmation_request = commands.add_parser("request-confirmation")
+    confirmation_request.add_argument("--state", type=Path, required=True)
+    response = commands.add_parser("record-outline-response")
+    response.add_argument("--state", type=Path, required=True)
+    response.add_argument("--candidate", type=Path, required=True)
+    response.add_argument("--confirmation", type=Path, required=True)
+    response.add_argument("--approved-output", type=Path)
+    response.add_argument("--approved-revision", type=int, default=1)
+    response.add_argument("--parent-approved-sha256")
     return result
 
 
@@ -78,6 +92,62 @@ def _materials(state_path: Path, materials_path: Path, resolution_sha256: str | 
     return _save_state(state_path, state), evaluation
 
 
+def _submit_candidate(state_path: Path, candidate_path: Path, deck_request_path: Path, materials_path: Path) -> dict[str, Any]:
+    state = load_json(state_path)
+    candidate = load_json(candidate_path)
+    validate_candidate_outline(candidate, deck_request=load_json(deck_request_path), materials=load_json(materials_path), schema_dir=SCHEMA_DIR)
+    candidate_hash = canonical_sha256(candidate)
+    if state["state"] == "materials_ready":
+        event = "initial_candidate_ready"
+        user_hash = None
+    elif state["state"] == "candidate_revision":
+        event = "candidate_revised"
+        user_hash = candidate.get("user_revision_request_sha256")
+    else:
+        raise ContentPlanStateError(f"candidate cannot be submitted from {state['state']}")
+    state = advance(state, event=event, artifact_kind="candidate_outline", artifact_sha256=candidate_hash, user_evidence_sha256=user_hash)
+    return _save_state(state_path, state)
+
+
+def _request_confirmation(state_path: Path) -> dict[str, Any]:
+    state = load_json(state_path)
+    state = advance(state, event="request_outline_confirmation")
+    return _save_state(state_path, state)
+
+
+def _record_response(
+    state_path: Path,
+    candidate_path: Path,
+    confirmation_path: Path,
+    approved_output: Path | None,
+    approved_revision: int,
+    parent_approved_sha256: str | None,
+) -> tuple[dict[str, Any], dict[str, Any] | None]:
+    state = load_json(state_path)
+    candidate = load_json(candidate_path)
+    confirmation = load_json(confirmation_path)
+    validate_outline_confirmation(candidate, confirmation, SCHEMA_DIR)
+    if state["state"] != "awaiting_outline_confirmation":
+        raise ContentPlanStateError(f"outline response cannot be recorded from {state['state']}")
+    confirmation_hash = canonical_sha256(confirmation)
+    status = confirmation["status"]
+    if status == "changes_requested":
+        state = advance(state, event="changes_requested", artifact_kind="confirmation", artifact_sha256=confirmation_hash, user_evidence_sha256=confirmation["user_message_sha256"])
+        approved = None
+    elif status == "rejected":
+        state = advance(state, event="outline_rejected", artifact_kind="confirmation", artifact_sha256=confirmation_hash, user_evidence_sha256=confirmation["user_message_sha256"])
+        approved = None
+    else:
+        if approved_output is None:
+            raise ContentPlanStateError("confirmed outline requires --approved-output")
+        approved = approved_outline_from(candidate, confirmation, revision=approved_revision, parent_sha256=parent_approved_sha256, approved_at_utc=confirmation["created_at_utc"])
+        validate_schema("approved_outline", approved, SCHEMA_DIR)
+        write_json(approved_output, approved)
+        state = advance(state, event="outline_confirmed", artifact_kind="confirmation", artifact_sha256=confirmation_hash, user_evidence_sha256=confirmation["user_message_sha256"])
+        state = advance(state, event="approved_outline_recorded", artifact_kind="approved_outline", artifact_sha256=canonical_sha256(approved))
+    return _save_state(state_path, state), approved
+
+
 def main() -> int:
     args = parser().parse_args()
     try:
@@ -89,8 +159,17 @@ def main() -> int:
         elif args.action == "route":
             state = _route(args.state.resolve(), args.route.resolve())
             details = {}
-        else:
+        elif args.action == "resolve-materials":
             state, details = _materials(args.state.resolve(), args.materials.resolve(), args.resolution_sha256)
+        elif args.action == "submit-candidate":
+            state = _submit_candidate(args.state.resolve(), args.candidate.resolve(), args.deck_request.resolve(), args.materials.resolve())
+            details = {}
+        elif args.action == "request-confirmation":
+            state = _request_confirmation(args.state.resolve())
+            details = {}
+        else:
+            state, approved = _record_response(args.state.resolve(), args.candidate.resolve(), args.confirmation.resolve(), args.approved_output.resolve() if args.approved_output else None, args.approved_revision, args.parent_approved_sha256)
+            details = {"approved_outline": str(args.approved_output.resolve()) if approved else None}
         print(json.dumps({"status": "ok", "state": state["state"], "counters": state["counters"], **details}, ensure_ascii=False))
         return 0
     except (ContractError, ContentPlanStateError) as exc:

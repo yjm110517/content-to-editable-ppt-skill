@@ -101,3 +101,100 @@ def validate_material_understanding(document: dict[str, Any], schema_dir: Path) 
             failures.append(error("$.warnings", f"missing warning for non-blocking unreadable material {material_id}"))
     _raise(failures)
     return {**evaluation, "authorized_materials": sorted(authorized_ids)}
+
+
+def validate_candidate_outline(
+    document: dict[str, Any],
+    *,
+    deck_request: dict[str, Any],
+    materials: dict[str, Any],
+    schema_dir: Path,
+) -> None:
+    validate_schema("candidate_outline", document, schema_dir)
+    validate_schema("deck_request", deck_request, schema_dir)
+    validate_material_understanding(materials, schema_dir)
+    failures: list[dict[str, str]] = []
+    if materials["status"] != "ready":
+        failures.append(error("$.material_understanding_sha256", "candidate outline requires ready materials"))
+    if document["deck_id"] != deck_request["deck_id"] or document["deck_id"] != materials["deck_id"]:
+        failures.append(error("$.deck_id", "deck identity does not match request and materials"))
+    if document["material_understanding_sha256"] != canonical_sha256(materials):
+        failures.append(error("$.material_understanding_sha256", "candidate does not bind the current material understanding"))
+    if len(document["pages"]) != deck_request["page_count"]:
+        failures.append(error("$.pages", f"expected exactly {deck_request['page_count']} pages"))
+    if document["revision"] == 1:
+        if document["parent_sha256"] is not None or document["host_pass_counts"]["revision"] != 0:
+            failures.append(error("$.revision", "initial candidate must have no parent and zero revision passes"))
+    else:
+        if document["parent_sha256"] is None or not document.get("user_revision_request_sha256"):
+            failures.append(error("$.revision", "candidate revision requires parent and user request hashes"))
+        if document["host_pass_counts"]["revision"] != document["revision"] - 1:
+            failures.append(error("$.host_pass_counts.revision", "revision pass count must equal revision - 1"))
+
+    facts = {fact["fact_id"] for fact in materials["facts"]}
+    allowed_sources = facts | {"USER"}
+    slide_ids: set[str] = set()
+    content_refs: set[str] = set()
+    for index, page in enumerate(document["pages"]):
+        base = f"$.pages[{index}]"
+        if page["order"] != index + 1:
+            failures.append(error(base + ".order", "page order must be continuous and match array order"))
+        if page["slide_id"] in slide_ids:
+            failures.append(error(base + ".slide_id", "duplicate slide_id"))
+        slide_ids.add(page["slide_id"])
+        refs = [page["title"]["content_ref"], *[block["content_ref"] for block in page["content_blocks"]]]
+        for ref in refs:
+            if ref in content_refs:
+                failures.append(error(base, f"duplicate content_ref: {ref}"))
+            content_refs.add(ref)
+        for block_index, block in enumerate(page["content_blocks"]):
+            if block["order"] != block_index + 1:
+                failures.append(error(f"{base}.content_blocks[{block_index}].order", "content block order must be continuous"))
+            for source in block["source_refs"]:
+                if source not in allowed_sources:
+                    failures.append(error(f"{base}.content_blocks[{block_index}].source_refs", f"unknown source fact: {source}"))
+        for source in page["source_refs"]:
+            if source not in allowed_sources:
+                failures.append(error(base + ".source_refs", f"unknown source fact: {source}"))
+        for text_path, text in [(base + ".title.text", page["title"]["text"]), *[(f"{base}.content_blocks[{i}].text", item["text"]) for i, item in enumerate(page["content_blocks"])]]:
+            if "\r" in text or text != __import__("unicodedata").normalize("NFC", text):
+                failures.append(error(text_path, "confirmed text must already use NFC and LF line endings"))
+    _raise(failures)
+
+
+def validate_outline_confirmation(candidate: dict[str, Any], confirmation: dict[str, Any], schema_dir: Path) -> None:
+    validate_schema("outline_confirmation", confirmation, schema_dir)
+    failures: list[dict[str, str]] = []
+    if confirmation["deck_id"] != candidate["deck_id"]:
+        failures.append(error("$.deck_id", "confirmation deck does not match candidate"))
+    if confirmation["candidate_revision"] != candidate["revision"]:
+        failures.append(error("$.candidate_revision", "confirmation does not bind the candidate revision"))
+    if confirmation["candidate_sha256"] != canonical_sha256(candidate):
+        failures.append(error("$.candidate_sha256", "confirmation does not bind the candidate canonical hash"))
+    _raise(failures)
+
+
+def approved_outline_from(
+    candidate: dict[str, Any],
+    confirmation: dict[str, Any],
+    *,
+    revision: int,
+    parent_sha256: str | None,
+    approved_at_utc: str,
+) -> dict[str, Any]:
+    if confirmation["status"] != "confirmed":
+        raise ContractError([error("$.status", "only a confirmed response can promote an outline")])
+    return {
+        "schema_version": "1.0",
+        "canonicalization_version": "p1-rfc8785-nfc-1",
+        "artifact_id": f"{candidate['deck_id']}-approved-outline-r{revision}",
+        "deck_id": candidate["deck_id"],
+        "revision": revision,
+        "parent_sha256": parent_sha256,
+        "candidate_revision": candidate["revision"],
+        "candidate_sha256": canonical_sha256(candidate),
+        "confirmation_id": confirmation["confirmation_id"],
+        "confirmation_sha256": canonical_sha256(confirmation),
+        "pages": __import__("copy").deepcopy(candidate["pages"]),
+        "approved_at_utc": approved_at_utc,
+    }
