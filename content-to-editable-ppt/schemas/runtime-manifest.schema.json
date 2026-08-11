@@ -1,0 +1,60 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "runtime-manifest.schema.json",
+  "title": "Content to Editable PPT Runtime Manifest",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["schema_version", "runtime_status", "platform", "python", "node", "powerpoint", "capabilities", "checked_at_utc"],
+  "properties": {
+    "schema_version": {"const": "1.0"},
+    "runtime_status": {"enum": ["ready", "environment_failure"]},
+    "platform": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["system", "release", "machine", "supported"],
+      "properties": {
+        "system": {"type": "string", "minLength": 1},
+        "release": {"type": "string"},
+        "machine": {"type": "string"},
+        "supported": {"type": "boolean"}
+      }
+    },
+    "python": {"$ref": "#/$defs/runtime"},
+    "node": {"$ref": "#/$defs/runtime"},
+    "powerpoint": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["installed", "com_available", "smoke_test", "version"],
+      "properties": {
+        "installed": {"type": "boolean"},
+        "com_available": {"type": "boolean"},
+        "smoke_test": {"enum": ["passed", "failed", "not_run"]},
+        "version": {"type": ["string", "null"]}
+      }
+    },
+    "capabilities": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["build", "render", "qa"],
+      "properties": {
+        "build": {"type": "boolean"},
+        "render": {"type": "boolean"},
+        "qa": {"type": "boolean"}
+      }
+    },
+    "failure": {"oneOf": [{"$ref": "runtime-error.schema.json"}, {"type": "null"}]},
+    "checked_at_utc": {"type": "string", "format": "date-time"}
+  },
+  "$defs": {
+    "runtime": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["available", "version", "executable"],
+      "properties": {
+        "available": {"type": "boolean"},
+        "version": {"type": ["string", "null"]},
+        "executable": {"type": ["string", "null"], "pattern": "^(\\$\\{NORMALIZED_RUNTIME_PATH\\}/[^\\r\\n]+)?$"}
+      }
+    }
+  }
+}

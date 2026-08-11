@@ -13,6 +13,7 @@ htmlcov/
 # Runtime work products
 /work/
 /content-to-editable-ppt/work/
+/content-to-editable-ppt/runtime-manifest.json
 **/.agent-runtime/
 
 # Local configuration and temporary files

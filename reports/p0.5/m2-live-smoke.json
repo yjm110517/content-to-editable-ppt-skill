@@ -1,0 +1,25 @@
+{
+  "schema_version": "1.0",
+  "milestone": "M2",
+  "case_id": "B05",
+  "status": "pass_with_classified_rejection",
+  "blocking_runtime_regression": false,
+  "attempts": [
+    {
+      "run_id": "p05-m2-b05-smoke",
+      "outcome": "schema_valid_validator_rejected",
+      "formal_artifacts_written": true,
+      "validator_code": "invalid_crop_box",
+      "invalid_crop_count": 13,
+      "host_recovery": "Agent response was recovered from the repository root into its isolated call package; call record was derived from the immutable call manifest.",
+      "automatic_retry": false
+    },
+    {
+      "run_id": "p05-m2-b05-smoke-rerun",
+      "outcome": "agent_no_output_timeout_after_first_attempt_was_misclassified",
+      "formal_artifacts_written": false,
+      "automatic_retry": false
+    }
+  ],
+  "disposition": "pass; Agent transport and response Schema succeeded, and Shared Validator correctly rejected legacy crop-box semantics before Build. No visual revision was attempted."
+}

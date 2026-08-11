@@ -31,6 +31,16 @@ SCHEMA_FILES = {
     "agent_call_record": "agent-call-record.schema.json",
     "planner_response": "planner-response.schema.json",
     "reviewer_response": "reviewer-response.schema.json",
+    "runtime_manifest": "runtime-manifest.schema.json",
+    "runtime_error": "runtime-error.schema.json",
+    "text_identity_map": "text-identity-map.schema.json",
+}
+
+SUPPORTED_SCHEMA_VERSIONS = {
+    "layout": {"1.3", "1.4"},
+    "runtime_manifest": {"1.0"},
+    "runtime_error": {"1.0"},
+    "text_identity_map": {"1.0"},
 }
 
 
@@ -156,8 +166,9 @@ def _validate_review_issues(document: dict[str, Any], failures: list[dict[str, s
 
 def validate_semantics(kind: str, document: dict[str, Any]) -> None:
     failures: list[dict[str, str]] = []
-    if document.get("schema_version") != SCHEMA_VERSION:
-        failures.append(error("$.schema_version", f"expected {SCHEMA_VERSION}"))
+    supported_versions = SUPPORTED_SCHEMA_VERSIONS.get(kind, {SCHEMA_VERSION})
+    if document.get("schema_version") not in supported_versions:
+        failures.append(error("$.schema_version", f"expected one of {sorted(supported_versions)}"))
 
     if kind == "request":
         policy = document["review_policy"]

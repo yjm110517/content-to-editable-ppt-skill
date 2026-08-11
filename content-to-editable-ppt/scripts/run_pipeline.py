@@ -55,6 +55,8 @@ def _validate_execution_state(args: argparse.Namespace) -> dict[str, Any] | None
             code="cli_error",
             exit_code=2,
         )
+    if args.renderer != "powerpoint":
+        raise AssetError("production mode requires Microsoft PowerPoint COM", path="--renderer", code="renderer_unavailable", exit_code=5)
     work_root = args.request.resolve().parent
     expected = work_root / "run_state.json"
     if args.run_state.resolve() != expected:

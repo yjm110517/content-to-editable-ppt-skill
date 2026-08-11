@@ -6,12 +6,14 @@ param(
     [switch]$All,
     [switch]$AllowLiveAgent,
     [int]$AgentCallBudget = 0,
-    [string]$PythonPath = 'python'
+    [string]$PythonPath = 'python',
+    [string]$NodePath
 )
 
 $ErrorActionPreference = 'Stop'
 $scriptPath = Join-Path $PSScriptRoot 'p05_runtime_eval.py'
-$arguments = @($scriptPath, '--tier', $Tier, '--agent-call-budget', $AgentCallBudget)
+$arguments = @($scriptPath, '--tier', $Tier, '--agent-call-budget', $AgentCallBudget, '--python-path', $PythonPath)
+if ($NodePath) { $arguments += @('--node-path', $NodePath) }
 if ($Case) { $arguments += @('--case', $Case) }
 if ($All) { $arguments += '--all' }
 if ($AllowLiveAgent) { $arguments += '--allow-live-agent' }
