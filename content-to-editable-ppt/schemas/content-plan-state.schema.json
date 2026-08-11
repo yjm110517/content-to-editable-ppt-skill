@@ -1,0 +1,57 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "content-plan-state.schema.json",
+  "title": "P1 Content Plan State",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["schema_version", "canonicalization_version", "task_id", "deck_id", "state", "counters", "current_artifacts", "history"],
+  "properties": {
+    "schema_version": {"const": "1.0"},
+    "canonicalization_version": {"const": "p1-rfc8785-nfc-1"},
+    "task_id": {"type": "string", "minLength": 1},
+    "deck_id": {"type": "string", "minLength": 1},
+    "state": {"$ref": "#/$defs/state"},
+    "counters": {
+      "type": "object", "additionalProperties": false,
+      "required": ["host_planning_pass_count", "host_revision_pass_count", "automatic_regeneration_count", "planner_calls", "reviewer_calls"],
+      "properties": {
+        "host_planning_pass_count": {"type": "integer", "minimum": 0, "maximum": 1},
+        "host_revision_pass_count": {"type": "integer", "minimum": 0, "maximum": 9007199254740991},
+        "automatic_regeneration_count": {"const": 0},
+        "planner_calls": {"const": 0},
+        "reviewer_calls": {"const": 0}
+      }
+    },
+    "current_artifacts": {
+      "type": "object", "additionalProperties": false,
+      "required": ["task_route_sha256", "materials_sha256", "candidate_outline_sha256", "confirmation_sha256", "approved_outline_sha256"],
+      "properties": {
+        "task_route_sha256": {"$ref": "#/$defs/nullable_hash"},
+        "materials_sha256": {"$ref": "#/$defs/nullable_hash"},
+        "candidate_outline_sha256": {"$ref": "#/$defs/nullable_hash"},
+        "confirmation_sha256": {"$ref": "#/$defs/nullable_hash"},
+        "approved_outline_sha256": {"$ref": "#/$defs/nullable_hash"}
+      }
+    },
+    "history": {"type": "array", "items": {"$ref": "#/$defs/history"}}
+  },
+  "$defs": {
+    "hash": {"type": "string", "pattern": "^[a-f0-9]{64}$"},
+    "nullable_hash": {"oneOf": [{"$ref": "#/$defs/hash"}, {"type": "null"}]},
+    "timestamp": {"type": "string", "format": "date-time", "pattern": "Z$"},
+    "state": {"enum": ["received", "routing", "awaiting_route_clarification", "p1_bypassed", "material_intake", "awaiting_material_resolution", "materials_ready", "candidate_ready", "awaiting_outline_confirmation", "candidate_revision", "outline_approved", "projecting_slide_content", "slide_content_frozen", "p1_complete"]},
+    "history": {
+      "type": "object", "additionalProperties": false,
+      "required": ["from", "to", "event", "artifact_kind", "artifact_sha256", "user_evidence_sha256", "timestamp_utc"],
+      "properties": {
+        "from": {"$ref": "#/$defs/state"},
+        "to": {"$ref": "#/$defs/state"},
+        "event": {"type": "string", "minLength": 1},
+        "artifact_kind": {"type": ["string", "null"]},
+        "artifact_sha256": {"$ref": "#/$defs/nullable_hash"},
+        "user_evidence_sha256": {"$ref": "#/$defs/nullable_hash"},
+        "timestamp_utc": {"$ref": "#/$defs/timestamp"}
+      }
+    }
+  }
+}
