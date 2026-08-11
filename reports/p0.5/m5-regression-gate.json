@@ -1,0 +1,68 @@
+{
+  "schema_version": "1.0",
+  "milestone": "M5",
+  "status": "pass",
+  "agent_calls": {
+    "planner": 6,
+    "reviewer": 6,
+    "total": 12,
+    "visual_revisions": 0,
+    "retries": 0
+  },
+  "gates": {
+    "runtime_unit_tests": {
+      "status": "pass",
+      "tests": 33
+    },
+    "json_schemas": {
+      "status": "pass",
+      "schemas": 23
+    },
+    "real_preflight": {
+      "status": "pass",
+      "runtime_status": "ready",
+      "platform": "windows",
+      "renderer": "microsoft_powerpoint_com"
+    },
+    "frozen_replay": {
+      "status": "pass",
+      "cases": ["B01", "B02", "B03", "B04", "B05", "B06"],
+      "agent_calls": 0,
+      "b01_as_is": "expected_content_failure",
+      "b01_corrected_fixture": "build_render_qa_content_pass",
+      "b06_asset_stages": "skipped"
+    },
+    "single_pass_live_e2e": {
+      "status": "pass",
+      "mode": "single_pass",
+      "max_total_iterations": 1,
+      "max_visual_revisions": 0,
+      "planner_calls": 6,
+      "reviewer_calls": 6,
+      "cases": {
+        "B01": {"planner": "accepted", "runtime": "pass", "reviewer": "revise", "highest_severity": "major", "attribution": "agent_variance_candidate"},
+        "B02": {"planner": "classified_rejection", "runtime": "not_started", "reviewer": "pass", "highest_severity": "none", "attribution": "agent_variance_candidate"},
+        "B03": {"planner": "classified_rejection", "runtime": "not_started", "reviewer": "pass", "highest_severity": "none", "attribution": "agent_variance_candidate"},
+        "B04": {"planner": "classified_rejection", "runtime": "not_started", "reviewer": "pass", "highest_severity": "minor", "attribution": "pre_existing_visual_issue"},
+        "B05": {"planner": "classified_rejection", "runtime": "not_started", "reviewer": "revise", "highest_severity": "major", "attribution": "pre_existing_visual_issue"},
+        "B06": {"planner": "accepted", "runtime": "pass", "reviewer": "revise", "highest_severity": "minor", "attribution": "agent_variance_candidate"}
+      },
+      "runtime_regressions": 0,
+      "note": "Rejected Planner candidates were not retried; each Case still received exactly one Reviewer contract call using its frozen render evidence."
+    },
+    "timeout_controller": {
+      "status": "pass",
+      "attempts": 3,
+      "technical_retries": 2,
+      "planner_calls": 0,
+      "live_agent_calls": 0,
+      "outcome": "delivered_with_warnings"
+    },
+    "public_safety_and_integrity": {
+      "status": "pass",
+      "baseline_hashes_unchanged": true,
+      "live_packages_tracked": false,
+      "deterministic_runtime_regressions": 0
+    }
+  }
+}

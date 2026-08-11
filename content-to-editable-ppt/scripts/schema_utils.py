@@ -35,6 +35,7 @@ SCHEMA_FILES = {
     "runtime_error": "runtime-error.schema.json",
     "reviewer_technical_failure": "reviewer-technical-failure.schema.json",
     "content_authority_report": "content-authority-report.schema.json",
+    "issue_attribution": "issue-attribution.schema.json",
     "text_identity_map": "text-identity-map.schema.json",
 }
 
@@ -45,6 +46,7 @@ SUPPORTED_SCHEMA_VERSIONS = {
     "runtime_error": {"1.0"},
     "reviewer_technical_failure": {"1.0"},
     "content_authority_report": {"1.0"},
+    "issue_attribution": {"1.0"},
     "text_identity_map": {"1.0"},
 }
 
