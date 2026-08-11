@@ -1,0 +1,361 @@
+{
+  "schema_version": "1.3",
+  "run_id": "p0-b01",
+  "iteration": 1,
+  "hashes": {
+    "layout_sha256": "310d2bd6a8fd61135b53196cad44c78345b6d997a8fc41b2fd9253bcd3a9c4ec",
+    "asset_manifest_sha256": "a7bf89dfc83781e9c058cbb5a733aebffaf4997ef75c4a81409b1f3037f15a0c",
+    "output_pptx_sha256": "c90d6b13a73a89d3d9107a7dbd0dbd784f297b07dccc790bc746a0e76d79288c"
+  },
+  "output_pptx": "p0-b01-editable.pptx",
+  "expected_element_count": 24,
+  "built_element_count": 24,
+  "missing_element_ids": [],
+  "unexpected_element_ids": [],
+  "build_order": [
+    "decor_top_right",
+    "decor_bottom_left",
+    "card_01",
+    "card_02",
+    "card_03",
+    "footer_bar",
+    "badge_01",
+    "badge_02",
+    "badge_03",
+    "divider_01",
+    "divider_02",
+    "divider_03",
+    "badge_text_01",
+    "badge_text_02",
+    "badge_text_03",
+    "card_title_01",
+    "card_title_02",
+    "card_title_03",
+    "card_body_01",
+    "card_body_02",
+    "card_body_03",
+    "footer_text",
+    "title",
+    "subtitle"
+  ],
+  "element_map": [
+    {
+      "element_id": "decor_top_right",
+      "type": "shape",
+      "object_names": [
+        "ivt:decor_top_right"
+      ],
+      "object_count": 1
+    },
+    {
+      "element_id": "decor_bottom_left",
+      "type": "shape",
+      "object_names": [
+        "ivt:decor_bottom_left"
+      ],
+      "object_count": 1
+    },
+    {
+      "element_id": "title",
+      "type": "text",
+      "object_names": [
+        "ivt:title"
+      ],
+      "object_count": 1
+    },
+    {
+      "element_id": "subtitle",
+      "type": "text",
+      "object_names": [
+        "ivt:subtitle"
+      ],
+      "object_count": 1
+    },
+    {
+      "element_id": "card_01",
+      "type": "shape",
+      "object_names": [
+        "ivt:card_01"
+      ],
+      "object_count": 1
+    },
+    {
+      "element_id": "card_02",
+      "type": "shape",
+      "object_names": [
+        "ivt:card_02"
+      ],
+      "object_count": 1
+    },
+    {
+      "element_id": "card_03",
+      "type": "shape",
+      "object_names": [
+        "ivt:card_03"
+      ],
+      "object_count": 1
+    },
+    {
+      "element_id": "badge_01",
+      "type": "shape",
+      "object_names": [
+        "ivt:badge_01"
+      ],
+      "object_count": 1
+    },
+    {
+      "element_id": "badge_02",
+      "type": "shape",
+      "object_names": [
+        "ivt:badge_02"
+      ],
+      "object_count": 1
+    },
+    {
+      "element_id": "badge_03",
+      "type": "shape",
+      "object_names": [
+        "ivt:badge_03"
+      ],
+      "object_count": 1
+    },
+    {
+      "element_id": "badge_text_01",
+      "type": "text",
+      "object_names": [
+        "ivt:badge_text_01"
+      ],
+      "object_count": 1
+    },
+    {
+      "element_id": "badge_text_02",
+      "type": "text",
+      "object_names": [
+        "ivt:badge_text_02"
+      ],
+      "object_count": 1
+    },
+    {
+      "element_id": "badge_text_03",
+      "type": "text",
+      "object_names": [
+        "ivt:badge_text_03"
+      ],
+      "object_count": 1
+    },
+    {
+      "element_id": "card_title_01",
+      "type": "text",
+      "object_names": [
+        "ivt:card_title_01"
+      ],
+      "object_count": 1
+    },
+    {
+      "element_id": "card_title_02",
+      "type": "text",
+      "object_names": [
+        "ivt:card_title_02"
+      ],
+      "object_count": 1
+    },
+    {
+      "element_id": "card_title_03",
+      "type": "text",
+      "object_names": [
+        "ivt:card_title_03"
+      ],
+      "object_count": 1
+    },
+    {
+      "element_id": "card_body_01",
+      "type": "text",
+      "object_names": [
+        "ivt:card_body_01"
+      ],
+      "object_count": 1
+    },
+    {
+      "element_id": "card_body_02",
+      "type": "text",
+      "object_names": [
+        "ivt:card_body_02"
+      ],
+      "object_count": 1
+    },
+    {
+      "element_id": "card_body_03",
+      "type": "text",
+      "object_names": [
+        "ivt:card_body_03"
+      ],
+      "object_count": 1
+    },
+    {
+      "element_id": "divider_01",
+      "type": "line",
+      "object_names": [
+        "ivt:divider_01"
+      ],
+      "object_count": 1
+    },
+    {
+      "element_id": "divider_02",
+      "type": "line",
+      "object_names": [
+        "ivt:divider_02"
+      ],
+      "object_count": 1
+    },
+    {
+      "element_id": "divider_03",
+      "type": "line",
+      "object_names": [
+        "ivt:divider_03"
+      ],
+      "object_count": 1
+    },
+    {
+      "element_id": "footer_bar",
+      "type": "shape",
+      "object_names": [
+        "ivt:footer_bar"
+      ],
+      "object_count": 1
+    },
+    {
+      "element_id": "footer_text",
+      "type": "text",
+      "object_names": [
+        "ivt:footer_text"
+      ],
+      "object_count": 1
+    }
+  ],
+  "assets": [],
+  "typography": {
+    "text_element_count": 12,
+    "run_count": 12,
+    "explicit_run_font_count": 0,
+    "inherited_run_font_count": 12,
+    "unresolved_font_count": 0,
+    "non_default_fit_elements": [
+      "badge_text_01",
+      "badge_text_02",
+      "badge_text_03",
+      "card_title_01",
+      "card_title_02",
+      "card_title_03",
+      "card_body_01",
+      "card_body_02",
+      "card_body_03",
+      "footer_text",
+      "title",
+      "subtitle"
+    ],
+    "font_resolutions": [
+      {
+        "element_id": "badge_text_01",
+        "run_index": 0,
+        "font_face": "Microsoft YaHei",
+        "font_size_pt": 21,
+        "source": "style"
+      },
+      {
+        "element_id": "badge_text_02",
+        "run_index": 0,
+        "font_face": "Microsoft YaHei",
+        "font_size_pt": 21,
+        "source": "style"
+      },
+      {
+        "element_id": "badge_text_03",
+        "run_index": 0,
+        "font_face": "Microsoft YaHei",
+        "font_size_pt": 21,
+        "source": "style"
+      },
+      {
+        "element_id": "card_title_01",
+        "run_index": 0,
+        "font_face": "Microsoft YaHei",
+        "font_size_pt": 20,
+        "source": "style"
+      },
+      {
+        "element_id": "card_title_02",
+        "run_index": 0,
+        "font_face": "Microsoft YaHei",
+        "font_size_pt": 20,
+        "source": "style"
+      },
+      {
+        "element_id": "card_title_03",
+        "run_index": 0,
+        "font_face": "Microsoft YaHei",
+        "font_size_pt": 20,
+        "source": "style"
+      },
+      {
+        "element_id": "card_body_01",
+        "run_index": 0,
+        "font_face": "Microsoft YaHei",
+        "font_size_pt": 14,
+        "source": "style"
+      },
+      {
+        "element_id": "card_body_02",
+        "run_index": 0,
+        "font_face": "Microsoft YaHei",
+        "font_size_pt": 14,
+        "source": "style"
+      },
+      {
+        "element_id": "card_body_03",
+        "run_index": 0,
+        "font_face": "Microsoft YaHei",
+        "font_size_pt": 14,
+        "source": "style"
+      },
+      {
+        "element_id": "footer_text",
+        "run_index": 0,
+        "font_face": "Microsoft YaHei",
+        "font_size_pt": 20,
+        "source": "style"
+      },
+      {
+        "element_id": "title",
+        "run_index": 0,
+        "font_face": "Microsoft YaHei",
+        "font_size_pt": 34,
+        "source": "style"
+      },
+      {
+        "element_id": "subtitle",
+        "run_index": 0,
+        "font_face": "Microsoft YaHei",
+        "font_size_pt": 18,
+        "source": "style"
+      }
+    ]
+  },
+  "connections": [
+    {
+      "element_id": "divider_01",
+      "from_id": null,
+      "to_id": null
+    },
+    {
+      "element_id": "divider_02",
+      "from_id": null,
+      "to_id": null
+    },
+    {
+      "element_id": "divider_03",
+      "from_id": null,
+      "to_id": null
+    }
+  ],
+  "warnings": []
+}

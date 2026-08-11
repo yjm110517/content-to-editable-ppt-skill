@@ -1,0 +1,435 @@
+{
+  "schema_version": "1.3",
+  "run_id": "p0-b04",
+  "iteration": 2,
+  "hashes": {
+    "layout_sha256": "aef7b6bb8ca1ac0fbffa091ba1898fddef8e5eea105a5a5f0aa5703ab279f0d3",
+    "asset_manifest_sha256": "a7bf89dfc83781e9c058cbb5a733aebffaf4997ef75c4a81409b1f3037f15a0c",
+    "output_pptx_sha256": "3c7b7e8012f6bf8d34512fa1cae33653b6cc485d803b6009d8c9501aceb19fb3"
+  },
+  "output_pptx": "p0-b04-editable.pptx",
+  "expected_element_count": 29,
+  "built_element_count": 29,
+  "missing_element_ids": [],
+  "unexpected_element_ids": [],
+  "build_order": [
+    "bg-circle-top-right",
+    "bg-circle-bottom-left",
+    "flow-input-to-split",
+    "flow-split-trunk",
+    "flow-split-to-design",
+    "flow-split-to-risk",
+    "flow-design-to-merge",
+    "flow-risk-to-merge",
+    "flow-merge-trunk",
+    "flow-merge-to-execution",
+    "flow-execution-to-acceptance",
+    "feedback-down",
+    "feedback-bottom",
+    "feedback-up-to-input",
+    "node-input",
+    "node-design",
+    "node-risk",
+    "node-execution",
+    "node-acceptance",
+    "title",
+    "subtitle",
+    "label-input",
+    "label-design",
+    "label-risk",
+    "label-execution",
+    "label-acceptance",
+    "label-parallel",
+    "label-merge",
+    "label-feedback"
+  ],
+  "element_map": [
+    {
+      "element_id": "bg-circle-top-right",
+      "type": "shape",
+      "object_names": [
+        "ivt:bg-circle-top-right"
+      ],
+      "object_count": 1
+    },
+    {
+      "element_id": "bg-circle-bottom-left",
+      "type": "shape",
+      "object_names": [
+        "ivt:bg-circle-bottom-left"
+      ],
+      "object_count": 1
+    },
+    {
+      "element_id": "title",
+      "type": "text",
+      "object_names": [
+        "ivt:title"
+      ],
+      "object_count": 1
+    },
+    {
+      "element_id": "subtitle",
+      "type": "text",
+      "object_names": [
+        "ivt:subtitle"
+      ],
+      "object_count": 1
+    },
+    {
+      "element_id": "flow-input-to-split",
+      "type": "line",
+      "object_names": [
+        "ivt:flow-input-to-split"
+      ],
+      "object_count": 1
+    },
+    {
+      "element_id": "flow-split-trunk",
+      "type": "line",
+      "object_names": [
+        "ivt:flow-split-trunk"
+      ],
+      "object_count": 1
+    },
+    {
+      "element_id": "flow-split-to-design",
+      "type": "line",
+      "object_names": [
+        "ivt:flow-split-to-design"
+      ],
+      "object_count": 1
+    },
+    {
+      "element_id": "flow-split-to-risk",
+      "type": "line",
+      "object_names": [
+        "ivt:flow-split-to-risk"
+      ],
+      "object_count": 1
+    },
+    {
+      "element_id": "flow-design-to-merge",
+      "type": "line",
+      "object_names": [
+        "ivt:flow-design-to-merge"
+      ],
+      "object_count": 1
+    },
+    {
+      "element_id": "flow-risk-to-merge",
+      "type": "line",
+      "object_names": [
+        "ivt:flow-risk-to-merge"
+      ],
+      "object_count": 1
+    },
+    {
+      "element_id": "flow-merge-trunk",
+      "type": "line",
+      "object_names": [
+        "ivt:flow-merge-trunk"
+      ],
+      "object_count": 1
+    },
+    {
+      "element_id": "flow-merge-to-execution",
+      "type": "line",
+      "object_names": [
+        "ivt:flow-merge-to-execution"
+      ],
+      "object_count": 1
+    },
+    {
+      "element_id": "flow-execution-to-acceptance",
+      "type": "line",
+      "object_names": [
+        "ivt:flow-execution-to-acceptance"
+      ],
+      "object_count": 1
+    },
+    {
+      "element_id": "feedback-down",
+      "type": "line",
+      "object_names": [
+        "ivt:feedback-down"
+      ],
+      "object_count": 1
+    },
+    {
+      "element_id": "feedback-bottom",
+      "type": "line",
+      "object_names": [
+        "ivt:feedback-bottom"
+      ],
+      "object_count": 1
+    },
+    {
+      "element_id": "feedback-up-to-input",
+      "type": "line",
+      "object_names": [
+        "ivt:feedback-up-to-input"
+      ],
+      "object_count": 1
+    },
+    {
+      "element_id": "node-input",
+      "type": "shape",
+      "object_names": [
+        "ivt:node-input"
+      ],
+      "object_count": 1
+    },
+    {
+      "element_id": "node-design",
+      "type": "shape",
+      "object_names": [
+        "ivt:node-design"
+      ],
+      "object_count": 1
+    },
+    {
+      "element_id": "node-risk",
+      "type": "shape",
+      "object_names": [
+        "ivt:node-risk"
+      ],
+      "object_count": 1
+    },
+    {
+      "element_id": "node-execution",
+      "type": "shape",
+      "object_names": [
+        "ivt:node-execution"
+      ],
+      "object_count": 1
+    },
+    {
+      "element_id": "node-acceptance",
+      "type": "shape",
+      "object_names": [
+        "ivt:node-acceptance"
+      ],
+      "object_count": 1
+    },
+    {
+      "element_id": "label-input",
+      "type": "text",
+      "object_names": [
+        "ivt:label-input"
+      ],
+      "object_count": 1
+    },
+    {
+      "element_id": "label-design",
+      "type": "text",
+      "object_names": [
+        "ivt:label-design"
+      ],
+      "object_count": 1
+    },
+    {
+      "element_id": "label-risk",
+      "type": "text",
+      "object_names": [
+        "ivt:label-risk"
+      ],
+      "object_count": 1
+    },
+    {
+      "element_id": "label-execution",
+      "type": "text",
+      "object_names": [
+        "ivt:label-execution"
+      ],
+      "object_count": 1
+    },
+    {
+      "element_id": "label-acceptance",
+      "type": "text",
+      "object_names": [
+        "ivt:label-acceptance"
+      ],
+      "object_count": 1
+    },
+    {
+      "element_id": "label-parallel",
+      "type": "text",
+      "object_names": [
+        "ivt:label-parallel"
+      ],
+      "object_count": 1
+    },
+    {
+      "element_id": "label-merge",
+      "type": "text",
+      "object_names": [
+        "ivt:label-merge"
+      ],
+      "object_count": 1
+    },
+    {
+      "element_id": "label-feedback",
+      "type": "text",
+      "object_names": [
+        "ivt:label-feedback"
+      ],
+      "object_count": 1
+    }
+  ],
+  "assets": [],
+  "typography": {
+    "text_element_count": 10,
+    "run_count": 10,
+    "explicit_run_font_count": 0,
+    "inherited_run_font_count": 10,
+    "unresolved_font_count": 0,
+    "non_default_fit_elements": [
+      "title",
+      "subtitle",
+      "label-input",
+      "label-design",
+      "label-risk",
+      "label-execution",
+      "label-acceptance",
+      "label-parallel",
+      "label-merge",
+      "label-feedback"
+    ],
+    "font_resolutions": [
+      {
+        "element_id": "title",
+        "run_index": 0,
+        "font_face": "Microsoft YaHei",
+        "font_size_pt": 32,
+        "source": "style"
+      },
+      {
+        "element_id": "subtitle",
+        "run_index": 0,
+        "font_face": "Microsoft YaHei",
+        "font_size_pt": 15,
+        "source": "style"
+      },
+      {
+        "element_id": "label-input",
+        "run_index": 0,
+        "font_face": "Microsoft YaHei",
+        "font_size_pt": 17,
+        "source": "style"
+      },
+      {
+        "element_id": "label-design",
+        "run_index": 0,
+        "font_face": "Microsoft YaHei",
+        "font_size_pt": 17,
+        "source": "style"
+      },
+      {
+        "element_id": "label-risk",
+        "run_index": 0,
+        "font_face": "Microsoft YaHei",
+        "font_size_pt": 17,
+        "source": "style"
+      },
+      {
+        "element_id": "label-execution",
+        "run_index": 0,
+        "font_face": "Microsoft YaHei",
+        "font_size_pt": 17,
+        "source": "style"
+      },
+      {
+        "element_id": "label-acceptance",
+        "run_index": 0,
+        "font_face": "Microsoft YaHei",
+        "font_size_pt": 17,
+        "source": "style"
+      },
+      {
+        "element_id": "label-parallel",
+        "run_index": 0,
+        "font_face": "Microsoft YaHei",
+        "font_size_pt": 12,
+        "source": "style"
+      },
+      {
+        "element_id": "label-merge",
+        "run_index": 0,
+        "font_face": "Microsoft YaHei",
+        "font_size_pt": 12,
+        "source": "style"
+      },
+      {
+        "element_id": "label-feedback",
+        "run_index": 0,
+        "font_face": "Microsoft YaHei",
+        "font_size_pt": 14,
+        "source": "style"
+      }
+    ]
+  },
+  "connections": [
+    {
+      "element_id": "flow-input-to-split",
+      "from_id": "node-input",
+      "to_id": "node-design"
+    },
+    {
+      "element_id": "flow-split-trunk",
+      "from_id": "node-input",
+      "to_id": "node-risk"
+    },
+    {
+      "element_id": "flow-split-to-design",
+      "from_id": "node-input",
+      "to_id": "node-design"
+    },
+    {
+      "element_id": "flow-split-to-risk",
+      "from_id": "node-input",
+      "to_id": "node-risk"
+    },
+    {
+      "element_id": "flow-design-to-merge",
+      "from_id": "node-design",
+      "to_id": "node-execution"
+    },
+    {
+      "element_id": "flow-risk-to-merge",
+      "from_id": "node-risk",
+      "to_id": "node-execution"
+    },
+    {
+      "element_id": "flow-merge-trunk",
+      "from_id": "node-design",
+      "to_id": "node-execution"
+    },
+    {
+      "element_id": "flow-merge-to-execution",
+      "from_id": "node-design",
+      "to_id": "node-execution"
+    },
+    {
+      "element_id": "flow-execution-to-acceptance",
+      "from_id": "node-execution",
+      "to_id": "node-acceptance"
+    },
+    {
+      "element_id": "feedback-down",
+      "from_id": "node-acceptance",
+      "to_id": "node-input"
+    },
+    {
+      "element_id": "feedback-bottom",
+      "from_id": "node-acceptance",
+      "to_id": "node-input"
+    },
+    {
+      "element_id": "feedback-up-to-input",
+      "from_id": "node-acceptance",
+      "to_id": "node-input"
+    }
+  ],
+  "warnings": []
+}

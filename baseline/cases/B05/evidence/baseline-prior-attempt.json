@@ -1,0 +1,18 @@
+{
+  "schema_version": "p0-v1",
+  "case_id": "B05",
+  "attempt": 1,
+  "archive_path": "../B05-failed-unsupported-background-removal",
+  "failure_category": "unsupported_operation",
+  "failure_message": "automatic background removal is not supported in P2",
+  "failed_state": "building",
+  "review_patch_sha256": "c0ba2305cd85f5c62d5b368af5a91cba8ff252dda89bef3b06c0b5ff72d0b720",
+  "failure_log_sha256": "c852ca60a10d1afeadc7a7c5f0c16a189d4f90628555425f520dcd79f3569339",
+  "resolution": "Preserved the failed work directory, restarted from the same frozen input, and removed unsupported background-removal operations from the next Planner revision call.",
+  "known_issues": [
+    {
+      "category": "planner_runtime_contract_gap",
+      "description": "Planner revision allowed automatic background-removal operations that the current P2 Runtime rejects as unsupported. The failed attempt is preserved outside committed evidence and its hashes are recorded here."
+    }
+  ]
+}

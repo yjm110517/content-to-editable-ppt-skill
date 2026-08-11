@@ -4,7 +4,7 @@
 
 ## 当前状态
 
-本仓库目前处于引导阶段。首个版本继承了 `Image to Editable PPT` 项目中可复用的 PowerPoint 构建、字体审计、资产处理、渲染、结构 QA 和视觉审核基础设施，并为新 Skill 完成了独立仓库和身份迁移。
+本仓库已完成 P0 Baseline Freeze。当前版本继承了 `Image to Editable PPT` 项目中可复用的 PowerPoint 构建、字体审计、资产处理、渲染、结构 QA 和视觉审核基础设施，并冻结了 6 个单页回归样例及其当前真实质量状态。
 
 当前继承的可执行流程仍以“参考图片 → 可编辑单页 PPT”为主。以下能力尚未实现，不能视为当前承诺：
 
@@ -33,6 +33,10 @@ content-to-editable-ppt-skill/
 ├─ DECISIONS.md
 ├─ LICENSE
 ├─ NOTICE
+├─ baseline/
+│  ├─ manifest.json
+│  ├─ baseline-report.md
+│  └─ cases/B01...B06/
 ├─ docs/
 │  ├─ architecture/v2.0/
 │  ├─ contracts/v1.0/
@@ -45,6 +49,7 @@ content-to-editable-ppt-skill/
 │  │  ├─ v1.1/
 │  │  └─ v1.2/
 │  └─ testing/v1.0/
+├─ tools/baseline/
 └─ content-to-editable-ppt/
    ├─ SKILL.md
    ├─ agents/
@@ -89,9 +94,21 @@ content-to-editable-ppt-skill/
 
 这些文档是开发和验收的完整权威规格。Skill 运行目录中的 `SKILL.md`、`references/`、`agents/` 和 `schemas/` 只保留实际执行所需的精简规则与机器可验证契约。
 
+## P0 Baseline
+
+[P0 Baseline Freeze Report](baseline/baseline-report.md) 记录 6 个 Case 的最终迭代、Structural QA、Visual Reviewer、调用次数、技术重试和已知问题。冻结结果不等同于像素级 Golden，也不表示当前视觉缺陷已经修复。
+
+开发用入口：
+
+```powershell
+.\tools\baseline\baseline.ps1 -Action Prepare -Case B01 -NodePath <node.exe> -PythonPath <python.exe>
+.\tools\baseline\baseline.ps1 -Action Capture -Case B01 -PythonPath <python.exe>
+.\tools\baseline\baseline.ps1 -Action Verify -All -PythonPath <python.exe>
+```
+
 ## 下一阶段
 
-按总体架构 v2.0 与测试计划进入 P0 Baseline Freeze，完成 6 个固定单页 Baseline 及所需证据后，再进入 P0.5 Single-Slide Runtime Hardening。
+按总体架构 v2.0 与测试计划进入 P0.5 Single-Slide Runtime Hardening。P0 中冻结的视觉失败、零资产目录重试、Planner/Reviewer 语义引用摩擦和不受支持的背景移除操作均作为 P0.5 输入。
 
 ## 开发验证
 

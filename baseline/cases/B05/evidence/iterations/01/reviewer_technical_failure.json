@@ -1,0 +1,18 @@
+{
+  "schema_version": "p0-v1",
+  "case_id": "B05",
+  "iteration": 1,
+  "call_id": "reviewer-b05-i01",
+  "attempted_at_utc": "2026-08-11T06:49:22Z",
+  "error_category": "timeout",
+  "timeout": true,
+  "exit_code": null,
+  "normalized_message": "The independent Visual Reviewer invocation exceeded the P0 closeout time budget and was interrupted without a structured response.",
+  "invocation_record": {
+    "package": ".agent-calls/01/reviewer/reviewer-b05-i01",
+    "status": "attempted",
+    "response_received": false,
+    "planner_reinvoked": false,
+    "hidden_reasoning_persisted": false
+  }
+}

@@ -1,0 +1,46 @@
+{
+  "artifact_role": "baseline_evidence",
+  "runtime_contract": false,
+  "case_id": "B01",
+  "revision": 1,
+  "status": "frozen",
+  "source_sha256": "dfce2f9627f04b2d295983eb0a13241306f41fbdc71d81ccab70f3c084fba7f0",
+  "text_items": [
+    {
+      "id": "title",
+      "text": "项目启动简报"
+    },
+    {
+      "id": "subtitle",
+      "text": "从目标到行动的三步协作框架"
+    },
+    {
+      "id": "step-1",
+      "text": "01  明确目标"
+    },
+    {
+      "id": "body-1",
+      "text": "统一范围与成功标准"
+    },
+    {
+      "id": "step-2",
+      "text": "02  分配行动"
+    },
+    {
+      "id": "body-2",
+      "text": "确认负责人和完成时间"
+    },
+    {
+      "id": "step-3",
+      "text": "03  验证结果"
+    },
+    {
+      "id": "body-3",
+      "text": "用证据复盘并持续改进"
+    },
+    {
+      "id": "footer",
+      "text": "目标清晰 · 行动可追踪 · 结果可验证"
+    }
+  ]
+}

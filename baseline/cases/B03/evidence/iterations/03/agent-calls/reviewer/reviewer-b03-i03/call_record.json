@@ -1,0 +1,31 @@
+{
+  "schema_version": "1.3",
+  "task_id": "p0-b03",
+  "iteration": 3,
+  "role": "reviewer",
+  "role_version": "1.3.1",
+  "model_selection_mode": "runtime-default",
+  "requested_model": null,
+  "config_sha256": "d6aa7a1beb4a8b2c0f4bf43a250ab24067f86d0d92f1672e84e9d8521981fb50",
+  "prompt_sha256": "093c7fe6b6e5bec1421313139bcca02d6d7225ddbf8f17215fcffbdbcccae92d",
+  "output_schema_sha256": "592489b3f5c049752bbb67366058884ceae36f71bcb9c499f99773daabd6a0bd",
+  "input_sha256": {
+    "request.json": "176c1ddc6f27e6b898be293cbc7b6f96b0d6b39ba53ad021f473778796326c40",
+    "source.png": "c9e0e40148f09a90291c19345cbbe8c7eda74154b67aea4f6e8ad4ed237b3518",
+    "rendered_slide.png": "4eca4301cc18151bf72a83f5276ab33a91061ac74ee3ef87c0ad5d5849a51c70",
+    "layout.json": "85269a1d1dc94816a6ff58d7aca90012b5ceaafa2482d055eab97522faf4d3c9",
+    "qa_report.json": "9f9e8944fb30511b6f8cea30770bfb23d742921066130eeea994ef261dc5f956",
+    "asset_manifest.json": "916a972a7c69be357b347da33601954989704694096a6e6b811ab6af406e0603",
+    "visual-review-rubric.md": "9ec564c610f8dfbf418905ad1b92e55443e7c2d71cba2296fa352d343cacb41c",
+    "reviewer-response.schema.json": "592489b3f5c049752bbb67366058884ceae36f71bcb9c499f99773daabd6a0bd"
+  },
+  "parameters": {
+    "seed": null,
+    "temperature": 0.0,
+    "top_p": 1.0
+  },
+  "call_id": "reviewer-b03-i03",
+  "context_id": "/root/reviewer_b03_i03:p0-b03:review:i03",
+  "parent_context_id": null,
+  "status": "succeeded"
+}

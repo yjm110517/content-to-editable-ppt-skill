@@ -1,0 +1,1180 @@
+{
+  "schema_version": "1.3",
+  "run_id": "p0-b05",
+  "iteration": 1,
+  "hashes": {
+    "layout_sha256": "5b6ffaf678a7ae51c092a5903ed6b30e68c096911ba9a00532f6d910dccc9722",
+    "asset_manifest_sha256": "f97eb8ee10bcc9829b7288888eac629dedbd2a68222f56639c2a65fe35049c25",
+    "output_pptx_sha256": "62e56b006b5982d2faa1c4c1bd04e8626e9e6fd5a82dcc4cb02f0a5c038f8ec0"
+  },
+  "output_pptx": "p0-b05-editable.pptx",
+  "expected_element_count": 86,
+  "built_element_count": 86,
+  "missing_element_ids": [],
+  "unexpected_element_ids": [],
+  "build_order": [
+    "bg-wave-light",
+    "bg-sun-orb",
+    "bg-wave-mid",
+    "bg-dot-1",
+    "bg-dot-2",
+    "bg-dot-3",
+    "bg-wave-deep",
+    "loop-1-to-2",
+    "loop-2-to-3",
+    "loop-3-to-4",
+    "loop-4-to-5",
+    "loop-5-to-6",
+    "loop-6-to-1",
+    "central-ring-outer",
+    "header-tab",
+    "panel-input-outer",
+    "panel-output-outer",
+    "central-ring-inner",
+    "header-tab-text",
+    "subtitle",
+    "title",
+    "panel-input-inner",
+    "panel-output-inner",
+    "step-card-1",
+    "step-card-2",
+    "step-card-3",
+    "step-card-4",
+    "step-card-5",
+    "step-card-6",
+    "footer-pill",
+    "panel-input-header",
+    "panel-output-header",
+    "panel-input-title",
+    "panel-input-divider-1",
+    "panel-input-divider-2",
+    "panel-output-title",
+    "panel-output-divider-1",
+    "panel-output-divider-2",
+    "footer-star-left",
+    "footer-star-right",
+    "icon-course",
+    "icon-behavior",
+    "icon-rubric",
+    "icon-knowledge",
+    "icon-profile",
+    "icon-recommend",
+    "icon-learner",
+    "icon-goal",
+    "icon-resource",
+    "icon-practice",
+    "icon-collab",
+    "icon-evaluate",
+    "icon-improve",
+    "footer-text",
+    "page-number",
+    "panel-input-item-course",
+    "panel-input-item-behavior",
+    "panel-input-item-rubric",
+    "panel-output-item-knowledge",
+    "panel-output-item-profile",
+    "panel-output-item-recommend",
+    "learner-label",
+    "badge-shape-1",
+    "badge-shape-2",
+    "badge-shape-3",
+    "badge-shape-4",
+    "badge-shape-5",
+    "badge-shape-6",
+    "badge-text-1",
+    "badge-text-2",
+    "badge-text-3",
+    "badge-text-4",
+    "badge-text-5",
+    "badge-text-6",
+    "step-1-head",
+    "step-1-body",
+    "step-2-head",
+    "step-2-body",
+    "step-3-head",
+    "step-3-body",
+    "step-4-head",
+    "step-4-body",
+    "step-5-head",
+    "step-5-body",
+    "step-6-head",
+    "step-6-body"
+  ],
+  "element_map": [
+    {
+      "element_id": "bg-wave-light",
+      "type": "shape",
+      "object_names": [
+        "ivt:bg-wave-light"
+      ],
+      "object_count": 1
+    },
+    {
+      "element_id": "bg-wave-mid",
+      "type": "shape",
+      "object_names": [
+        "ivt:bg-wave-mid"
+      ],
+      "object_count": 1
+    },
+    {
+      "element_id": "bg-wave-deep",
+      "type": "shape",
+      "object_names": [
+        "ivt:bg-wave-deep"
+      ],
+      "object_count": 1
+    },
+    {
+      "element_id": "bg-sun-orb",
+      "type": "shape",
+      "object_names": [
+        "ivt:bg-sun-orb"
+      ],
+      "object_count": 1
+    },
+    {
+      "element_id": "bg-dot-1",
+      "type": "shape",
+      "object_names": [
+        "ivt:bg-dot-1"
+      ],
+      "object_count": 1
+    },
+    {
+      "element_id": "bg-dot-2",
+      "type": "shape",
+      "object_names": [
+        "ivt:bg-dot-2"
+      ],
+      "object_count": 1
+    },
+    {
+      "element_id": "bg-dot-3",
+      "type": "shape",
+      "object_names": [
+        "ivt:bg-dot-3"
+      ],
+      "object_count": 1
+    },
+    {
+      "element_id": "header-tab",
+      "type": "shape",
+      "object_names": [
+        "ivt:header-tab"
+      ],
+      "object_count": 1
+    },
+    {
+      "element_id": "header-tab-text",
+      "type": "text",
+      "object_names": [
+        "ivt:header-tab-text"
+      ],
+      "object_count": 1
+    },
+    {
+      "element_id": "subtitle",
+      "type": "text",
+      "object_names": [
+        "ivt:subtitle"
+      ],
+      "object_count": 1
+    },
+    {
+      "element_id": "title",
+      "type": "text",
+      "object_names": [
+        "ivt:title"
+      ],
+      "object_count": 1
+    },
+    {
+      "element_id": "panel-input-outer",
+      "type": "shape",
+      "object_names": [
+        "ivt:panel-input-outer"
+      ],
+      "object_count": 1
+    },
+    {
+      "element_id": "panel-input-inner",
+      "type": "shape",
+      "object_names": [
+        "ivt:panel-input-inner"
+      ],
+      "object_count": 1
+    },
+    {
+      "element_id": "panel-input-header",
+      "type": "shape",
+      "object_names": [
+        "ivt:panel-input-header"
+      ],
+      "object_count": 1
+    },
+    {
+      "element_id": "panel-input-title",
+      "type": "text",
+      "object_names": [
+        "ivt:panel-input-title"
+      ],
+      "object_count": 1
+    },
+    {
+      "element_id": "panel-input-divider-1",
+      "type": "line",
+      "object_names": [
+        "ivt:panel-input-divider-1"
+      ],
+      "object_count": 1
+    },
+    {
+      "element_id": "panel-input-divider-2",
+      "type": "line",
+      "object_names": [
+        "ivt:panel-input-divider-2"
+      ],
+      "object_count": 1
+    },
+    {
+      "element_id": "icon-course",
+      "type": "image",
+      "object_names": [
+        "ivt:icon-course"
+      ],
+      "object_count": 1
+    },
+    {
+      "element_id": "icon-behavior",
+      "type": "image",
+      "object_names": [
+        "ivt:icon-behavior"
+      ],
+      "object_count": 1
+    },
+    {
+      "element_id": "icon-rubric",
+      "type": "image",
+      "object_names": [
+        "ivt:icon-rubric"
+      ],
+      "object_count": 1
+    },
+    {
+      "element_id": "panel-input-item-course",
+      "type": "text",
+      "object_names": [
+        "ivt:panel-input-item-course"
+      ],
+      "object_count": 1
+    },
+    {
+      "element_id": "panel-input-item-behavior",
+      "type": "text",
+      "object_names": [
+        "ivt:panel-input-item-behavior"
+      ],
+      "object_count": 1
+    },
+    {
+      "element_id": "panel-input-item-rubric",
+      "type": "text",
+      "object_names": [
+        "ivt:panel-input-item-rubric"
+      ],
+      "object_count": 1
+    },
+    {
+      "element_id": "panel-output-outer",
+      "type": "shape",
+      "object_names": [
+        "ivt:panel-output-outer"
+      ],
+      "object_count": 1
+    },
+    {
+      "element_id": "panel-output-inner",
+      "type": "shape",
+      "object_names": [
+        "ivt:panel-output-inner"
+      ],
+      "object_count": 1
+    },
+    {
+      "element_id": "panel-output-header",
+      "type": "shape",
+      "object_names": [
+        "ivt:panel-output-header"
+      ],
+      "object_count": 1
+    },
+    {
+      "element_id": "panel-output-title",
+      "type": "text",
+      "object_names": [
+        "ivt:panel-output-title"
+      ],
+      "object_count": 1
+    },
+    {
+      "element_id": "panel-output-divider-1",
+      "type": "line",
+      "object_names": [
+        "ivt:panel-output-divider-1"
+      ],
+      "object_count": 1
+    },
+    {
+      "element_id": "panel-output-divider-2",
+      "type": "line",
+      "object_names": [
+        "ivt:panel-output-divider-2"
+      ],
+      "object_count": 1
+    },
+    {
+      "element_id": "icon-knowledge",
+      "type": "image",
+      "object_names": [
+        "ivt:icon-knowledge"
+      ],
+      "object_count": 1
+    },
+    {
+      "element_id": "icon-profile",
+      "type": "image",
+      "object_names": [
+        "ivt:icon-profile"
+      ],
+      "object_count": 1
+    },
+    {
+      "element_id": "icon-recommend",
+      "type": "image",
+      "object_names": [
+        "ivt:icon-recommend"
+      ],
+      "object_count": 1
+    },
+    {
+      "element_id": "panel-output-item-knowledge",
+      "type": "text",
+      "object_names": [
+        "ivt:panel-output-item-knowledge"
+      ],
+      "object_count": 1
+    },
+    {
+      "element_id": "panel-output-item-profile",
+      "type": "text",
+      "object_names": [
+        "ivt:panel-output-item-profile"
+      ],
+      "object_count": 1
+    },
+    {
+      "element_id": "panel-output-item-recommend",
+      "type": "text",
+      "object_names": [
+        "ivt:panel-output-item-recommend"
+      ],
+      "object_count": 1
+    },
+    {
+      "element_id": "step-card-1",
+      "type": "shape",
+      "object_names": [
+        "ivt:step-card-1"
+      ],
+      "object_count": 1
+    },
+    {
+      "element_id": "step-card-2",
+      "type": "shape",
+      "object_names": [
+        "ivt:step-card-2"
+      ],
+      "object_count": 1
+    },
+    {
+      "element_id": "step-card-3",
+      "type": "shape",
+      "object_names": [
+        "ivt:step-card-3"
+      ],
+      "object_count": 1
+    },
+    {
+      "element_id": "step-card-4",
+      "type": "shape",
+      "object_names": [
+        "ivt:step-card-4"
+      ],
+      "object_count": 1
+    },
+    {
+      "element_id": "step-card-5",
+      "type": "shape",
+      "object_names": [
+        "ivt:step-card-5"
+      ],
+      "object_count": 1
+    },
+    {
+      "element_id": "step-card-6",
+      "type": "shape",
+      "object_names": [
+        "ivt:step-card-6"
+      ],
+      "object_count": 1
+    },
+    {
+      "element_id": "loop-1-to-2",
+      "type": "line",
+      "object_names": [
+        "ivt:loop-1-to-2"
+      ],
+      "object_count": 1
+    },
+    {
+      "element_id": "loop-2-to-3",
+      "type": "line",
+      "object_names": [
+        "ivt:loop-2-to-3"
+      ],
+      "object_count": 1
+    },
+    {
+      "element_id": "loop-3-to-4",
+      "type": "line",
+      "object_names": [
+        "ivt:loop-3-to-4"
+      ],
+      "object_count": 1
+    },
+    {
+      "element_id": "loop-4-to-5",
+      "type": "line",
+      "object_names": [
+        "ivt:loop-4-to-5"
+      ],
+      "object_count": 1
+    },
+    {
+      "element_id": "loop-5-to-6",
+      "type": "line",
+      "object_names": [
+        "ivt:loop-5-to-6"
+      ],
+      "object_count": 1
+    },
+    {
+      "element_id": "loop-6-to-1",
+      "type": "line",
+      "object_names": [
+        "ivt:loop-6-to-1"
+      ],
+      "object_count": 1
+    },
+    {
+      "element_id": "central-ring-outer",
+      "type": "shape",
+      "object_names": [
+        "ivt:central-ring-outer"
+      ],
+      "object_count": 1
+    },
+    {
+      "element_id": "central-ring-inner",
+      "type": "shape",
+      "object_names": [
+        "ivt:central-ring-inner"
+      ],
+      "object_count": 1
+    },
+    {
+      "element_id": "icon-learner",
+      "type": "image",
+      "object_names": [
+        "ivt:icon-learner"
+      ],
+      "object_count": 1
+    },
+    {
+      "element_id": "learner-label",
+      "type": "text",
+      "object_names": [
+        "ivt:learner-label"
+      ],
+      "object_count": 1
+    },
+    {
+      "element_id": "icon-goal",
+      "type": "image",
+      "object_names": [
+        "ivt:icon-goal"
+      ],
+      "object_count": 1
+    },
+    {
+      "element_id": "icon-resource",
+      "type": "image",
+      "object_names": [
+        "ivt:icon-resource"
+      ],
+      "object_count": 1
+    },
+    {
+      "element_id": "icon-practice",
+      "type": "image",
+      "object_names": [
+        "ivt:icon-practice"
+      ],
+      "object_count": 1
+    },
+    {
+      "element_id": "icon-collab",
+      "type": "image",
+      "object_names": [
+        "ivt:icon-collab"
+      ],
+      "object_count": 1
+    },
+    {
+      "element_id": "icon-evaluate",
+      "type": "image",
+      "object_names": [
+        "ivt:icon-evaluate"
+      ],
+      "object_count": 1
+    },
+    {
+      "element_id": "icon-improve",
+      "type": "image",
+      "object_names": [
+        "ivt:icon-improve"
+      ],
+      "object_count": 1
+    },
+    {
+      "element_id": "badge-shape-1",
+      "type": "shape",
+      "object_names": [
+        "ivt:badge-shape-1"
+      ],
+      "object_count": 1
+    },
+    {
+      "element_id": "badge-shape-2",
+      "type": "shape",
+      "object_names": [
+        "ivt:badge-shape-2"
+      ],
+      "object_count": 1
+    },
+    {
+      "element_id": "badge-shape-3",
+      "type": "shape",
+      "object_names": [
+        "ivt:badge-shape-3"
+      ],
+      "object_count": 1
+    },
+    {
+      "element_id": "badge-shape-4",
+      "type": "shape",
+      "object_names": [
+        "ivt:badge-shape-4"
+      ],
+      "object_count": 1
+    },
+    {
+      "element_id": "badge-shape-5",
+      "type": "shape",
+      "object_names": [
+        "ivt:badge-shape-5"
+      ],
+      "object_count": 1
+    },
+    {
+      "element_id": "badge-shape-6",
+      "type": "shape",
+      "object_names": [
+        "ivt:badge-shape-6"
+      ],
+      "object_count": 1
+    },
+    {
+      "element_id": "badge-text-1",
+      "type": "text",
+      "object_names": [
+        "ivt:badge-text-1"
+      ],
+      "object_count": 1
+    },
+    {
+      "element_id": "badge-text-2",
+      "type": "text",
+      "object_names": [
+        "ivt:badge-text-2"
+      ],
+      "object_count": 1
+    },
+    {
+      "element_id": "badge-text-3",
+      "type": "text",
+      "object_names": [
+        "ivt:badge-text-3"
+      ],
+      "object_count": 1
+    },
+    {
+      "element_id": "badge-text-4",
+      "type": "text",
+      "object_names": [
+        "ivt:badge-text-4"
+      ],
+      "object_count": 1
+    },
+    {
+      "element_id": "badge-text-5",
+      "type": "text",
+      "object_names": [
+        "ivt:badge-text-5"
+      ],
+      "object_count": 1
+    },
+    {
+      "element_id": "badge-text-6",
+      "type": "text",
+      "object_names": [
+        "ivt:badge-text-6"
+      ],
+      "object_count": 1
+    },
+    {
+      "element_id": "step-1-head",
+      "type": "text",
+      "object_names": [
+        "ivt:step-1-head"
+      ],
+      "object_count": 1
+    },
+    {
+      "element_id": "step-1-body",
+      "type": "text",
+      "object_names": [
+        "ivt:step-1-body"
+      ],
+      "object_count": 1
+    },
+    {
+      "element_id": "step-2-head",
+      "type": "text",
+      "object_names": [
+        "ivt:step-2-head"
+      ],
+      "object_count": 1
+    },
+    {
+      "element_id": "step-2-body",
+      "type": "text",
+      "object_names": [
+        "ivt:step-2-body"
+      ],
+      "object_count": 1
+    },
+    {
+      "element_id": "step-3-head",
+      "type": "text",
+      "object_names": [
+        "ivt:step-3-head"
+      ],
+      "object_count": 1
+    },
+    {
+      "element_id": "step-3-body",
+      "type": "text",
+      "object_names": [
+        "ivt:step-3-body"
+      ],
+      "object_count": 1
+    },
+    {
+      "element_id": "step-4-head",
+      "type": "text",
+      "object_names": [
+        "ivt:step-4-head"
+      ],
+      "object_count": 1
+    },
+    {
+      "element_id": "step-4-body",
+      "type": "text",
+      "object_names": [
+        "ivt:step-4-body"
+      ],
+      "object_count": 1
+    },
+    {
+      "element_id": "step-5-head",
+      "type": "text",
+      "object_names": [
+        "ivt:step-5-head"
+      ],
+      "object_count": 1
+    },
+    {
+      "element_id": "step-5-body",
+      "type": "text",
+      "object_names": [
+        "ivt:step-5-body"
+      ],
+      "object_count": 1
+    },
+    {
+      "element_id": "step-6-head",
+      "type": "text",
+      "object_names": [
+        "ivt:step-6-head"
+      ],
+      "object_count": 1
+    },
+    {
+      "element_id": "step-6-body",
+      "type": "text",
+      "object_names": [
+        "ivt:step-6-body"
+      ],
+      "object_count": 1
+    },
+    {
+      "element_id": "footer-pill",
+      "type": "shape",
+      "object_names": [
+        "ivt:footer-pill"
+      ],
+      "object_count": 1
+    },
+    {
+      "element_id": "footer-star-left",
+      "type": "shape",
+      "object_names": [
+        "ivt:footer-star-left"
+      ],
+      "object_count": 1
+    },
+    {
+      "element_id": "footer-star-right",
+      "type": "shape",
+      "object_names": [
+        "ivt:footer-star-right"
+      ],
+      "object_count": 1
+    },
+    {
+      "element_id": "footer-text",
+      "type": "text",
+      "object_names": [
+        "ivt:footer-text"
+      ],
+      "object_count": 1
+    },
+    {
+      "element_id": "page-number",
+      "type": "text",
+      "object_names": [
+        "ivt:page-number"
+      ],
+      "object_count": 1
+    }
+  ],
+  "assets": [
+    {
+      "asset_id": "asset-icon-behavior",
+      "type": "png",
+      "sha256": "4b0ff6475581957aa13bbd8e058a5a9f0a887c331120c0088a06f111e230ab8a"
+    },
+    {
+      "asset_id": "asset-icon-collab",
+      "type": "png",
+      "sha256": "081c9a89293d56a0489efafe3bcd3cd0865df7bea8106b8d8eb11f508a411f41"
+    },
+    {
+      "asset_id": "asset-icon-course",
+      "type": "png",
+      "sha256": "61d98d5d2ab4e2ced69a0b8b28d78e561edaa6a469f4c7e2abc1e3fd8fdb558a"
+    },
+    {
+      "asset_id": "asset-icon-evaluate",
+      "type": "png",
+      "sha256": "2c4f7b816825b8e9be556d0b9383c5aa75ca7d84af05fc07882973c4443b83ec"
+    },
+    {
+      "asset_id": "asset-icon-goal",
+      "type": "png",
+      "sha256": "62951aaef2330812d84c5028e4d2c389c22df1b0c1850d27f2c3c8a0a71978a5"
+    },
+    {
+      "asset_id": "asset-icon-improve",
+      "type": "png",
+      "sha256": "a30712e2b3d1ef8234ccde023d580e54228a01be6778d99b13524754c9d0e931"
+    },
+    {
+      "asset_id": "asset-icon-knowledge",
+      "type": "png",
+      "sha256": "9d4471a125e160e959c438573dcdd5678f5e92c46d85bf03a3beb932e2c22737"
+    },
+    {
+      "asset_id": "asset-icon-learner",
+      "type": "png",
+      "sha256": "612d907eb4ba137e6287709dc8002f97641599e1c3b3d975874b0bf87386735d"
+    },
+    {
+      "asset_id": "asset-icon-practice",
+      "type": "png",
+      "sha256": "5a6ed08076456dfa895cdabc6fee7229b6fbb07cfc5079ec75d6c619a08160da"
+    },
+    {
+      "asset_id": "asset-icon-profile",
+      "type": "png",
+      "sha256": "3762ed68389839a3f52a3f65fd0b9aa8de72b475a9309fbcf452979b40cdc142"
+    },
+    {
+      "asset_id": "asset-icon-recommend",
+      "type": "png",
+      "sha256": "f9d54194735645dc3236df917065dc426bfb45665c9ff40390c2e93aaa9a03bd"
+    },
+    {
+      "asset_id": "asset-icon-resource",
+      "type": "png",
+      "sha256": "07e507fce3079de772e1b618f09a7d16c69d40ef01d314fff848c19ecacfd507"
+    },
+    {
+      "asset_id": "asset-icon-rubric",
+      "type": "png",
+      "sha256": "24529f1c82db84c6840c79441250f7d192f00cabc6bd3fb04704dbd3d9ddca8f"
+    }
+  ],
+  "typography": {
+    "text_element_count": 32,
+    "run_count": 32,
+    "explicit_run_font_count": 0,
+    "inherited_run_font_count": 32,
+    "unresolved_font_count": 0,
+    "non_default_fit_elements": [
+      "header-tab-text",
+      "subtitle",
+      "title",
+      "panel-input-title",
+      "panel-output-title",
+      "footer-text",
+      "page-number",
+      "panel-input-item-course",
+      "panel-input-item-behavior",
+      "panel-input-item-rubric",
+      "panel-output-item-knowledge",
+      "panel-output-item-profile",
+      "panel-output-item-recommend",
+      "learner-label",
+      "badge-text-1",
+      "badge-text-2",
+      "badge-text-3",
+      "badge-text-4",
+      "badge-text-5",
+      "badge-text-6",
+      "step-1-head",
+      "step-1-body",
+      "step-2-head",
+      "step-2-body",
+      "step-3-head",
+      "step-3-body",
+      "step-4-head",
+      "step-4-body",
+      "step-5-head",
+      "step-5-body",
+      "step-6-head",
+      "step-6-body"
+    ],
+    "font_resolutions": [
+      {
+        "element_id": "header-tab-text",
+        "run_index": 0,
+        "font_face": "Microsoft YaHei",
+        "font_size_pt": 19,
+        "source": "style"
+      },
+      {
+        "element_id": "subtitle",
+        "run_index": 0,
+        "font_face": "Microsoft YaHei",
+        "font_size_pt": 14,
+        "source": "style"
+      },
+      {
+        "element_id": "title",
+        "run_index": 0,
+        "font_face": "Microsoft YaHei",
+        "font_size_pt": 34,
+        "source": "style"
+      },
+      {
+        "element_id": "panel-input-title",
+        "run_index": 0,
+        "font_face": "Microsoft YaHei",
+        "font_size_pt": 19,
+        "source": "style"
+      },
+      {
+        "element_id": "panel-output-title",
+        "run_index": 0,
+        "font_face": "Microsoft YaHei",
+        "font_size_pt": 19,
+        "source": "style"
+      },
+      {
+        "element_id": "footer-text",
+        "run_index": 0,
+        "font_face": "Microsoft YaHei",
+        "font_size_pt": 24,
+        "source": "style"
+      },
+      {
+        "element_id": "page-number",
+        "run_index": 0,
+        "font_face": "Microsoft YaHei",
+        "font_size_pt": 15,
+        "source": "style"
+      },
+      {
+        "element_id": "panel-input-item-course",
+        "run_index": 0,
+        "font_face": "Microsoft YaHei",
+        "font_size_pt": 14,
+        "source": "style"
+      },
+      {
+        "element_id": "panel-input-item-behavior",
+        "run_index": 0,
+        "font_face": "Microsoft YaHei",
+        "font_size_pt": 14,
+        "source": "style"
+      },
+      {
+        "element_id": "panel-input-item-rubric",
+        "run_index": 0,
+        "font_face": "Microsoft YaHei",
+        "font_size_pt": 14,
+        "source": "style"
+      },
+      {
+        "element_id": "panel-output-item-knowledge",
+        "run_index": 0,
+        "font_face": "Microsoft YaHei",
+        "font_size_pt": 14,
+        "source": "style"
+      },
+      {
+        "element_id": "panel-output-item-profile",
+        "run_index": 0,
+        "font_face": "Microsoft YaHei",
+        "font_size_pt": 14,
+        "source": "style"
+      },
+      {
+        "element_id": "panel-output-item-recommend",
+        "run_index": 0,
+        "font_face": "Microsoft YaHei",
+        "font_size_pt": 14,
+        "source": "style"
+      },
+      {
+        "element_id": "learner-label",
+        "run_index": 0,
+        "font_face": "Microsoft YaHei",
+        "font_size_pt": 20,
+        "source": "style"
+      },
+      {
+        "element_id": "badge-text-1",
+        "run_index": 0,
+        "font_face": "Microsoft YaHei",
+        "font_size_pt": 13,
+        "source": "style"
+      },
+      {
+        "element_id": "badge-text-2",
+        "run_index": 0,
+        "font_face": "Microsoft YaHei",
+        "font_size_pt": 13,
+        "source": "style"
+      },
+      {
+        "element_id": "badge-text-3",
+        "run_index": 0,
+        "font_face": "Microsoft YaHei",
+        "font_size_pt": 13,
+        "source": "style"
+      },
+      {
+        "element_id": "badge-text-4",
+        "run_index": 0,
+        "font_face": "Microsoft YaHei",
+        "font_size_pt": 13,
+        "source": "style"
+      },
+      {
+        "element_id": "badge-text-5",
+        "run_index": 0,
+        "font_face": "Microsoft YaHei",
+        "font_size_pt": 13,
+        "source": "style"
+      },
+      {
+        "element_id": "badge-text-6",
+        "run_index": 0,
+        "font_face": "Microsoft YaHei",
+        "font_size_pt": 13,
+        "source": "style"
+      },
+      {
+        "element_id": "step-1-head",
+        "run_index": 0,
+        "font_face": "Microsoft YaHei",
+        "font_size_pt": 17,
+        "source": "style"
+      },
+      {
+        "element_id": "step-1-body",
+        "run_index": 0,
+        "font_face": "Microsoft YaHei",
+        "font_size_pt": 14,
+        "source": "style"
+      },
+      {
+        "element_id": "step-2-head",
+        "run_index": 0,
+        "font_face": "Microsoft YaHei",
+        "font_size_pt": 17,
+        "source": "style"
+      },
+      {
+        "element_id": "step-2-body",
+        "run_index": 0,
+        "font_face": "Microsoft YaHei",
+        "font_size_pt": 14,
+        "source": "style"
+      },
+      {
+        "element_id": "step-3-head",
+        "run_index": 0,
+        "font_face": "Microsoft YaHei",
+        "font_size_pt": 17,
+        "source": "style"
+      },
+      {
+        "element_id": "step-3-body",
+        "run_index": 0,
+        "font_face": "Microsoft YaHei",
+        "font_size_pt": 14,
+        "source": "style"
+      },
+      {
+        "element_id": "step-4-head",
+        "run_index": 0,
+        "font_face": "Microsoft YaHei",
+        "font_size_pt": 17,
+        "source": "style"
+      },
+      {
+        "element_id": "step-4-body",
+        "run_index": 0,
+        "font_face": "Microsoft YaHei",
+        "font_size_pt": 14,
+        "source": "style"
+      },
+      {
+        "element_id": "step-5-head",
+        "run_index": 0,
+        "font_face": "Microsoft YaHei",
+        "font_size_pt": 17,
+        "source": "style"
+      },
+      {
+        "element_id": "step-5-body",
+        "run_index": 0,
+        "font_face": "Microsoft YaHei",
+        "font_size_pt": 14,
+        "source": "style"
+      },
+      {
+        "element_id": "step-6-head",
+        "run_index": 0,
+        "font_face": "Microsoft YaHei",
+        "font_size_pt": 17,
+        "source": "style"
+      },
+      {
+        "element_id": "step-6-body",
+        "run_index": 0,
+        "font_face": "Microsoft YaHei",
+        "font_size_pt": 14,
+        "source": "style"
+      }
+    ]
+  },
+  "connections": [
+    {
+      "element_id": "loop-1-to-2",
+      "from_id": "step-card-1",
+      "to_id": "step-card-2"
+    },
+    {
+      "element_id": "loop-2-to-3",
+      "from_id": "step-card-2",
+      "to_id": "step-card-3"
+    },
+    {
+      "element_id": "loop-3-to-4",
+      "from_id": "step-card-3",
+      "to_id": "step-card-4"
+    },
+    {
+      "element_id": "loop-4-to-5",
+      "from_id": "step-card-4",
+      "to_id": "step-card-5"
+    },
+    {
+      "element_id": "loop-5-to-6",
+      "from_id": "step-card-5",
+      "to_id": "step-card-6"
+    },
+    {
+      "element_id": "loop-6-to-1",
+      "from_id": "step-card-6",
+      "to_id": "step-card-1"
+    },
+    {
+      "element_id": "panel-input-divider-1",
+      "from_id": null,
+      "to_id": null
+    },
+    {
+      "element_id": "panel-input-divider-2",
+      "from_id": null,
+      "to_id": null
+    },
+    {
+      "element_id": "panel-output-divider-1",
+      "from_id": null,
+      "to_id": null
+    },
+    {
+      "element_id": "panel-output-divider-2",
+      "from_id": null,
+      "to_id": null
+    }
+  ],
+  "warnings": []
+}

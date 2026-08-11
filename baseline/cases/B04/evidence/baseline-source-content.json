@@ -1,0 +1,50 @@
+{
+  "artifact_role": "baseline_evidence",
+  "runtime_contract": false,
+  "case_id": "B04",
+  "revision": 1,
+  "status": "frozen",
+  "source_sha256": "6b29847d97f00ab25e1e21d660efb0b747aa4c7e7faabb382c1e0875bfb89c1f",
+  "text_items": [
+    {
+      "id": "title",
+      "text": "需求到交付的闭环流程"
+    },
+    {
+      "id": "subtitle",
+      "text": "分支评审、结果汇合与反馈回路必须保持连通"
+    },
+    {
+      "id": "node-1",
+      "text": "需求输入"
+    },
+    {
+      "id": "node-2",
+      "text": "方案设计"
+    },
+    {
+      "id": "node-3",
+      "text": "风险评审"
+    },
+    {
+      "id": "node-4",
+      "text": "统一执行"
+    },
+    {
+      "id": "node-5",
+      "text": "结果验收"
+    },
+    {
+      "id": "parallel",
+      "text": "并行"
+    },
+    {
+      "id": "merge",
+      "text": "汇合"
+    },
+    {
+      "id": "feedback",
+      "text": "验收反馈回到需求输入"
+    }
+  ]
+}

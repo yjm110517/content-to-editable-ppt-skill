@@ -1,0 +1,42 @@
+{
+  "artifact_role": "baseline_evidence",
+  "runtime_contract": false,
+  "case_id": "B03",
+  "revision": 1,
+  "status": "frozen",
+  "source_sha256": "c9e0e40148f09a90291c19345cbbe8c7eda74154b67aea4f6e8ad4ed237b3518",
+  "text_items": [
+    {
+      "id": "title",
+      "text": "城市微更新观察"
+    },
+    {
+      "id": "subtitle",
+      "text": "在有限空间里创造更友好的公共体验"
+    },
+    {
+      "id": "section",
+      "text": "观察结论"
+    },
+    {
+      "id": "bullet-1",
+      "text": "增加可停留的遮阴空间"
+    },
+    {
+      "id": "bullet-2",
+      "text": "保留清晰的步行通道"
+    },
+    {
+      "id": "bullet-3",
+      "text": "用色彩建立区域识别"
+    },
+    {
+      "id": "bullet-4",
+      "text": "让设施支持多种活动"
+    },
+    {
+      "id": "footer",
+      "text": "小尺度 · 高感知 · 可持续"
+    }
+  ]
+}
