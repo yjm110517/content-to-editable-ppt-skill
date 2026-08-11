@@ -38,6 +38,7 @@ SCHEMA_FILES = {
 
 SUPPORTED_SCHEMA_VERSIONS = {
     "layout": {"1.3", "1.4"},
+    "run_state": {"1.3", "1.4"},
     "runtime_manifest": {"1.0"},
     "runtime_error": {"1.0"},
     "text_identity_map": {"1.0"},

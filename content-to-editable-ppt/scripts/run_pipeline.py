@@ -12,6 +12,7 @@ from typing import Any
 
 from asset_common import AssetError, atomic_write_json, failure, load_contract, log_event, success
 from manage_run_state import advance as advance_run_state
+from recovery_engine import StageLedger, hash_inputs
 
 
 COMPONENT = "run_pipeline"
@@ -35,6 +36,7 @@ def parser() -> argparse.ArgumentParser:
     result.add_argument("--log-file", type=Path)
     result.add_argument("--run-id", required=True)
     result.add_argument("--iteration", required=True, type=int)
+    result.add_argument("--resume", action="store_true")
     return result
 
 
@@ -162,7 +164,7 @@ def _copy_to_stage(args: argparse.Namespace, temporary_root: Path) -> tuple[Path
     source_relative = source.relative_to(work_root)
     generated = [args.output_ppt.name, "build_summary.json", "font_audit.json", "rendered_slide.png", "render_report.json", "qa_report.json"]
     collision = next((iteration / name for name in generated if (iteration / name).exists()), None)
-    if collision:
+    if collision and not args.resume:
         raise AssetError("iteration already contains generated output", path=str(collision), code="output_collision", exit_code=9)
     staged_work = temporary_root / work_root.name
     staged_iteration = staged_work / "iterations" / iteration.name
@@ -213,6 +215,30 @@ def _commit_iteration(stage: Path, target: Path, output_name: str) -> None:
             raise
 
 
+def _checkpoint_names(stage: Path, target: Path, names: list[str]) -> None:
+    existing = [name for name in names if (stage / name).exists()]
+    if not existing:
+        return
+    parent = target.parent.resolve()
+    with tempfile.TemporaryDirectory(prefix=f".{target.name}-checkpoint-", dir=parent) as temporary:
+        incoming = Path(temporary) / "incoming"
+        incoming.mkdir()
+        for name in existing:
+            source = stage / name
+            destination = incoming / name
+            if source.is_dir():
+                shutil.copytree(source, destination)
+            else:
+                shutil.copy2(source, destination)
+        for name in existing:
+            destination = target / name
+            if destination.is_dir():
+                shutil.rmtree(destination)
+            elif destination.exists():
+                destination.unlink()
+            os.replace(incoming / name, destination)
+
+
 def _preserve_failure_log(stage: Path | None, target: Path, args: argparse.Namespace, exc: Exception) -> None:
     target_log = args.log_file.resolve() if args.log_file else target / "pipeline.log"
     if stage and (stage / "pipeline.log").is_file():
@@ -230,6 +256,9 @@ def run_pipeline(args: argparse.Namespace) -> dict[str, Any]:
     if args.log_file and args.log_file.resolve() != actual_iteration / "pipeline.log":
         raise AssetError("log-file must be iteration-dir/pipeline.log", path=str(args.log_file), code="path_escape")
     stage_iteration: Path | None = None
+    state_path = args.run_state.resolve() if args.execution_mode == "production" else actual_iteration / "stage_state.json"
+    state_root = args.request.resolve().parent if args.execution_mode == "production" else actual_iteration
+    ledger = StageLedger(state_path, root=state_root, production_state=args.execution_mode == "production")
     with tempfile.TemporaryDirectory(prefix=f".{args.request.parent.name}-pipeline-", dir=args.request.parent.parent) as temporary:
         staged_work, stage_iteration, staged_source = _copy_to_stage(args, Path(temporary))
         log = stage_iteration / "pipeline.log"
@@ -239,6 +268,7 @@ def run_pipeline(args: argparse.Namespace) -> dict[str, Any]:
             crops = stage_iteration / "crops.json"
             manifest = stage_iteration / "asset_manifest.json"
             assets = stage_iteration / "assets"
+            assets.mkdir(parents=True, exist_ok=True)
             request = staged_work / args.request.name
             _run(_python_command("validate_spec.py", "--phase", "preflight", "--request", str(request), "--layout", str(layout), "--crops", str(crops), "--asset-manifest", str(manifest), "--schema-dir", str(args.schema_dir)), "validate_spec")
 
@@ -293,15 +323,37 @@ def run_pipeline(args: argparse.Namespace) -> dict[str, Any]:
             else:
                 log_event(log, level="info", component="sanitize_svg", event="skipped", message="No pending SVG assets", run_id=args.run_id, iteration=args.iteration)
 
+            if not manifest_doc["assets"]:
+                empty_input = hash_inputs([manifest])
+                ledger.skip("asset_processing", empty_input)
+                ledger.skip("asset_crop", empty_input)
+                ledger.skip("svg_sanitize", empty_input)
+
+            _checkpoint_names(stage_iteration, actual_iteration, ["asset_manifest.json", "assets", "svg_security_report.json"])
+
             _run(_python_command("validate_spec.py", "--phase", "build-ready", "--request", str(request), "--layout", str(layout), "--crops", str(crops), "--asset-manifest", str(manifest), "--schema-dir", str(args.schema_dir)), "validate_spec")
             output = stage_iteration / args.output_ppt.name
             summary = stage_iteration / "build_summary.json"
             build_command = [str(node), str(SCRIPT_DIR / "build_slide.mjs"), "--iteration-dir", str(stage_iteration), "--layout", str(layout), "--asset-manifest", str(manifest), "--asset-dir", str(assets), "--output", str(output), "--build-summary", str(summary), "--python", sys.executable, "--run-id", args.run_id, "--iteration", str(args.iteration), "--log-file", str(log), "--schema-dir", str(args.schema_dir)]
             if svg_items:
                 build_command.extend(["--svg-report", str(svg_report)])
-            _run(build_command, "build_slide")
+            actual_output = actual_iteration / args.output_ppt.name
+            actual_summary = actual_iteration / "build_summary.json"
+
+            def build_action() -> None:
+                _run(build_command, "build_slide")
+                _checkpoint_names(stage_iteration, actual_iteration, [args.output_ppt.name, "build_summary.json"])
+
+            build_inputs = [actual_iteration / "layout.json", actual_iteration / "asset_manifest.json", actual_iteration / "assets"]
+            ledger.run("build", inputs=build_inputs, outputs=[actual_output, actual_summary], action=build_action, resume=args.resume)
             font_audit = stage_iteration / "font_audit.json"
-            _run(_python_command("audit_fonts.py", "--ppt", str(output), "--layout", str(layout), "--build-summary", str(summary), "--output", str(font_audit), *_common(args, log)), "audit_fonts")
+            actual_font_audit = actual_iteration / "font_audit.json"
+
+            def font_action() -> None:
+                _run(_python_command("audit_fonts.py", "--ppt", str(output), "--layout", str(layout), "--build-summary", str(summary), "--output", str(font_audit), *_common(args, log)), "audit_fonts")
+                _checkpoint_names(stage_iteration, actual_iteration, ["font_audit.json"])
+
+            ledger.run("font_audit", inputs=[actual_output, actual_iteration / "layout.json", actual_summary], outputs=[actual_font_audit], action=font_action, resume=args.resume)
             render = stage_iteration / "rendered_slide.png"
             render_report = stage_iteration / "render_report.json"
             render_command = _python_command("render_ppt.py", "--input", str(output), "--layout", str(layout), "--output", str(render), "--report", str(render_report), "--renderer", args.renderer, "--timeout-seconds", str(args.timeout_seconds), *_common(args, log))
@@ -309,10 +361,40 @@ def run_pipeline(args: argparse.Namespace) -> dict[str, Any]:
                 render_command.extend(["--libreoffice-path", str(args.libreoffice_path)])
             if args.width_px is not None:
                 render_command.extend(["--width-px", str(args.width_px), "--height-px", str(args.height_px)])
-            _run(render_command, "render_ppt")
+            actual_render = actual_iteration / "rendered_slide.png"
+            actual_render_report = actual_iteration / "render_report.json"
+
+            def render_action() -> None:
+                _run(render_command, "render_ppt")
+                _checkpoint_names(stage_iteration, actual_iteration, ["rendered_slide.png", "render_report.json"])
+
+            ledger.run(
+                "render",
+                inputs=[actual_output, actual_iteration / "layout.json"],
+                outputs=[actual_render, actual_render_report],
+                action=render_action,
+                resume=args.resume,
+                retryable=lambda exc: isinstance(exc, AssetError) and exc.detail.get("code") in {"render_failed", "file_lock", "invalid_subprocess_result"},
+            )
             qa = stage_iteration / "qa_report.json"
             verify_command = _python_command("verify_ppt.py", "--request", str(request), "--source", str(staged_source), "--iteration-dir", str(stage_iteration), "--ppt", str(output), "--layout", str(layout), "--crops", str(crops), "--asset-manifest", str(manifest), "--build-summary", str(summary), "--font-audit", str(font_audit), "--render", str(render), "--render-report", str(render_report), "--output", str(qa), *_common(args, log))
-            verify_code, _ = _run(verify_command, "verify_ppt", allow_codes={0, 8})
+            verify_result: dict[str, int] = {}
+
+            def qa_action() -> None:
+                verify_result["code"], _ = _run(verify_command, "verify_ppt", allow_codes={0, 8})
+                _checkpoint_names(stage_iteration, actual_iteration, ["qa_report.json"])
+
+            ledger.run(
+                "structural_qa",
+                inputs=[actual_output, actual_render, actual_iteration / "layout.json", actual_iteration / "asset_manifest.json"],
+                outputs=[actual_iteration / "qa_report.json"],
+                action=qa_action,
+                resume=args.resume,
+            )
+            if "code" in verify_result:
+                verify_code = verify_result["code"]
+            else:
+                verify_code = 0 if json.loads((actual_iteration / "qa_report.json").read_text(encoding="utf-8"))["status"] == "pass" else 8
             log_event(log, level="info" if verify_code == 0 else "error", component=COMPONENT, event="completed" if verify_code == 0 else "structural_failed", message="Single-iteration pipeline completed", run_id=args.run_id, iteration=args.iteration, data={"exit_code": verify_code})
             _commit_iteration(stage_iteration, actual_iteration, args.output_ppt.name)
             actual_qa = actual_iteration / "qa_report.json"
