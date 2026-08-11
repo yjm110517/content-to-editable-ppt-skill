@@ -63,11 +63,9 @@ def _frozen_replay(case_id: str, output_root: Path, python_path: Path, node_path
     shutil.copy2(case_root / "input" / "source.png", work / "source.png")
     for name in ("layout.json", "crops.json", "asset_manifest.json"):
         shutil.copy2(frozen / name, iteration / name)
-    # Compatibility only: P0 required an empty directory for zero-asset cases.
-    # PR3 removes this requirement and asserts the stages are skipped.
-    (iteration / "assets").mkdir()
     frozen_assets = case_root / "evidence" / "final" / "assets"
     if frozen_assets.is_dir():
+        (iteration / "assets").mkdir()
         for asset in frozen_assets.iterdir():
             if asset.is_file():
                 shutil.copy2(asset, iteration / "assets" / asset.name)
@@ -94,6 +92,13 @@ def _frozen_replay(case_id: str, output_root: Path, python_path: Path, node_path
         "stderr": completed.stderr.strip().splitlines()[-3:] or [],
         "agent_calls": 0,
     }
+    if completed.returncode == 0 and case_id == "B06":
+        stage_state = json.loads((iteration / "stage_state.json").read_text(encoding="utf-8"))
+        for stage_name in ("asset_processing", "asset_crop", "svg_sanitize"):
+            if stage_state["stages"].get(stage_name, {}).get("status") != "skipped":
+                raise RuntimeError(f"B06 {stage_name} was not skipped")
+        if stage_state["counters"]["technical_retries"] != 0:
+            raise RuntimeError("B06 used a technical retry")
     (output_root / "replays").mkdir(parents=True, exist_ok=True)
     (output_root / "replays" / f"{case_id}-replay-report.json").write_text(json.dumps(result, ensure_ascii=False, indent=2), encoding="utf-8")
     return result

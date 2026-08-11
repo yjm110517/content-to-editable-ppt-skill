@@ -79,7 +79,20 @@ def initialize(args: argparse.Namespace) -> dict[str, Any]:
     if args.output.exists():
         raise AssetError("run state already exists", path=str(args.output), code="output_conflict", exit_code=9)
     request = load_contract("request", require_under(args.request, work_root), args.schema_dir)
-    state = {"schema_version": "1.3", "task_id": request["task_id"], "request_sha256": sha256_file(args.request), "state": "input_pending", "current_iteration": 0, "max_iterations": request["review_policy"]["max_iterations"], "history": []}
+    state = {
+        "schema_version": "1.4",
+        "task_id": request["task_id"],
+        "request_sha256": sha256_file(args.request),
+        "state": "input_pending",
+        "current_iteration": 0,
+        "max_iterations": request["review_policy"]["max_iterations"],
+        "history": [],
+        "current_stage": None,
+        "counters": {"planner_calls": 0, "reviewer_calls": 0, "full_semantic_replans": 0, "targeted_revisions": 0, "technical_retries": 0, "runtime_repairs": 0},
+        "stages": {},
+        "last_failure": None,
+        "reclassifications": [],
+    }
     _validate_state(state, args.schema_dir)
     commit_state(args.output, state)
     return state

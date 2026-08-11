@@ -13,7 +13,9 @@ from defusedxml import ElementTree as SafeET
 
 from asset_common import AssetError, atomic_write_bytes, atomic_write_json, failure, load_contract, log_event, sha256_file, success
 from iteration_common import append_transition, commit_state, require_under, utc_now
-from schema_utils import ContractError, cross_validate, is_safe_relative_path, validate_schema, validate_semantics
+from recovery_engine import RecoveryError, authorize_targeted_revision
+from schema_utils import ContractError, is_safe_relative_path, validate_schema, validate_semantics
+from shared_validator import validate_documents
 
 
 COMPONENT = "apply_review_patch"
@@ -244,12 +246,14 @@ def apply_patch(args: argparse.Namespace) -> dict[str, Any]:
             _apply_operation(stage, layout, crops, manifest, operation, approved)
             applied.append(operation["issue_id"])
         layout["metadata"]["iteration"] = patch["to_iteration"]
-        for kind, name, document in (("layout", "layout.json", layout), ("crops", "crops.json", crops), ("asset_manifest", "asset_manifest.json", manifest)):
-            validate_schema(kind, document, args.schema_dir)
-            validate_semantics(kind, document)
-            atomic_write_json(stage / name, document)
-        cross_validate({"layout": layout, "crops": crops, "asset_manifest": manifest})
-        state_after_planning = copy.deepcopy(state)
+        documents = {"layout": layout, "crops": crops, "asset_manifest": manifest}
+        validate_documents(documents, {}, profile="post_patch", schema_dir=args.schema_dir)
+        for kind, name in (("layout", "layout.json"), ("crops", "crops.json"), ("asset_manifest", "asset_manifest.json")):
+            atomic_write_json(stage / name, documents[kind])
+        try:
+            state_after_planning = authorize_targeted_revision(state)
+        except RecoveryError as exc:
+            raise AssetError(str(exc), code="iteration_limit", exit_code=9) from exc
         state_after_planning["current_iteration"] = patch["to_iteration"]
         state_after_planning = append_transition(state_after_planning, "planning", "review_patch_started", artifact=patch_path, work_root=work_root)
         state_after_ready = copy.deepcopy(state_after_planning)
