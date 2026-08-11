@@ -1,0 +1,28 @@
+{
+  "schema_version": "1.0",
+  "case_id": "D03",
+  "status": "pass",
+  "mode": "host_content_planning_smoke",
+  "pages": 3,
+  "host_planning_pass_count": 1,
+  "host_revision_pass_count": 1,
+  "automatic_regeneration_count": 0,
+  "specialist_agent_calls": {
+    "layout_planner": 0,
+    "visual_reviewer": 0
+  },
+  "user_interaction_fixture": {
+    "changes_requested": true,
+    "candidate_revisions": [1, 2],
+    "confirmed_revision": 2,
+    "confirmation_hash_bound": true
+  },
+  "projection": {
+    "mode": "deterministic",
+    "host_calls_after_confirmation": 0,
+    "content_projection_drift": 0,
+    "approved_outline_sha256": "227ab049c0690f454d08681ec8edb3c3107210723be05934661d066d83123673",
+    "slide_content_manifest_sha256": "3030a26691bc4b5c92e82d00dd4160dcc00da1c9a2e5828e78c2ee6d3d068bcf"
+  },
+  "private_reasoning_saved": false
+}

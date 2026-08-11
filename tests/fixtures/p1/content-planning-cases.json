@@ -1,0 +1,98 @@
+{
+  "schema_version": "1.0",
+  "fixed_timestamp_utc": "2026-08-11T00:00:00Z",
+  "cases": [
+    {
+      "case_id": "D03",
+      "topic": "为什么内容规划必须先确认",
+      "objective": "说明 P1 如何建立内容权威",
+      "audience": "Skill 开发者",
+      "material_text": "P1 在设计前确认最终页面文字。确认绑定候选大纲哈希。确认后由确定性投影生成页面内容。",
+      "facts": [
+        {"id": "M01-F01", "text": "P1 在设计前确认最终页面文字"},
+        {"id": "M01-F02", "text": "确认绑定候选大纲哈希"},
+        {"id": "M01-F03", "text": "确认后由确定性投影生成页面内容"}
+      ],
+      "revision_request": "请将第二页标题明确改为用户确认建立内容边界",
+      "confirmation_message": "确认修订后的三页大纲和全部页面文字",
+      "candidates": [
+        {
+          "revision": 1,
+          "pages": [
+            {"role": "cover", "purpose": "引出内容权威", "key_message": "先确认再设计", "title": "内容规划先于页面设计", "blocks": ["P1 在设计前确认最终页面文字"], "facts": ["M01-F01"], "visual_intent": "封面式大标题"},
+            {"role": "process", "purpose": "说明确认机制", "key_message": "确认必须绑定具体版本", "title": "确认建立内容边界", "blocks": ["确认绑定候选大纲哈希"], "facts": ["M01-F02"], "visual_intent": "两阶段流程"},
+            {"role": "conclusion", "purpose": "说明确认后的处理", "key_message": "确认后不再由 Host 改写", "title": "确定性冻结页面文字", "blocks": ["确认后由确定性投影生成页面内容"], "facts": ["M01-F03"], "visual_intent": "输入输出关系图"}
+          ]
+        },
+        {
+          "revision": 2,
+          "pages": [
+            {"role": "cover", "purpose": "引出内容权威", "key_message": "先确认再设计", "title": "内容规划先于页面设计", "blocks": ["P1 在设计前确认最终页面文字"], "facts": ["M01-F01"], "visual_intent": "封面式大标题"},
+            {"role": "process", "purpose": "说明确认机制", "key_message": "确认必须绑定具体版本", "title": "用户确认建立内容边界", "blocks": ["确认绑定候选大纲哈希"], "facts": ["M01-F02"], "visual_intent": "两阶段流程"},
+            {"role": "conclusion", "purpose": "说明确认后的处理", "key_message": "确认后不再由 Host 改写", "title": "确定性冻结页面文字", "blocks": ["确认后由确定性投影生成页面内容"], "facts": ["M01-F03"], "visual_intent": "输入输出关系图"}
+          ]
+        }
+      ]
+    },
+    {
+      "case_id": "D05",
+      "topic": "可验证的内容到幻灯片流程",
+      "objective": "用五页说明 P1 数据链",
+      "audience": "工程团队",
+      "material_text": "任务先路由。材料必须可用。候选大纲包含最终文字。用户确认绑定哈希。确认内容被确定性投影。",
+      "facts": [
+        {"id": "M01-F01", "text": "任务先路由"},
+        {"id": "M01-F02", "text": "材料必须可用"},
+        {"id": "M01-F03", "text": "候选大纲包含最终文字"},
+        {"id": "M01-F04", "text": "用户确认绑定哈希"},
+        {"id": "M01-F05", "text": "确认内容被确定性投影"}
+      ],
+      "confirmation_message": "确认五页大纲和页面文字",
+      "candidates": [
+        {
+          "revision": 1,
+          "pages": [
+            {"role": "opening", "purpose": "介绍入口", "key_message": "先确定任务路线", "title": "任务路由", "blocks": ["任务先路由"], "facts": ["M01-F01"], "visual_intent": "双入口"},
+            {"role": "content", "purpose": "说明材料门槛", "key_message": "必需材料不可缺失", "title": "材料完整性", "blocks": ["材料必须可用"], "facts": ["M01-F02"], "visual_intent": "检查清单"},
+            {"role": "content", "purpose": "说明候选内容", "key_message": "候选已包含最终文字", "title": "候选大纲", "blocks": ["候选大纲包含最终文字"], "facts": ["M01-F03"], "visual_intent": "大纲卡片"},
+            {"role": "content", "purpose": "说明确认边界", "key_message": "确认绑定确定版本", "title": "用户确认", "blocks": ["用户确认绑定哈希"], "facts": ["M01-F04"], "visual_intent": "锁定图示"},
+            {"role": "closing", "purpose": "说明冻结输出", "key_message": "投影不创造文字", "title": "确定性投影", "blocks": ["确认内容被确定性投影"], "facts": ["M01-F05"], "visual_intent": "确定性数据流"}
+          ]
+        }
+      ]
+    },
+    {
+      "case_id": "D08",
+      "topic": "八页内容权威链",
+      "objective": "验证长大纲顺序和页面隔离",
+      "audience": "Runtime 维护者",
+      "material_text": "路由隔离入口。澄清闭合歧义。材料记录可读性。事实绑定来源。候选保留身份。确认绑定版本。投影保持文字。状态证明完成。",
+      "facts": [
+        {"id": "M01-F01", "text": "路由隔离入口"},
+        {"id": "M01-F02", "text": "澄清闭合歧义"},
+        {"id": "M01-F03", "text": "材料记录可读性"},
+        {"id": "M01-F04", "text": "事实绑定来源"},
+        {"id": "M01-F05", "text": "候选保留身份"},
+        {"id": "M01-F06", "text": "确认绑定版本"},
+        {"id": "M01-F07", "text": "投影保持文字"},
+        {"id": "M01-F08", "text": "状态证明完成"}
+      ],
+      "confirmation_message": "确认八页大纲、顺序和所有文字",
+      "candidates": [
+        {
+          "revision": 1,
+          "pages": [
+            {"role": "opening", "purpose": "说明入口", "key_message": "两条路径互不污染", "title": "入口隔离", "blocks": ["路由隔离入口"], "facts": ["M01-F01"], "visual_intent": "分流图"},
+            {"role": "content", "purpose": "说明澄清", "key_message": "不明确时先询问", "title": "路由澄清", "blocks": ["澄清闭合歧义"], "facts": ["M01-F02"], "visual_intent": "回路图"},
+            {"role": "content", "purpose": "说明材料状态", "key_message": "读取结果显式化", "title": "材料可读性", "blocks": ["材料记录可读性"], "facts": ["M01-F03"], "visual_intent": "状态表"},
+            {"role": "content", "purpose": "说明事实来源", "key_message": "实质内容必须有来源", "title": "来源绑定", "blocks": ["事实绑定来源"], "facts": ["M01-F04"], "visual_intent": "引用关系"},
+            {"role": "content", "purpose": "说明内容身份", "key_message": "Content Ref 全局稳定", "title": "内容身份", "blocks": ["候选保留身份"], "facts": ["M01-F05"], "visual_intent": "身份卡片"},
+            {"role": "content", "purpose": "说明版本确认", "key_message": "旧确认不能批准新版本", "title": "版本确认", "blocks": ["确认绑定版本"], "facts": ["M01-F06"], "visual_intent": "版本链"},
+            {"role": "content", "purpose": "说明投影", "key_message": "确认后不再改写", "title": "文字投影", "blocks": ["投影保持文字"], "facts": ["M01-F07"], "visual_intent": "映射关系"},
+            {"role": "closing", "purpose": "说明完成证据", "key_message": "状态与哈希构成 Gate", "title": "完成状态", "blocks": ["状态证明完成"], "facts": ["M01-F08"], "visual_intent": "Gate 总结"}
+          ]
+        }
+      ]
+    }
+  ]
+}

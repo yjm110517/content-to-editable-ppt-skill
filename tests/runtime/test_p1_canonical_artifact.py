@@ -19,6 +19,11 @@ class P1CanonicalArtifactTests(unittest.TestCase):
     def test_all_strings_are_normalized_to_nfc(self) -> None:
         self.assertEqual(canonical_sha256({"value": "e\u0301"}), canonical_sha256({"value": "é"}))
 
+    def test_rfc8785_string_and_literal_vector(self) -> None:
+        # RFC 8785 section 3.2.2 sample, restricted to P1-supported value types.
+        document = {"string": "€$\u000f\nA'B\"\\\"/", "literals": [None, True, False]}
+        self.assertEqual(canonical_sha256(document), "3b682bc213c1fa88d5931e98b2efabfa60a236fb621f05437d6aa51daaa8031d")
+
     def test_nfc_key_collision_is_rejected(self) -> None:
         with self.assertRaises(CanonicalArtifactError):
             canonical_bytes({"e\u0301": 1, "é": 2})
