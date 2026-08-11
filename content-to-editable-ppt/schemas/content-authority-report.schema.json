@@ -1,0 +1,33 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "content-authority-report.schema.json",
+  "title": "Canonical Content Authority Report",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["schema_version", "status", "authority_sha256", "layout_sha256", "ppt_sha256", "missing", "mismatched", "unknown", "duplicate_segment_orders", "non_contiguous_segment_orders"],
+  "properties": {
+    "schema_version": {"const": "1.0"},
+    "status": {"enum": ["pass", "fail"]},
+    "authority_sha256": {"$ref": "#/$defs/hash"},
+    "layout_sha256": {"$ref": "#/$defs/hash"},
+    "ppt_sha256": {"$ref": "#/$defs/hash"},
+    "missing": {"type": "array", "uniqueItems": true, "items": {"type": "string", "minLength": 1}},
+    "mismatched": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["content_ref", "expected", "actual"],
+        "properties": {
+          "content_ref": {"type": "string", "minLength": 1},
+          "expected": {"type": "string"},
+          "actual": {"type": "string"}
+        }
+      }
+    },
+    "unknown": {"type": "array", "uniqueItems": true, "items": {"type": "string", "minLength": 1}},
+    "duplicate_segment_orders": {"type": "array", "uniqueItems": true, "items": {"type": "string", "minLength": 1}},
+    "non_contiguous_segment_orders": {"type": "array", "uniqueItems": true, "items": {"type": "string", "minLength": 1}}
+  },
+  "$defs": {"hash": {"type": "string", "pattern": "^[0-9a-f]{64}$"}}
+}

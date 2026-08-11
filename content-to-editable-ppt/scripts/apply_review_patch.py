@@ -16,6 +16,7 @@ from iteration_common import append_transition, commit_state, require_under, utc
 from recovery_engine import RecoveryError, authorize_targeted_revision
 from schema_utils import ContractError, is_safe_relative_path, validate_schema, validate_semantics
 from shared_validator import validate_documents
+from text_identity import compare_authority
 
 
 COMPONENT = "apply_review_patch"
@@ -248,6 +249,11 @@ def apply_patch(args: argparse.Namespace) -> dict[str, Any]:
         layout["metadata"]["iteration"] = patch["to_iteration"]
         documents = {"layout": layout, "crops": crops, "asset_manifest": manifest}
         validate_documents(documents, {}, profile="post_patch", schema_dir=args.schema_dir)
+        authority_path = work_root / "source-content.json"
+        if authority_path.is_file():
+            authority = json.loads(authority_path.read_text(encoding="utf-8"))
+            if compare_authority(authority, layout)["status"] != "pass":
+                raise AssetError("Targeted Patch cannot alter canonical content authority", path="layout.json", code="content_failure")
         for kind, name in (("layout", "layout.json"), ("crops", "crops.json"), ("asset_manifest", "asset_manifest.json")):
             atomic_write_json(stage / name, documents[kind])
         try:

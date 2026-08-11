@@ -223,6 +223,7 @@ def prepare(case_id: str, node_path: Path, python_path: Path) -> dict[str, Any]:
     shutil.copy2(source, case_work / "source.png")
     shutil.copy2(request, case_work / "request.json")
     shutil.copy2(source_content, case_work / "baseline-source-content.json")
+    shutil.copy2(source_content, case_work / "source-content.json")
     run_id = f"p0-{case_id.lower()}"
     log = case_work / "baseline.log"
     command([
@@ -241,6 +242,7 @@ def prepare(case_id: str, node_path: Path, python_path: Path) -> dict[str, Any]:
         str(python_path), str(RUNTIME_SCRIPTS / "prepare_agent_call.py"),
         "--role", "planner", "--mode", "initial", "--work-root", str(case_work),
         "--request", str(case_work / "request.json"), "--source", str(case_work / "source.png"),
+        "--content-authority", str(case_work / "source-content.json"),
         "--iteration", "1", "--call-id", call_id, "--output-dir", str(call_dir),
         "--run-id", run_id, "--log-file", str(log),
     ])

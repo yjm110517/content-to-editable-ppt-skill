@@ -45,6 +45,26 @@
         }
       }
     },
+    "review_degradation": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["reviewer_failure_sha256", "warning", "gates", "completed_at_utc"],
+      "properties": {
+        "reviewer_failure_sha256": {"$ref": "#/$defs/hash"},
+        "warning": {"const": "visual review incomplete"},
+        "gates": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["structural", "content", "editability"],
+          "properties": {
+            "structural": {"const": true},
+            "content": {"const": true},
+            "editability": {"const": true}
+          }
+        },
+        "completed_at_utc": {"$ref": "#/$defs/timestamp"}
+      }
+    },
     "history": {
       "type": "array",
       "items": {
@@ -117,12 +137,16 @@
     {
       "if": {"properties": {"state": {"const": "delivered"}}, "required": ["state"]},
       "then": {"required": ["delivery"]}
+    },
+    {
+      "if": {"properties": {"state": {"const": "delivered_with_warnings"}}, "required": ["state"]},
+      "then": {"required": ["review_degradation"]}
     }
   ],
   "$defs": {
     "hash": {"type": "string", "pattern": "^[a-f0-9]{64}$"},
     "timestamp": {"type": "string", "format": "date-time", "pattern": "Z$"},
-    "state": {"enum": ["input_pending", "planning", "spec_ready", "building", "structural_fail", "structural_pass", "reviewing", "review_evaluating", "review_revise", "review_pass", "review_fail", "review_warning_candidate", "awaiting_user_acceptance", "packaging", "delivered", "failed"]},
+    "state": {"enum": ["input_pending", "planning", "spec_ready", "building", "structural_fail", "structural_pass", "reviewing", "review_evaluating", "review_revise", "review_pass", "review_fail", "review_warning_candidate", "awaiting_user_acceptance", "packaging", "delivered", "delivered_with_warnings", "failed"]},
     "stage": {
       "type": "object",
       "additionalProperties": false,
