@@ -262,7 +262,7 @@ Layout Planner 必须视觉上遵循 Design Image，文本上遵循正式文字�
 
 ## ADR-011 — Wireframe 由 Host 规划，使用 Deterministic SVG Renderer
 
-**Status:** Accepted
+**Status:** Superseded by ADR-035
 
 **Decision**
 
@@ -288,6 +288,8 @@ Wireframe 是结构规划问题，不需要额外 Specialist Agent；确定性 R
 - SVG 是第一版 Wireframe Preview 的主要格式；
 - Wireframe 每页都需要逻辑规划；
 - Wireframe 不一定必须展示给用户。
+
+该决策对应的实现、测试、PR #12–#16 和 Gate 报告继续作为历史工程证据保留，但不再定义当前正式 P2 产品行为。
 
 ---
 
@@ -908,6 +910,55 @@ Content-to-PPT、Visual Design 和 Deck 能力最终都依赖 Single-Slide Runti
 
 ---
 
+## ADR-035 — P2 Wireframe 采用大模型生成的 Markdown 文字线稿
+
+**Status:** Accepted
+
+**Supersedes:** ADR-011
+
+**Decision**
+
+P2 的正式 Wireframe 是 Host 大模型逐页生成的 Markdown 文字线稿，用于表达每页真实内容、页面布局草稿、信息层级和内容关系。
+
+正式产物为：
+
+```text
+wireframes/deck-wireframe.md
+wireframes/wireframe-manifest.json
+```
+
+`deck-wireframe.md` 是唯一正式线稿内容本体。`wireframe-manifest.json` 只记录 Deck、P1 Authority、页序、Content Ref、Revision、文件 Hash 和接受状态，不保存坐标、BBox、Region Graph、SVG 路径或最终视觉风格。
+
+正式流程：
+
+```text
+P1 Approved Slide Content
+→ P1 Authority Validation
+→ Host Markdown Wireframe Pass
+→ Markdown Structure Validation
+→ Content Binding / Drift Validation
+→ Bounded Contract Correction
+→ 默认在聊天中逐页展示
+→ Accepted / Layout Revision / Return to P1
+```
+
+P2 不再以 SVG、PNG、精确坐标、BBox、Region Graph 或 Deterministic SVG Renderer 作为正式产物或生产路径。
+
+**Why**
+
+P2 的产品目标是让用户和 Host 低成本讨论“每页放什么、如何布局”，而不是建立第二套图形渲染系统。Markdown 文字线稿更适合聊天展示、用户修改和 P3 视觉设计输入，同时可以通过 P1 Authority、固定 Metadata Binding 和极薄 Manifest 保持机器可验证性。
+
+**Consequences**
+
+- 已合并的 PR #12–#16、SVG P2 实现、测试和 `reports/p2/p2-wireframe-gate.json` 作为历史技术证据保留，不回滚、不关闭、不改写；
+- 旧 SVG P2 Gate 不等于新的 Markdown P2 Gate；
+- P2 状态重新打开，Markdown P2 Implementation 与新 Gate 通过前不得进入 P3；
+- `deck-wireframe.md` 的“页面内容”必须逐字绑定 Approved Slide Content，布局线稿可用真实短句或 Content Block 标签表示位置；
+- 默认向用户展示整套线稿；明确跳过查看只取消暂停，不取消生成；
+- 废弃 SVG 作为 P2 Wireframe 表示，不影响 SVG 作为 PPT Runtime 视觉素材格式；`sanitize_svg.py`、SVG Asset Manifest、`validate_assets.py` 和 Builder SVG 支持继续保留。
+
+---
+
 # 决策变更规则
 
 如果后续需要修改 `Accepted` ADR，应遵循：
@@ -968,7 +1019,7 @@ Status: Deprecated
 
 # 当前基线
 
-当前 v2.0 Specification Baseline 的核心方向为：
+当前 v2.1 Specification Baseline 的核心方向为：
 
 ```text
 Windows only
@@ -998,5 +1049,8 @@ Limited Page Parallelism
 PowerPoint COM Deck Assembly
 +
 Gate-based Development
++
+P2 Markdown Wireframe
++
+Legacy SVG P2 Isolation
 ```
-

@@ -40,7 +40,7 @@ Production mode requires state `building`, records the structural result in
 available for isolated engineering checks, does not mutate run state, and can
 never be used as delivery evidence.
 
-During P2, invoke the asset chain with explicit iteration-scoped paths:
+During the Image-to-Editable-PPT Single-Slide Runtime, invoke the asset chain with explicit iteration-scoped paths. This asset chain is not part of the Markdown Wireframe P2:
 
 ```bash
 python scripts/crop_assets.py \
