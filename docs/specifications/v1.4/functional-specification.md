@@ -17,3 +17,7 @@ P3.1 只接受 Accepted P2 1.1 Manifest 和 Deck Visual Direction 作为业务�
 Resolution Record 一经创建不可修改。Normalize、Sanitize 和物化 Hash 写入 Asset Manifest。复杂度依次按 Existing、最多两图标组合、受限 Primitive SVG、Raster/Image Handoff 路由。
 
 P3.1 只证明同一 Sanitized SVG 能被 Preview Compositor 和 PPT Runtime 消费，不生成正式 Design Preview。
+
+两条消费链必须记录同一个 `sanitized_svg_sha256` 作为输入来源。resvg 产生的 PNG 和 Pillow 合成结果分别记录自己的派生 Hash；PPT Builder 在调用前记录输入 SVG Hash。不得比较 SVG 与 PNG Hash，也不得要求 Office 保存后的 OOXML 媒体字节与输入 SVG 完全一致。
+
+已解析 SVG 必须在后续 Preview Composition 和 PPT Runtime 中被物理消费，生成模型不得重绘、模拟或替换该图标。
