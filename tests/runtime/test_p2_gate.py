@@ -1,6 +1,8 @@
 from __future__ import annotations
 
 import json
+import hashlib
+import unicodedata
 import unittest
 from pathlib import Path
 
@@ -26,6 +28,14 @@ class P2MarkdownGateReportTests(unittest.TestCase):
         self.assertEqual(report["d03_host_call_evidence"]["status"], "pass")
         self.assertEqual(report["review_run"]["live_host_model_invocations"], 0)
         self.assertTrue(report["p0_baseline_unchanged"])
+
+    def test_text_evidence_hashes_are_line_ending_independent(self) -> None:
+        prompt_path = ROOT / "reports" / "p2" / "d03-markdown-host-call" / "prompt.md"
+        text = prompt_path.read_text(encoding="utf-8")
+        def digest(value: str) -> str:
+            normalized = unicodedata.normalize("NFC", value.replace("\r\n", "\n").replace("\r", "\n"))
+            return hashlib.sha256(normalized.encode("utf-8")).hexdigest()
+        self.assertEqual(digest(text.replace("\n", "\r\n")), digest(text.replace("\n", "\n")))
 
 
 if __name__ == "__main__":

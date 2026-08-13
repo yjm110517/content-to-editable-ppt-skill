@@ -6,9 +6,9 @@
   "role_version": "1.0.0",
   "model_selection_mode": "runtime-default",
   "requested_model": null,
-  "config_sha256": "fb77fd5474a114f4c5a2f4ea6bd759675c72ea468d9245bd7287cb7121d57490",
+  "config_sha256": "48dfbd287ba942eb5c8466658612dbf7e2b5144da53f8fafddfe019ffb25a77c",
   "prompt_sha256": "ded5c374e601621f82322c63e823f46ed0d447313f3b7f7a921bba208d3ae0fe",
-  "output_schema_sha256": "7e51f3d31a77273fa5b7356abc494a84aaf8013f493b41966b611c432fa7b6c5",
+  "output_schema_sha256": "8a351f56f701b03d75b49636d72e928990d6336364a8a9db836597709b0a935e",
   "input_sha256": {
     "p1_state": "3e53787f609baf272a8e7f8329782ab9edaf95ba526781e7661c272a65cf4326",
     "approved_outline": "84b9f37f51468f54966b2fb3d708d0d25a31e2805620398b4c2c4d2ad6b951f0",
