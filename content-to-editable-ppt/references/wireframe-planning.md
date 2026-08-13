@@ -1,25 +1,22 @@
-# Host Wireframe Planning
+# Markdown Wireframe Migration Boundary
 
-Load this reference only after a Content-to-PPT task reaches `p1_complete`. Image-to-Editable-PPT bypasses P2.
+ADR-035 supersedes the historical SVG-based P2 workflow. The formal Wireframe is now defined as a Host-generated Markdown document that shows the real approved content and a per-slide layout draft.
 
-## Authority
+The Markdown Binder, thin Manifest, Validator, revision workflow, and new P2 Gate have not yet been implemented. Until that implementation is complete:
 
-Read only the Deck Request, Approved Outline, Projection Manifest, frozen Approved Slide Content, and structured Wireframe Layout Requirements. Do not return to raw materials and do not copy or rewrite approved text into the Wireframe Spec.
+- stop after `content_to_ppt + p1_complete`;
+- report `P2 Markdown realignment pending`;
+- do not invoke `manage_wireframe.py`, `validate_wireframe.py`, `render_wireframe.py`, or the historical SVG P2 route;
+- do not enter P3;
+- preserve all P1 Approved Slide Content without rewriting it.
 
-Use `content_refs` exactly once to place approved text. Use `semantic_source_refs` to show which approved content motivates an image, chart, or diagram zone; semantic references may repeat and do not create another text placement.
+The future formal artifacts are:
 
-## Planning boundary
+```text
+wireframes/deck-wireframe.md
+wireframes/wireframe-manifest.json
+```
 
-Plan one Spec per Slide ID. Deck Order belongs to the Manifest, not the page Spec. Use integer `normalized_10000` geometry and create real parent-child Region relationships. Use explicit Overlay or Overlap Groups for intentional intersections. A foreground Decoration requires an Overlay relationship.
+`deck-wireframe.md` will contain each slide's complete approved content, a text-based layout draft, and layout notes. The thin Manifest will bind Deck identity, P1 Authority hashes, Slide IDs, order, Content Refs, revision, Markdown hash, and status. It will not contain coordinates, regions, SVG data, or final visual style.
 
-Do not choose final color, font, shadow, texture, illustration style, image asset, or PowerPoint object decomposition. The SVG is a low-fidelity structural preview, not the Design Image.
-
-## Validation and correction
-
-Submit the complete Candidate once, then consume the deterministic Validation Report. A logical Planning Pass allows at most two bounded Contract Corrections and at most three actual Host Model Invocations including the initial planning call.
-
-Every Correction Operation must reference a correctable Validation Issue. Do not change Layout Pattern, approved content, Authority Hash, a legal Semantic Source, or a legal Focal Region through Contract Correction. If validation reports `redesign_required`, stop instead of silently redesigning.
-
-## Preview and feedback
-
-Every page must render an SVG even when Preview mode is `internal_only`. Pause only when `pause_for_feedback` is true. User layout feedback records only the affected Slide IDs for a later Wireframe revision. User text changes terminate the old P2 State as `p1_revision_required`; route the original request back to P1, create and confirm a new Candidate revision, then initialize a new P2 Authority Bundle. Never resume the old P2 State with new content.
+This deprecation applies only to SVG as the P2 Wireframe representation. Sanitized SVG remains a supported visual asset format in the single-slide PowerPoint Runtime.

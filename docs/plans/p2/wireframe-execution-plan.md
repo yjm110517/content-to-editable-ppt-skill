@@ -1,5 +1,7 @@
 # P2 Host Wireframe 阶段执行计划
 
+> **历史状态：Superseded by ADR-035。** 本计划记录已经完成并合并的 SVG P2 实现，不再定义当前正式 P2。新的正式 P2 是 Host 生成的 Markdown 文字线稿；本文件正文作为历史执行证据保持不变。
+
 ## 权威与范围
 
 - 开发起点：`main@66253f8`。
