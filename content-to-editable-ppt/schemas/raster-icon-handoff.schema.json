@@ -1,0 +1,17 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "raster-icon-handoff.schema.json",
+  "title": "P3.1 Raster Icon Handoff",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["schema_version", "artifact_type", "visual_ref", "p2_manifest_sha256", "reason", "status", "created_at_utc"],
+  "properties": {
+    "schema_version": {"const": "1.0"},
+    "artifact_type": {"const": "raster_icon_handoff"},
+    "visual_ref": {"type": "string", "minLength": 1},
+    "p2_manifest_sha256": {"type": "string", "pattern": "^[a-f0-9]{64}$"},
+    "reason": {"enum": ["no_suitable_svg", "complex_visual_required", "accessibility_requirement"]},
+    "status": {"const": "raster_handoff_required"},
+    "created_at_utc": {"type": "string", "format": "date-time", "pattern": "Z$"}
+  }
+}

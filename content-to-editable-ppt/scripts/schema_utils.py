@@ -57,6 +57,8 @@ SCHEMA_FILES = {
     "resolved_asset_consumption": "resolved-asset-consumption.schema.json",
     "deck_visual_direction": "deck-visual-direction.schema.json",
     "icon_search_evidence": "icon-search-evidence.schema.json",
+    "simple_icon_drawing": "simple-icon-drawing.schema.json",
+    "raster_icon_handoff": "raster-icon-handoff.schema.json",
 }
 
 SUPPORTED_SCHEMA_VERSIONS = {
@@ -88,6 +90,8 @@ SUPPORTED_SCHEMA_VERSIONS = {
     "resolved_asset_consumption": {"1.0"},
     "deck_visual_direction": {"1.0"},
     "icon_search_evidence": {"1.0"},
+    "simple_icon_drawing": {"1.0"},
+    "raster_icon_handoff": {"1.0"},
     "asset_manifest": {"1.3", "1.4"},
 }
 
