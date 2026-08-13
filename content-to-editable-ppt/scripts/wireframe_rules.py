@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import copy
+import json
 from collections import Counter
 from datetime import datetime, timezone
 from pathlib import Path
@@ -71,6 +72,20 @@ def load_authority_bundle(*, p1_state_path: Path, deck_request_path: Path, appro
     failures: list[dict[str, str]] = []
     if p1_state["state"] != "p1_complete":
         failures.append(error("$.p1_state.state", "P2 requires p1_complete", "p1_not_complete"))
+    outline_sha256 = canonical_sha256(approved)
+    frozen_outline_sha256 = p1_state["current_artifacts"].get("approved_outline_sha256")
+    if frozen_outline_sha256 is None:
+        failures.append(error(
+            "$.p1_state.current_artifacts.approved_outline_sha256",
+            "p1_complete requires a frozen Approved Outline hash",
+            "missing_authority",
+        ))
+    elif frozen_outline_sha256 != outline_sha256:
+        failures.append(error(
+            "$.p1_state.current_artifacts.approved_outline_sha256",
+            "supplied Approved Outline does not match the hash frozen by P1 State",
+            "authority_hash_mismatch",
+        ))
     deck_id = deck_request["deck_id"]
     for label, document in (("p1_state", p1_state), ("approved_outline", approved), ("layout_requirements", layout)):
         if document["deck_id"] != deck_id:
@@ -85,8 +100,27 @@ def load_authority_bundle(*, p1_state_path: Path, deck_request_path: Path, appro
         failures.append(error("$.slide_content_manifest", "projection-manifest.json is missing", "missing_authority"))
         projection = None
     else:
-        projection = load_json(projection_path)
-        if projection.get("deck_id") != deck_id or projection.get("approved_outline_sha256") != canonical_sha256(approved):
+        try:
+            projection = load_json(projection_path)
+        except (OSError, UnicodeError, json.JSONDecodeError, ContractError):
+            failures.append(error("$.slide_content_manifest", "projection-manifest.json is unreadable", "missing_authority"))
+            projection = None
+    if projection is not None:
+        frozen_manifest_sha256 = p1_state["current_artifacts"].get("slide_content_manifest_sha256")
+        actual_manifest_sha256 = canonical_sha256(projection)
+        if frozen_manifest_sha256 is None:
+            failures.append(error(
+                "$.p1_state.current_artifacts.slide_content_manifest_sha256",
+                "p1_complete requires a frozen Projection Manifest hash",
+                "missing_authority",
+            ))
+        elif frozen_manifest_sha256 != actual_manifest_sha256:
+            failures.append(error(
+                "$.p1_state.current_artifacts.slide_content_manifest_sha256",
+                "supplied Projection Manifest does not match the hash frozen by P1 State",
+                "authority_hash_mismatch",
+            ))
+        if projection.get("deck_id") != deck_id or projection.get("approved_outline_sha256") != outline_sha256:
             failures.append(error("$.slide_content_manifest", "Projection Manifest does not bind Approved Outline", "authority_hash_mismatch"))
     contents: dict[str, dict[str, Any]] = {}
     if projection:
