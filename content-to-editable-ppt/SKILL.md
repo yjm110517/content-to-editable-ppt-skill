@@ -1,13 +1,13 @@
 ---
 name: content-to-editable-ppt
-description: Plan and freeze presentation content from user materials, or rebuild a reference image with the reusable PowerPoint construction, rendering, and QA runtime. Use for P1 material-to-approved-content workflows and repository development; do not claim complete multi-page PPT generation before later gates are implemented.
+description: Plan and freeze presentation content, create deterministic low-fidelity Wireframe SVGs, or rebuild a reference image with the reusable PowerPoint runtime. Use for P1/P2 content-to-wireframe workflows and repository development; do not claim complete multi-page PPT generation before later gates are implemented.
 ---
 
 # Content to Editable PPT
 
 ## Development status
 
-The Skill has two independent entry paths. P1 supports routing readable user materials into a confirmed Outline and deterministically frozen per-slide content. The inherited executable Runtime rebuilds reference images as editable single slides. Wireframes, visual design, Deck orchestration, assembly, charts, citations, and presentation-wide review are not yet complete.
+The Skill has two independent entry paths. P1 routes readable user materials into a confirmed Outline and deterministically frozen per-slide content. P2 plans per-slide information regions and renders deterministic low-fidelity SVG Wireframes. The inherited executable Runtime rebuilds reference images as editable single slides. Final visual design, Deck orchestration, assembly, charts, citations, and presentation-wide review are not yet complete.
 
 ## Route content planning
 
@@ -20,6 +20,17 @@ The Skill has two independent entry paths. P1 supports routing readable user mat
 7. Project Approved Slide Content deterministically. Do not call the Host, Layout Planner, or Visual Reviewer after confirmation.
 
 Image-to-Editable-PPT bypasses every P1 Outline stage and continues through the inherited single-slide workflow below.
+
+## Plan Wireframes
+
+1. Continue only from `content_to_ppt + p1_complete`; Image-to-Editable-PPT bypasses P2.
+2. Read [references/wireframe-planning.md](references/wireframe-planning.md).
+3. Freeze structured Layout Requirements and exclude P3-only color, font, texture, illustration, and mood fields.
+4. Produce one Wireframe Spec per Slide ID in a single Host planning pass. Do not copy approved text into the Spec.
+5. Run deterministic Authority, Content Ref, hierarchy, geometry, overlap, and relationship validation.
+6. Apply at most two issue-bound Contract Corrections. Count every actual Host model invocation and never perform an automatic redesign.
+7. Render every accepted page as deterministic SVG. Long text may be truncated only in the visible preview while retaining Content Ref and Authority Hash metadata.
+8. Record `user_visible` or `internal_only`. Pause only when requested; user layout feedback creates a new Wireframe revision, while text feedback returns to P1.
 
 ## Core requirements
 
@@ -83,7 +94,7 @@ Never describe a structural QA pass as final completion. `run_pipeline.py` retur
 
 ## Follow the execution contract
 
-Read [references/task-routing.md](references/task-routing.md), [references/content-planning.md](references/content-planning.md), and [references/outline-contract.md](references/outline-contract.md) for P1 tasks. Do not load reconstruction references until the route actually enters the single-slide Runtime.
+Read [references/task-routing.md](references/task-routing.md), [references/content-planning.md](references/content-planning.md), and [references/outline-contract.md](references/outline-contract.md) for P1 tasks. Read [references/wireframe-planning.md](references/wireframe-planning.md) only after P1 completes. Do not load reconstruction references until the route actually enters the single-slide Runtime.
 
 Read [references/agent-orchestration.md](references/agent-orchestration.md) before invoking or implementing a deterministic command. Follow its path, output, logging, and exit-code rules.
 

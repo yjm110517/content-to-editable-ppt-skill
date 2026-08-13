@@ -29,7 +29,7 @@ class P2ContractsAndStateTests(unittest.TestCase):
         report = {"schema_version": "1.0", "canonicalization_version": "p1-rfc8785-nfc-1", "report_id": "vr1", "deck_id": "D03", "candidate_manifest_sha256": H, "status": "pass", "issues": [], "validated_at_utc": NOW}
         correction = {"schema_version": "1.0", "canonicalization_version": "p1-rfc8785-nfc-1", "correction_id": "c1", "deck_id": "D03", "pass_id": "p1", "attempt": 1, "host_model_invocation_id": "h2", "candidate_manifest_sha256": H, "validation_report_sha256": H, "operations": [{"validation_issue_id": "i1", "slide_id": "S01", "target_type": "region", "target_id": "R1", "field": "bbox", "before": {"x": 0}, "after": {"x": 1}}], "created_at_utc": NOW}
         preview = {"schema_version": "1.0", "canonicalization_version": "p1-rfc8785-nfc-1", "artifact_id": "pv1", "deck_id": "D03", "wireframe_manifest_sha256": H, "mode": "internal_only", "decided_by": "user", "visible_slide_ids": [], "pause_for_feedback": False, "decision_reason": "continue", "user_message_sha256": H, "presented_at_utc": None}
-        feedback = {"schema_version": "1.0", "canonicalization_version": "p1-rfc8785-nfc-1", "feedback_id": "f1", "deck_id": "D03", "wireframe_manifest_sha256": H, "decision": "continue", "affected_slide_ids": [], "user_message_sha256": H, "created_at_utc": NOW}
+        feedback = {"schema_version": "1.1", "canonicalization_version": "p1-rfc8785-nfc-1", "feedback_id": "f1", "deck_id": "D03", "wireframe_manifest_sha256": H, "wireframe_preview_sha256": H, "decision": "continue", "change_scope": "none", "affected_slide_ids": [], "user_message_sha256": H, "created_at_utc": NOW}
         state = initial_state(task_id="t", deck_id="D03", absolute_host_model_invocation_ceiling=6)
         for kind, document in {"wireframe_layout_requirements": layout, "wireframe_spec": spec, "wireframe_manifest": manifest, "wireframe_validation_report": report, "wireframe_correction_record": correction, "wireframe_preview": preview, "wireframe_feedback": feedback, "wireframe_state": state}.items():
             with self.subTest(kind=kind):
@@ -61,7 +61,7 @@ class P2ContractsAndStateTests(unittest.TestCase):
         state = advance(state, event="start_initial_planning", pass_id="initial", host_model_invocation_id="h1", timestamp_utc=NOW)
         for event in ("candidate_specs_ready", "start_spec_validation", "specs_accepted", "start_rendering", "rendering_complete", "preview_recorded", "wait_for_feedback"):
             state = advance(state, event=event, timestamp_utc=NOW)
-        state = advance(state, event="feedback_changes_requested", user_evidence_sha256=H, timestamp_utc=NOW)
+        state = advance(state, event="feedback_changes_requested", user_evidence_sha256=H, affected_slide_ids=["S01"], timestamp_utc=NOW)
         state = advance(state, event="start_revision_planning", pass_id="revision-1", user_evidence_sha256=H, host_model_invocation_id="h2", timestamp_utc=NOW)
         self.assertEqual(state["counters"]["host_wireframe_revision_pass_count"], 1)
         self.assertEqual(state["counters"]["host_model_invocation_count"], 2)

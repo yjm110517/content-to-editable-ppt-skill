@@ -4,9 +4,9 @@
   "title": "P2 Wireframe State",
   "type": "object",
   "additionalProperties": false,
-  "required": ["schema_version", "canonicalization_version", "task_id", "deck_id", "state", "active_pass_id", "budgets", "counters", "current_artifacts", "page_results", "history"],
+  "required": ["schema_version", "canonicalization_version", "task_id", "deck_id", "state", "active_pass_id", "budgets", "counters", "current_artifacts", "changed_slide_ids", "page_results", "history"],
   "properties": {
-    "schema_version": {"const": "1.0"},
+    "schema_version": {"const": "1.1"},
     "canonicalization_version": {"const": "p1-rfc8785-nfc-1"},
     "task_id": {"type": "string", "minLength": 1},
     "deck_id": {"type": "string", "minLength": 1},
@@ -39,16 +39,18 @@
     },
     "current_artifacts": {
       "type": "object", "additionalProperties": false,
-      "required": ["layout_requirements_sha256", "approved_outline_sha256", "slide_content_manifest_sha256", "candidate_manifest_sha256", "wireframe_manifest_sha256", "preview_sha256"],
+      "required": ["layout_requirements_sha256", "approved_outline_sha256", "slide_content_manifest_sha256", "candidate_manifest_sha256", "wireframe_manifest_sha256", "preview_sha256", "feedback_sha256"],
       "properties": {
         "layout_requirements_sha256": {"$ref": "#/$defs/nullable_hash"},
         "approved_outline_sha256": {"$ref": "#/$defs/nullable_hash"},
         "slide_content_manifest_sha256": {"$ref": "#/$defs/nullable_hash"},
         "candidate_manifest_sha256": {"$ref": "#/$defs/nullable_hash"},
         "wireframe_manifest_sha256": {"$ref": "#/$defs/nullable_hash"},
-        "preview_sha256": {"$ref": "#/$defs/nullable_hash"}
+        "preview_sha256": {"$ref": "#/$defs/nullable_hash"},
+        "feedback_sha256": {"$ref": "#/$defs/nullable_hash"}
       }
     },
+    "changed_slide_ids": {"type": "array", "uniqueItems": true, "items": {"type": "string", "minLength": 1}},
     "page_results": {
       "type": "array",
       "items": {
@@ -69,10 +71,10 @@
     "hash": {"type": "string", "pattern": "^[a-f0-9]{64}$"},
     "nullable_hash": {"oneOf": [{"$ref": "#/$defs/hash"}, {"type": "null"}]},
     "timestamp": {"type": "string", "format": "date-time", "pattern": "Z$"},
-    "state": {"enum": ["received", "validating_inputs", "p2_bypassed", "inputs_validated", "wireframe_planning", "candidate_specs_ready", "validating_specs", "contract_correction_required", "applying_contract_correction", "specs_accepted", "rendering", "rendered", "preview_recorded", "awaiting_wireframe_feedback", "revision_requested", "p2_complete", "wireframe_failed"]},
+    "state": {"enum": ["received", "validating_inputs", "p2_bypassed", "inputs_validated", "wireframe_planning", "candidate_specs_ready", "validating_specs", "contract_correction_required", "applying_contract_correction", "specs_accepted", "rendering", "rendered", "preview_recorded", "awaiting_wireframe_feedback", "revision_requested", "p1_revision_required", "p2_complete", "wireframe_failed"]},
     "history": {
       "type": "object", "additionalProperties": false,
-      "required": ["from", "to", "event", "artifact_kind", "artifact_sha256", "user_evidence_sha256", "host_model_invocation_id", "timestamp_utc"],
+      "required": ["from", "to", "event", "artifact_kind", "artifact_sha256", "user_evidence_sha256", "affected_slide_ids", "host_model_invocation_id", "timestamp_utc"],
       "properties": {
         "from": {"$ref": "#/$defs/state"},
         "to": {"$ref": "#/$defs/state"},
@@ -80,6 +82,7 @@
         "artifact_kind": {"type": ["string", "null"]},
         "artifact_sha256": {"$ref": "#/$defs/nullable_hash"},
         "user_evidence_sha256": {"$ref": "#/$defs/nullable_hash"},
+        "affected_slide_ids": {"type": "array", "uniqueItems": true, "items": {"type": "string", "minLength": 1}},
         "host_model_invocation_id": {"type": ["string", "null"]},
         "timestamp_utc": {"$ref": "#/$defs/timestamp"}
       }
