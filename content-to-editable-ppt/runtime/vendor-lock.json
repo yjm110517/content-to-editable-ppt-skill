@@ -1,0 +1,23 @@
+{
+  "schema_version": "1.0",
+  "vendors": {
+    "tabler-icons": {
+      "version": "3.46.0",
+      "tag": "v3.46.0",
+      "commit": "8ac7d81b72ece11072ef25ea9fd92e80c6f3c9fc",
+      "license": "MIT",
+      "license_sha256": "dbfa6cff2e8426878267c6719ff68dcd8bc3dadaffb2207f5c46ce939c4becd3",
+      "aliases_sha256": "cde4704275730617089b82bc194c4c170fff3e328b994b29177cc68f2a74af27",
+      "outline_icon_count": 5130,
+      "outline_tree_sha256": "0c8417c4798cc09cc0dab4ce291e134b43560efdf978e49e680715d75d1e5832",
+      "managed_path": "runtime/vendor/tabler-icons/3.46.0"
+    },
+    "resvg-js": {
+      "package": "@resvg/resvg-js",
+      "version": "2.6.2",
+      "license": "MPL-2.0",
+      "reference_platform": "win32-x64",
+      "status": "declared_for_materialization_pr"
+    }
+  }
+}
