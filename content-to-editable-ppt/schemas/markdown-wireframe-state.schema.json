@@ -1,0 +1,18 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema", "$id": "markdown-wireframe-state.schema.json",
+  "title": "P2 Markdown Wireframe State", "type": "object", "additionalProperties": false,
+  "required": ["schema_version", "canonicalization_version", "artifact_type", "task_id", "deck_id", "state", "active_pass_id", "current_revision", "budgets", "counters", "current_artifacts", "changed_slide_ids", "history"],
+  "properties": {
+    "schema_version": {"const": "1.0"}, "canonicalization_version": {"const": "p1-rfc8785-nfc-1"}, "artifact_type": {"const": "markdown_wireframe_state"},
+    "task_id": {"type": "string", "minLength": 1}, "deck_id": {"type": "string", "minLength": 1}, "state": {"$ref": "#/$defs/state"},
+    "active_pass_id": {"type": ["string", "null"]}, "current_revision": {"type": "integer", "minimum": 0},
+    "budgets": {"type": "object", "additionalProperties": false, "required": ["max_contract_corrections_per_pass", "max_host_invocations_per_pass", "absolute_host_model_invocation_ceiling"],
+      "properties": {"max_contract_corrections_per_pass": {"const": 2}, "max_host_invocations_per_pass": {"const": 3}, "absolute_host_model_invocation_ceiling": {"oneOf": [{"type": "integer", "minimum": 1}, {"type": "null"}]}}},
+    "counters": {"type": "object", "additionalProperties": false, "required": ["host_wireframe_initial_pass_count", "host_wireframe_revision_pass_count", "host_wireframe_contract_correction_count", "host_model_invocation_count", "current_pass_contract_corrections", "current_pass_host_invocations", "automatic_wireframe_redesign_count", "layout_planner_calls", "reviewer_calls", "image_generation_calls"],
+      "properties": {"host_wireframe_initial_pass_count": {"type": "integer", "minimum": 0, "maximum": 1}, "host_wireframe_revision_pass_count": {"type": "integer", "minimum": 0}, "host_wireframe_contract_correction_count": {"type": "integer", "minimum": 0}, "host_model_invocation_count": {"type": "integer", "minimum": 0}, "current_pass_contract_corrections": {"type": "integer", "minimum": 0, "maximum": 2}, "current_pass_host_invocations": {"type": "integer", "minimum": 0, "maximum": 3}, "automatic_wireframe_redesign_count": {"const": 0}, "layout_planner_calls": {"const": 0}, "reviewer_calls": {"const": 0}, "image_generation_calls": {"const": 0}}},
+    "current_artifacts": {"type": "object", "additionalProperties": false, "required": ["approved_outline_sha256", "slide_content_manifest_sha256", "candidate_sha256", "validation_report_sha256", "wireframe_manifest_sha256", "wireframe_sha256", "preview_sha256", "feedback_sha256"],
+      "properties": {"approved_outline_sha256": {"$ref": "#/$defs/nullhash"}, "slide_content_manifest_sha256": {"$ref": "#/$defs/nullhash"}, "candidate_sha256": {"$ref": "#/$defs/nullhash"}, "validation_report_sha256": {"$ref": "#/$defs/nullhash"}, "wireframe_manifest_sha256": {"$ref": "#/$defs/nullhash"}, "wireframe_sha256": {"$ref": "#/$defs/nullhash"}, "preview_sha256": {"$ref": "#/$defs/nullhash"}, "feedback_sha256": {"$ref": "#/$defs/nullhash"}}},
+    "changed_slide_ids": {"type": "array", "uniqueItems": true, "items": {"type": "string", "minLength": 1}}, "history": {"type": "array", "items": {"type": "object"}}
+  }, "$defs": {"hash": {"type": "string", "pattern": "^[a-f0-9]{64}$"}, "nullhash": {"oneOf": [{"$ref": "#/$defs/hash"}, {"type": "null"}]},
+    "state": {"enum": ["received", "inputs_validated", "wireframe_planning", "validating_candidate", "contract_correction_required", "candidate_ready", "ready_for_preview", "awaiting_wireframe_feedback", "revision_requested", "p1_revision_required", "p2_complete", "wireframe_failed"]}}
+}

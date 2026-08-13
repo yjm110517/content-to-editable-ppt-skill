@@ -1,268 +1,118 @@
 from __future__ import annotations
 
-import copy
 import json
+import subprocess
 import sys
 import tempfile
 import unittest
 from pathlib import Path
-from types import SimpleNamespace
 
 
 ROOT = Path(__file__).resolve().parents[2]
-sys.path.insert(0, str(ROOT / "content-to-editable-ppt" / "scripts"))
+SCRIPTS = ROOT / "content-to-editable-ppt" / "scripts"
+sys.path.insert(0, str(SCRIPTS))
 
 from canonical_artifact import canonical_sha256
 from deterministic_project_slide_content import build_projection
-from manage_wireframe import _accept, _feedback, _preview, _projection_bundle, _validate_manifest_authority
-from schema_utils import ContractError
-from wireframe_state import WireframeStateError, advance, initial_state
-from tests.runtime.test_p2_wireframe_rules import approved, requirements, spec
+from markdown_wireframe import build_validation_report, load_markdown_authority
+from tests.runtime.test_p2_markdown_binder import NOW, H, approved, candidate
 
 
-H = "a" * 64
-NOW = "2026-08-11T00:00:00Z"
+class P2MarkdownWorkflowTests(unittest.TestCase):
+    def prepare(self, root: Path) -> dict[str, Path]:
+        outline = approved(); slides, projection = build_projection(outline, frozen_at_utc=NOW)
+        state = {"schema_version": "1.0", "canonicalization_version": "p1-rfc8785-nfc-1", "task_id": "task-1", "deck_id": "D01", "state": "p1_complete", "counters": {"host_planning_pass_count": 1, "host_revision_pass_count": 0, "automatic_regeneration_count": 0, "planner_calls": 0, "reviewer_calls": 0}, "current_artifacts": {"task_route_sha256": None, "materials_sha256": None, "candidate_outline_sha256": None, "confirmation_sha256": None, "approved_outline_sha256": canonical_sha256(outline), "slide_content_manifest_sha256": canonical_sha256(projection)}, "history": []}
+        paths = {"p1": root / "p1.json", "outline": root / "outline.json", "content": root / "content", "candidate": root / "candidate.json", "state": root / "p2-state.json", "wireframes": root / "wireframes", "report": root / "report.json"}
+        paths["content"].mkdir()
+        for slide, item in zip(slides, projection["slides"]):
+            (paths["content"] / item["path"]).write_text(json.dumps(slide, ensure_ascii=False), encoding="utf-8")
+        (paths["content"] / "projection-manifest.json").write_text(json.dumps(projection, ensure_ascii=False), encoding="utf-8")
+        for key, value in (("p1", state), ("outline", outline), ("candidate", candidate())):
+            paths[key].write_text(json.dumps(value, ensure_ascii=False), encoding="utf-8")
+        return paths
 
+    def run_cli(self, *args: object, expect: int = 0) -> dict:
+        result = subprocess.run([sys.executable, str(SCRIPTS / "manage_wireframe.py"), *(str(arg) for arg in args)], capture_output=True, text=True, encoding="utf-8")
+        self.assertEqual(result.returncode, expect, result.stdout + result.stderr)
+        return json.loads(result.stdout)
 
-def rendered_state() -> dict:
-    state = initial_state(task_id="t", deck_id="D", absolute_host_model_invocation_ceiling=6)
-    for event in ("start_input_validation", "inputs_accepted"):
-        state = advance(state, event=event, timestamp_utc=NOW)
-    state = advance(state, event="start_initial_planning", pass_id="p", host_model_invocation_id="h1", timestamp_utc=NOW)
-    for event in ("candidate_specs_ready", "start_spec_validation", "specs_accepted", "start_rendering", "rendering_complete"):
-        state = advance(state, event=event, timestamp_utc=NOW)
-    state["current_artifacts"]["wireframe_manifest_sha256"] = H
-    state["page_results"] = [
-        {"slide_id": "S01", "wireframe_input_sha256": H, "build_status": "rebuilt", "spec_sha256": H, "svg_sha256": H},
-        {"slide_id": "S02", "wireframe_input_sha256": H, "build_status": "rebuilt", "spec_sha256": H, "svg_sha256": H},
-    ]
-    return state
+    def reach_preview(self, paths: dict[str, Path]) -> dict:
+        self.run_cli("init", "--task-id", "task-1", "--p1-state", paths["p1"], "--approved-outline", paths["outline"], "--slide-content-dir", paths["content"], "--wireframe-root", paths["wireframes"], "--state", paths["state"])
+        self.run_cli("submit-candidate", "--state", paths["state"], "--candidate", paths["candidate"], "--approved-outline", paths["outline"], "--slide-content-dir", paths["content"], "--validation-report", paths["report"])
+        result = self.run_cli("bind", "--state", paths["state"], "--candidate", paths["candidate"], "--approved-outline", paths["outline"], "--slide-content-dir", paths["content"], "--wireframe-root", paths["wireframes"])
+        self.assertEqual(result["state"], "ready_for_preview")
+        return json.loads((paths["wireframes"] / "revisions" / "r001" / "preview-manifest.json").read_text(encoding="utf-8"))
 
+    def feedback(self, paths: dict[str, Path], manifest: dict, *, decision: str, scope: str, slides: list[str]) -> Path:
+        state = json.loads(paths["state"].read_text(encoding="utf-8"))
+        document = {"schema_version": "1.0", "canonicalization_version": "p1-rfc8785-nfc-1", "artifact_type": "markdown_wireframe_feedback", "feedback_id": "f1", "deck_id": "D01", "revision": 1, "wireframe_manifest_sha256": canonical_sha256(manifest), "preview_sha256": state["current_artifacts"]["preview_sha256"], "decision": decision, "change_scope": scope, "affected_slide_ids": slides, "user_message_sha256": H, "created_at_utc": NOW}
+        target = paths["wireframes"].parent / "feedback-input.json"; target.write_text(json.dumps(document), encoding="utf-8"); return target
 
-def preview(*, deck_id: str = "D", mode: str = "user_visible", manifest_sha256: str = H) -> dict:
-    internal = mode == "internal_only"
-    return {
-        "schema_version": "1.0", "canonicalization_version": "p1-rfc8785-nfc-1", "artifact_id": "pv",
-        "deck_id": deck_id, "wireframe_manifest_sha256": manifest_sha256, "mode": mode,
-        "decided_by": "host" if internal else "user", "visible_slide_ids": [] if internal else ["S01"],
-        "pause_for_feedback": not internal, "decision_reason": "review", "user_message_sha256": None if internal else H,
-        "presented_at_utc": None if internal else NOW,
-    }
-
-
-def feedback(*, decision: str = "continue", scope: str = "none", slides: list[str] | None = None, deck_id: str = "D", preview_sha256: str = H) -> dict:
-    return {
-        "schema_version": "1.1", "canonicalization_version": "p1-rfc8785-nfc-1", "feedback_id": "f",
-        "deck_id": deck_id, "wireframe_manifest_sha256": H, "wireframe_preview_sha256": preview_sha256,
-        "decision": decision, "change_scope": scope, "affected_slide_ids": list(slides or []),
-        "user_message_sha256": H, "created_at_utc": NOW,
-    }
-
-
-class P2PreviewFeedbackTests(unittest.TestCase):
-    def write(self, path: Path, document: dict) -> None:
-        path.write_text(json.dumps(document), encoding="utf-8")
-
-    def record_preview(self, root: Path, state: dict, document: dict | None = None) -> tuple[Path, dict]:
-        state_path, preview_path = root / "state.json", root / "preview.json"
-        value = document or preview()
-        self.write(state_path, state)
-        self.write(preview_path, value)
-        return state_path, _preview(SimpleNamespace(state=state_path, preview=preview_path))
-
-    def test_user_visible_preview_and_continue_close_loop(self) -> None:
+    def test_user_visible_continue_publishes_current_copy(self) -> None:
         with tempfile.TemporaryDirectory() as temporary:
-            root = Path(temporary)
-            state_path, state = self.record_preview(root, rendered_state())
-            self.assertEqual(state["state"], "awaiting_wireframe_feedback")
-            self.assertEqual(state["current_artifacts"]["preview_sha256"], canonical_sha256(preview()))
-            feedback_path = root / "feedback.json"
-            self.write(feedback_path, feedback(preview_sha256=canonical_sha256(preview())))
-            state = _feedback(SimpleNamespace(state=state_path, feedback=feedback_path))
-            self.assertEqual(state["state"], "p2_complete")
-            self.assertEqual(state["changed_slide_ids"], [])
+            paths = self.prepare(Path(temporary)); manifest = self.reach_preview(paths)
+            self.run_cli("record-preview", "--state", paths["state"], "--wireframe-root", paths["wireframes"], "--mode", "user_visible", "--user-message-sha256", H)
+            feedback = self.feedback(paths, manifest, decision="continue", scope="none", slides=[])
+            result = self.run_cli("record-feedback", "--state", paths["state"], "--wireframe-root", paths["wireframes"], "--feedback", feedback)
+            self.assertEqual(result["state"], "p2_complete")
+            self.assertTrue((paths["wireframes"] / "deck-wireframe.md").is_file())
+            self.run_cli("verify", "--state", paths["state"], "--approved-outline", paths["outline"], "--slide-content-dir", paths["content"], "--wireframe-root", paths["wireframes"])
+            accepted = paths["wireframes"] / "revisions" / "r001" / "wireframe-manifest.json"
+            top = paths["wireframes"] / "wireframe-manifest.json"
+            self.assertEqual(accepted.read_bytes(), top.read_bytes())
 
-    def test_internal_preview_completes_without_feedback(self) -> None:
+    def test_skip_requires_message_and_completes_without_feedback(self) -> None:
         with tempfile.TemporaryDirectory() as temporary:
-            _, state = self.record_preview(Path(temporary), rendered_state(), preview(mode="internal_only"))
-            self.assertEqual(state["state"], "p2_complete")
+            paths = self.prepare(Path(temporary)); self.reach_preview(paths)
+            result = self.run_cli("record-preview", "--state", paths["state"], "--wireframe-root", paths["wireframes"], "--mode", "skipped", "--user-message-sha256", H)
+            self.assertEqual(result["state"], "p2_complete")
 
     def test_layout_and_content_feedback_route_separately(self) -> None:
         for scope, expected in (("layout", "revision_requested"), ("content", "p1_revision_required")):
             with self.subTest(scope=scope), tempfile.TemporaryDirectory() as temporary:
-                root = Path(temporary)
-                state_path, before = self.record_preview(root, rendered_state())
-                feedback_path = root / "feedback.json"
-                self.write(feedback_path, feedback(decision="changes_requested", scope=scope, slides=["S02"], preview_sha256=before["current_artifacts"]["preview_sha256"]))
-                after = _feedback(SimpleNamespace(state=state_path, feedback=feedback_path))
-                self.assertEqual(after["state"], expected)
-                self.assertEqual(after["changed_slide_ids"], ["S02"])
-                self.assertEqual(after["counters"]["host_model_invocation_count"], 1)
-                if scope == "content":
-                    with self.assertRaises(WireframeStateError):
-                        advance(after, event="start_revision_planning", pass_id="p2", user_evidence_sha256=H, host_model_invocation_id="h2")
+                paths = self.prepare(Path(temporary)); manifest = self.reach_preview(paths)
+                self.run_cli("record-preview", "--state", paths["state"], "--wireframe-root", paths["wireframes"], "--mode", "user_visible", "--user-message-sha256", H)
+                feedback = self.feedback(paths, manifest, decision="changes_requested", scope=scope, slides=["S01"])
+                result = self.run_cli("record-feedback", "--state", paths["state"], "--wireframe-root", paths["wireframes"], "--feedback", feedback)
+                self.assertEqual(result["state"], expected)
 
-    def test_cross_deck_stale_unknown_and_replayed_inputs_preserve_state(self) -> None:
-        bad_previews = (preview(deck_id="OTHER"), preview(manifest_sha256="b" * 64), {**preview(), "visible_slide_ids": ["S99"]})
-        for document in bad_previews:
-            with self.subTest(preview=document), tempfile.TemporaryDirectory() as temporary:
-                root = Path(temporary)
-                state_path, preview_path = root / "state.json", root / "preview.json"
-                self.write(state_path, rendered_state()); self.write(preview_path, document)
-                before = state_path.read_bytes()
-                with self.assertRaises((ContractError, WireframeStateError)):
-                    _preview(SimpleNamespace(state=state_path, preview=preview_path))
-                self.assertEqual(state_path.read_bytes(), before)
-
+    def test_stale_feedback_and_authority_tamper_preserve_state(self) -> None:
         with tempfile.TemporaryDirectory() as temporary:
-            root = Path(temporary)
-            state_path, waiting = self.record_preview(root, rendered_state())
-            current_preview = waiting["current_artifacts"]["preview_sha256"]
-            bad_feedback = (
-                feedback(deck_id="OTHER", preview_sha256=current_preview),
-                {**feedback(preview_sha256=current_preview), "wireframe_manifest_sha256": "b" * 64},
-                feedback(preview_sha256="b" * 64),
-                feedback(decision="changes_requested", scope="layout", slides=["S99"], preview_sha256=current_preview),
-            )
-            for index, document in enumerate(bad_feedback):
-                feedback_path = root / f"feedback-{index}.json"
-                self.write(feedback_path, document)
-                before = state_path.read_bytes()
-                with self.assertRaises((ContractError, WireframeStateError)):
-                    _feedback(SimpleNamespace(state=state_path, feedback=feedback_path))
-                self.assertEqual(state_path.read_bytes(), before)
+            paths = self.prepare(Path(temporary)); manifest = self.reach_preview(paths)
+            self.run_cli("record-preview", "--state", paths["state"], "--wireframe-root", paths["wireframes"], "--mode", "user_visible", "--user-message-sha256", H)
+            feedback_path = self.feedback(paths, manifest, decision="continue", scope="none", slides=[])
+            feedback = json.loads(feedback_path.read_text()); feedback["preview_sha256"] = "b" * 64; feedback_path.write_text(json.dumps(feedback))
+            before = paths["state"].read_bytes()
+            self.run_cli("record-feedback", "--state", paths["state"], "--wireframe-root", paths["wireframes"], "--feedback", feedback_path, expect=4)
+            self.assertEqual(before, paths["state"].read_bytes())
+            outline = json.loads(paths["outline"].read_text(encoding="utf-8")); outline["artifact_id"] = "tampered"; paths["outline"].write_text(json.dumps(outline))
+            self.run_cli("verify", "--state", paths["state"], "--approved-outline", paths["outline"], "--slide-content-dir", paths["content"], "--wireframe-root", paths["wireframes"], expect=4)
 
-            valid_path = root / "feedback-valid.json"
-            self.write(valid_path, feedback(preview_sha256=current_preview))
-            _feedback(SimpleNamespace(state=state_path, feedback=valid_path))
-            consumed = state_path.read_bytes()
-            with self.assertRaises(WireframeStateError):
-                _feedback(SimpleNamespace(state=state_path, feedback=valid_path))
-            self.assertEqual(state_path.read_bytes(), consumed)
-
-    def test_invalid_scope_combinations_are_rejected(self) -> None:
-        documents = (
-            feedback(decision="continue", scope="layout", slides=[]),
-            feedback(decision="changes_requested", scope="none", slides=["S01"]),
-            feedback(decision="changes_requested", scope="layout", slides=[]),
-        )
-        for document in documents:
-            with self.subTest(document=document), tempfile.TemporaryDirectory() as temporary:
-                root = Path(temporary)
-                state_path, waiting = self.record_preview(root, rendered_state())
-                document["wireframe_preview_sha256"] = waiting["current_artifacts"]["preview_sha256"]
-                path = root / "feedback.json"; self.write(path, document)
-                before = state_path.read_bytes()
-                with self.assertRaises(ContractError):
-                    _feedback(SimpleNamespace(state=state_path, feedback=path))
-                self.assertEqual(state_path.read_bytes(), before)
-
-    def test_accept_specs_binds_actual_outline_and_layout_before_writes(self) -> None:
+    def test_revision_artifacts_refuse_overwrite(self) -> None:
         with tempfile.TemporaryDirectory() as temporary:
-            root = Path(temporary)
-            outline, layout = approved(), requirements()
-            state = initial_state(task_id="t", deck_id="D")
-            for event in ("start_input_validation", "inputs_accepted"):
-                state = advance(state, event=event, timestamp_utc=NOW)
-            state = advance(state, event="start_initial_planning", pass_id="p", host_model_invocation_id="h1", timestamp_utc=NOW)
-            for event in ("candidate_specs_ready", "start_spec_validation", "specs_accepted"):
-                state = advance(state, event=event, timestamp_utc=NOW)
-            state["current_artifacts"]["approved_outline_sha256"] = canonical_sha256(outline)
-            state["current_artifacts"]["layout_requirements_sha256"] = canonical_sha256(layout)
-            state["current_artifacts"]["slide_content_manifest_sha256"] = H
-            state_path, outline_path, layout_path = root / "state.json", root / "outline.json", root / "layout.json"
-            spec_dir, output = root / "specs", root / "manifest.json"
-            spec_dir.mkdir()
-            self.write(state_path, state); self.write(outline_path, outline); self.write(layout_path, layout); self.write(spec_dir / "S01-r001.json", spec())
-            args = SimpleNamespace(state=state_path, spec_dir=spec_dir, approved_outline=outline_path, layout_requirements=layout_path, output_ratio="16:9", manifest_output=output, artifact_id="m", revision=1, previous_manifest=None, timestamp_utc=NOW)
-            _accept(args)
-            self.assertTrue(output.is_file())
+            paths = self.prepare(Path(temporary)); self.reach_preview(paths); before = paths["state"].read_bytes()
+            self.run_cli("bind", "--state", paths["state"], "--candidate", paths["candidate"], "--approved-outline", paths["outline"], "--slide-content-dir", paths["content"], "--wireframe-root", paths["wireframes"], expect=4)
+            self.assertEqual(before, paths["state"].read_bytes())
 
-            for path, document in (
-                (outline_path, {**outline, "artifact_id": "tampered"}),
-                (layout_path, {**layout, "artifact_id": "tampered"}),
-            ):
-                with self.subTest(path=path.name):
-                    self.write(outline_path, outline); self.write(layout_path, layout); output.unlink(missing_ok=True)
-                    self.write(path, document)
-                    state_before = state_path.read_bytes()
-                    with self.assertRaises(ContractError):
-                        _accept(args)
-                    self.assertFalse(output.exists())
-                    self.assertEqual(state_path.read_bytes(), state_before)
-
-    def test_manifest_authority_tampering_is_rejected(self) -> None:
-        state = initial_state(task_id="t", deck_id="D")
-        state["current_artifacts"].update({
-            "approved_outline_sha256": "a" * 64,
-            "slide_content_manifest_sha256": "b" * 64,
-            "layout_requirements_sha256": "c" * 64,
-        })
-        manifest = {
-            "approved_outline_sha256": "a" * 64,
-            "slide_content_manifest_sha256": "b" * 64,
-            "layout_requirements_sha256": "c" * 64,
-        }
-        _validate_manifest_authority(state, manifest)
-        for field in manifest:
-            with self.subTest(field=field):
-                tampered = {**manifest, field: "d" * 64}
-                with self.assertRaises(ContractError) as caught:
-                    _validate_manifest_authority(state, tampered)
-                self.assertIn("authority_hash_mismatch", {item["code"] for item in caught.exception.errors})
-
-    def test_accept_specs_consumes_exact_feedback_scope(self) -> None:
+    def test_correction_requires_issue_binding_before_value_and_budget(self) -> None:
         with tempfile.TemporaryDirectory() as temporary:
-            root = Path(temporary)
-            outline, layout = approved(), requirements()
-            state = initial_state(task_id="t", deck_id="D")
-            for event in ("start_input_validation", "inputs_accepted"):
-                state = advance(state, event=event, timestamp_utc=NOW)
-            state = advance(state, event="start_initial_planning", pass_id="p", host_model_invocation_id="h1", timestamp_utc=NOW)
-            for event in ("candidate_specs_ready", "start_spec_validation", "specs_accepted"):
-                state = advance(state, event=event, timestamp_utc=NOW)
-            state["current_artifacts"].update({"approved_outline_sha256": canonical_sha256(outline), "layout_requirements_sha256": canonical_sha256(layout), "slide_content_manifest_sha256": H})
-            state["changed_slide_ids"] = ["S01"]
-            state_path, outline_path, layout_path = root / "state.json", root / "outline.json", root / "layout.json"
-            spec_dir, output = root / "specs", root / "manifest.json"
-            spec_dir.mkdir()
-            self.write(state_path, state); self.write(outline_path, outline); self.write(layout_path, layout); self.write(spec_dir / "S01-r001.json", spec())
-            base = dict(state=state_path, spec_dir=spec_dir, approved_outline=outline_path, layout_requirements=layout_path, output_ratio="16:9", manifest_output=output, artifact_id="m", revision=1, previous_manifest=None, timestamp_utc=NOW)
-            for changed in ([], ["S99"], ["S01", "S01"]):
-                with self.subTest(changed=changed):
-                    before = state_path.read_bytes()
-                    with self.assertRaises(ContractError):
-                        _accept(SimpleNamespace(**base, changed_slide_id=changed))
-                    self.assertEqual(state_path.read_bytes(), before)
-                    self.assertFalse(output.exists())
-            next_state, _ = _accept(SimpleNamespace(**base, changed_slide_id=["S01"]))
-            self.assertEqual(next_state["changed_slide_ids"], [])
-
-    def test_projection_bundle_binds_actual_manifest_and_slide_content(self) -> None:
-        with tempfile.TemporaryDirectory() as temporary:
-            root = Path(temporary)
-            slides, manifest = build_projection(approved(), frozen_at_utc=NOW)
-            content_dir = root / "content"; content_dir.mkdir()
-            for slide, item in zip(slides, manifest["slides"]):
-                self.write(content_dir / item["path"], slide)
-            manifest_path = content_dir / "projection-manifest.json"
-            self.write(manifest_path, manifest)
-            state = initial_state(task_id="t", deck_id="D")
-            state["current_artifacts"]["slide_content_manifest_sha256"] = canonical_sha256(manifest)
-            _, paths = _projection_bundle(state, content_dir)
-            self.assertEqual(set(paths), {"S01"})
-
-            tampered = copy.deepcopy(manifest); tampered["revision"] = 2
-            self.write(manifest_path, tampered)
-            with self.assertRaises(ContractError):
-                _projection_bundle(state, content_dir)
-
-            self.write(manifest_path, manifest)
-            slide_path = content_dir / manifest["slides"][0]["path"]
-            changed = json.loads(slide_path.read_text(encoding="utf-8")); changed["artifact_id"] = "tampered"
-            self.write(slide_path, changed)
-            with self.assertRaises(ContractError):
-                _projection_bundle(state, content_dir)
+            paths = self.prepare(Path(temporary))
+            self.run_cli("init", "--task-id", "task-1", "--p1-state", paths["p1"], "--approved-outline", paths["outline"], "--slide-content-dir", paths["content"], "--wireframe-root", paths["wireframes"], "--state", paths["state"])
+            invalid = candidate(); invalid["slides"][0]["content_labels"][1]["label"] = "错误标签"
+            paths["candidate"].write_text(json.dumps(invalid, ensure_ascii=False), encoding="utf-8")
+            result = self.run_cli("submit-candidate", "--state", paths["state"], "--candidate", paths["candidate"], "--approved-outline", paths["outline"], "--slide-content-dir", paths["content"], "--validation-report", paths["report"])
+            self.assertEqual(result["validation_status"], "correctable")
+            report = json.loads(paths["report"].read_text(encoding="utf-8")); issue = next(item for item in report["issues"] if item["code"] == "label_not_authority_substring")
+            correction = {"schema_version": "1.0", "canonicalization_version": "p1-rfc8785-nfc-1", "artifact_type": "markdown_wireframe_correction_record", "correction_id": "c1", "deck_id": "D01", "attempt": 1, "host_model_invocation_id": "h2", "candidate_sha256": canonical_sha256(invalid), "validation_report_sha256": canonical_sha256(report), "operations": [{"op": "replace", "validation_issue_id": issue["issue_id"], "path": "/slides/0/content_labels/1/label", "before": "错误标签", "after": "即时反馈"}], "created_at_utc": NOW}
+            correction_path, output = Path(temporary) / "correction.json", Path(temporary) / "corrected.json"
+            correction_path.write_text(json.dumps(correction, ensure_ascii=False), encoding="utf-8")
+            self.run_cli("apply-correction", "--state", paths["state"], "--candidate", paths["candidate"], "--validation-report", paths["report"], "--correction", correction_path, "--output", output)
+            self.assertEqual(json.loads(output.read_text(encoding="utf-8"))["slides"][0]["content_labels"][1]["label"], "即时反馈")
+            stale = dict(correction); stale["correction_id"] = "c2"; stale["host_model_invocation_id"] = "h3"; stale["operations"] = [dict(correction["operations"][0], before="其他")]
+            stale_path = Path(temporary) / "stale.json"; stale_path.write_text(json.dumps(stale, ensure_ascii=False), encoding="utf-8")
+            before_state = paths["state"].read_bytes()
+            self.run_cli("apply-correction", "--state", paths["state"], "--candidate", paths["candidate"], "--validation-report", paths["report"], "--correction", stale_path, "--output", Path(temporary) / "bad.json", expect=4)
+            self.assertEqual(before_state, paths["state"].read_bytes())
 
 
 if __name__ == "__main__":

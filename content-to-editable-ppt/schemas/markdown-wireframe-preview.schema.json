@@ -1,0 +1,12 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema", "$id": "markdown-wireframe-preview.schema.json",
+  "title": "P2 Markdown Wireframe Preview", "type": "object", "additionalProperties": false,
+  "required": ["schema_version", "canonicalization_version", "artifact_type", "preview_id", "deck_id", "revision", "wireframe_manifest_sha256", "mode", "visible_slide_ids", "pause_for_feedback", "user_message_sha256", "created_at_utc"],
+  "properties": {
+    "schema_version": {"const": "1.0"}, "canonicalization_version": {"const": "p1-rfc8785-nfc-1"}, "artifact_type": {"const": "markdown_wireframe_preview"},
+    "preview_id": {"type": "string", "minLength": 1}, "deck_id": {"type": "string", "minLength": 1}, "revision": {"type": "integer", "minimum": 1},
+    "wireframe_manifest_sha256": {"$ref": "#/$defs/hash"}, "mode": {"enum": ["user_visible", "skipped"]},
+    "visible_slide_ids": {"type": "array", "uniqueItems": true, "items": {"type": "string", "minLength": 1}}, "pause_for_feedback": {"type": "boolean"},
+    "user_message_sha256": {"$ref": "#/$defs/hash"}, "created_at_utc": {"$ref": "#/$defs/time"}
+  }, "$defs": {"hash": {"type": "string", "pattern": "^[a-f0-9]{64}$"}, "time": {"type": "string", "format": "date-time", "pattern": "Z$"}}
+}

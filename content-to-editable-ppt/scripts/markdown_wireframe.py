@@ -44,22 +44,27 @@ def authority_items(slide: dict[str, Any]) -> list[dict[str, Any]]:
 
 
 def load_markdown_authority(
-    *, p1_state_path: Path, approved_outline_path: Path, slide_content_dir: Path
+    *, approved_outline_path: Path, slide_content_dir: Path, p1_state_path: Path | None = None,
+    frozen_outline_sha256: str | None = None, frozen_manifest_sha256: str | None = None,
+    expected_deck_id: str | None = None,
 ) -> dict[str, Any]:
-    p1_state = load_json(p1_state_path)
     approved = load_json(approved_outline_path)
-    validate_schema("content_plan_state", p1_state, SCHEMA_DIR)
     validate_schema("approved_outline", approved, SCHEMA_DIR)
     failures: list[dict[str, str]] = []
-    if p1_state["state"] != "p1_complete":
-        failures.append(error("$.p1_state.state", "P2 requires p1_complete", "p1_not_complete"))
-    if p1_state["deck_id"] != approved["deck_id"]:
+    p1_state = load_json(p1_state_path) if p1_state_path else None
+    if p1_state is not None:
+        validate_schema("content_plan_state", p1_state, SCHEMA_DIR)
+        if p1_state["state"] != "p1_complete":
+            failures.append(error("$.p1_state.state", "P2 requires p1_complete", "p1_not_complete"))
+        frozen_outline_sha256 = p1_state["current_artifacts"].get("approved_outline_sha256")
+        frozen_manifest_sha256 = p1_state["current_artifacts"].get("slide_content_manifest_sha256")
+        expected_deck_id = p1_state["deck_id"]
+    if expected_deck_id != approved["deck_id"]:
         failures.append(error("$.approved_outline.deck_id", "Authority Bundle deck_id mismatch", "deck_mismatch"))
     outline_sha = canonical_sha256(approved)
-    frozen_outline = p1_state["current_artifacts"].get("approved_outline_sha256")
-    if frozen_outline is None:
+    if frozen_outline_sha256 is None:
         failures.append(error("$.p1_state.current_artifacts.approved_outline_sha256", "P1 State has no frozen Approved Outline", "missing_authority"))
-    elif frozen_outline != outline_sha:
+    elif frozen_outline_sha256 != outline_sha:
         failures.append(error("$.p1_state.current_artifacts.approved_outline_sha256", "Approved Outline does not match P1 State", "authority_hash_mismatch"))
 
     projection_path = slide_content_dir / "projection-manifest.json"
@@ -71,10 +76,9 @@ def load_markdown_authority(
     contents: dict[str, dict[str, Any]] = {}
     if projection is not None:
         actual_projection = canonical_sha256(projection)
-        frozen_projection = p1_state["current_artifacts"].get("slide_content_manifest_sha256")
-        if frozen_projection is None:
+        if frozen_manifest_sha256 is None:
             failures.append(error("$.p1_state.current_artifacts.slide_content_manifest_sha256", "P1 State has no frozen Projection Manifest", "missing_authority"))
-        elif frozen_projection != actual_projection:
+        elif frozen_manifest_sha256 != actual_projection:
             failures.append(error("$.p1_state.current_artifacts.slide_content_manifest_sha256", "Projection Manifest does not match P1 State", "authority_hash_mismatch"))
         if projection.get("deck_id") != approved["deck_id"] or projection.get("approved_outline_sha256") != outline_sha:
             failures.append(error("$.slide_content_manifest", "Projection Manifest does not bind Approved Outline", "authority_hash_mismatch"))
