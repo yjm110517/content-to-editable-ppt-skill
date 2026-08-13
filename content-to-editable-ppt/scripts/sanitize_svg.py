@@ -187,6 +187,8 @@ def sanitize_manifest(args: argparse.Namespace) -> dict[str, Any]:
                 os.replace(spec["staged"], spec["destination"])
                 committed.append(spec["destination"])
                 spec["item"].update({"path": spec["result"]["output_path"], "width_px": spec["result"]["width_px"], "height_px": spec["result"]["height_px"], "size_bytes": spec["destination"].stat().st_size, "sha256": spec["result"]["sanitized_sha256"], "view_box": spec["result"]["view_box"], "security_status": "passed"})
+                if manifest.get("schema_version") == "1.4" and "provenance" in spec["item"]:
+                    spec["item"]["provenance"]["sanitized_svg_sha256"] = spec["result"]["sanitized_sha256"]
             atomic_write_json(args.asset_manifest, manifest)
             atomic_write_json(args.report, report)
         except Exception:

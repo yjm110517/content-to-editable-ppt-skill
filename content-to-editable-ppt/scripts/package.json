@@ -11,6 +11,7 @@
     "versions": "node --version && pnpm --version && pnpm list --depth 0"
   },
   "dependencies": {
+    "@resvg/resvg-js": "2.6.2",
     "jszip": "3.10.1",
     "pptxgenjs": "4.0.1"
   }

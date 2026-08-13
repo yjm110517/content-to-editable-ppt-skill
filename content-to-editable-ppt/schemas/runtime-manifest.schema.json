@@ -6,7 +6,7 @@
   "additionalProperties": false,
   "required": ["schema_version", "runtime_status", "platform", "python", "node", "powerpoint", "capabilities", "checked_at_utc"],
   "properties": {
-    "schema_version": {"const": "1.0"},
+    "schema_version": {"enum": ["1.0", "1.1"]},
     "runtime_status": {"enum": ["ready", "environment_failure"]},
     "platform": {
       "type": "object",
@@ -43,8 +43,25 @@
       }
     },
     "failure": {"oneOf": [{"$ref": "runtime-error.schema.json"}, {"type": "null"}]},
+    "tools": {
+      "type": "object", "additionalProperties": false,
+      "required": ["svg_rasterizer"],
+      "properties": {
+        "svg_rasterizer": {
+          "type": "object", "additionalProperties": false,
+          "required": ["package", "version", "available", "platform"],
+          "properties": {
+            "package": {"const": "@resvg/resvg-js"},
+            "version": {"oneOf": [{"const": "2.6.2"}, {"type": "null"}]},
+            "available": {"type": "boolean"},
+            "platform": {"type": "string", "minLength": 1}
+          }
+        }
+      }
+    },
     "checked_at_utc": {"type": "string", "format": "date-time"}
   },
+  "allOf": [{"if": {"properties": {"schema_version": {"const": "1.1"}}}, "then": {"required": ["tools"]}, "else": {"not": {"required": ["tools"]}}}],
   "$defs": {
     "runtime": {
       "type": "object",

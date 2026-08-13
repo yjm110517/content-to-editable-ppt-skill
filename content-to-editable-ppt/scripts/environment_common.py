@@ -131,10 +131,16 @@ def write_json(path: Path, document: dict[str, Any]) -> None:
 
 def validate_manifest_shape(manifest: dict[str, Any]) -> None:
     required = {"schema_version", "runtime_status", "platform", "python", "node", "powerpoint", "capabilities", "failure", "checked_at_utc"}
+    if manifest.get("schema_version") == "1.1":
+        required.add("tools")
     if set(manifest) != required:
         raise ValueError("runtime manifest fields do not match the 1.0 contract")
-    if manifest["schema_version"] != "1.0" or manifest["runtime_status"] not in {"ready", "environment_failure"}:
+    if manifest["schema_version"] not in {"1.0", "1.1"} or manifest["runtime_status"] not in {"ready", "environment_failure"}:
         raise ValueError("runtime manifest status is invalid")
+    if manifest["schema_version"] == "1.1":
+        rasterizer = manifest["tools"].get("svg_rasterizer", {})
+        if rasterizer.get("package") != "@resvg/resvg-js" or rasterizer.get("version") not in {"2.6.2", None}:
+            raise ValueError("runtime manifest SVG rasterizer is invalid")
     for name in ("python", "node"):
         executable = manifest[name]["executable"]
         if executable is not None and not executable.startswith("${NORMALIZED_RUNTIME_PATH}/"):

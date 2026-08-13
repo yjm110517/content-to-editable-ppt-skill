@@ -48,7 +48,8 @@
         "properties": {
           "asset_id": {"type": "string"},
           "type": {"enum": ["png", "jpeg", "svg"]},
-          "sha256": {"type": "string", "pattern": "^[a-f0-9]{64}$"}
+          "sha256": {"type": "string", "pattern": "^[a-f0-9]{64}$"},
+          "source_input_sha256": {"type": "string", "pattern": "^[a-f0-9]{64}$"}
         }
       }
     },

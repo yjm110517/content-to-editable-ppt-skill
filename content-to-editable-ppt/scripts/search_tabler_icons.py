@@ -13,7 +13,7 @@ def normalize(value: str) -> str:
     return "-".join(part for part in re.split(r"[^a-z0-9]+", value) if part)
 
 
-def rank(index: dict, query: str, top_k: int = 8) -> dict:
+def rank(index: dict, query: str, top_k: int = 8, *, visual_ref: str | None = None, p2_manifest_sha256: str | None = None) -> dict:
     query_key = normalize(query)
     if not query_key:
         raise ValueError("query must contain searchable ASCII terms")
@@ -36,7 +36,18 @@ def rank(index: dict, query: str, top_k: int = 8) -> dict:
     selected = results[:top_k]
     automatic = [item for item in selected if item["evidence"]["exact_canonical"] or item["evidence"]["exact_official_alias"]]
     status = "auto_selected" if len(automatic) == 1 else "host_selection_required"
-    return {"query": query, "normalized_query": query_key, "status": status, "automatic_icon_name": automatic[0]["name"] if status == "auto_selected" else None, "top_k": selected}
+    result = {"query": query, "normalized_query": query_key, "status": status, "automatic_icon_name": automatic[0]["name"] if status == "auto_selected" else None, "top_k": selected}
+    if visual_ref is not None or p2_manifest_sha256 is not None:
+        if not visual_ref or not p2_manifest_sha256:
+            raise ValueError("visual_ref and p2_manifest_sha256 must be supplied together")
+        result = {
+            "schema_version": "1.0",
+            "artifact_type": "icon_search_evidence",
+            "visual_ref": visual_ref,
+            "p2_manifest_sha256": p2_manifest_sha256,
+            **result,
+        }
+    return result
 
 
 def main() -> int:
@@ -44,11 +55,19 @@ def main() -> int:
     parser.add_argument("--index", type=Path, required=True)
     parser.add_argument("--query", required=True)
     parser.add_argument("--top-k", type=int, default=8)
+    parser.add_argument("--visual-ref", required=True)
+    parser.add_argument("--p2-manifest-sha256", required=True)
     parser.add_argument("--output", type=Path)
     args = parser.parse_args()
     if not 1 <= args.top_k <= 50:
         parser.error("--top-k must be between 1 and 50")
-    result = rank(json.loads(args.index.read_text(encoding="utf-8")), args.query, args.top_k)
+    result = rank(
+        json.loads(args.index.read_text(encoding="utf-8")),
+        args.query,
+        args.top_k,
+        visual_ref=args.visual_ref,
+        p2_manifest_sha256=args.p2_manifest_sha256,
+    )
     encoded = json.dumps(result, ensure_ascii=False, sort_keys=True, separators=(",", ":")) + "\n"
     if args.output:
         args.output.parent.mkdir(parents=True, exist_ok=True)
