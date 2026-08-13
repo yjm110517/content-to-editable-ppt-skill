@@ -52,14 +52,7 @@ SCHEMA_FILES = {
     "markdown_wireframe_preview": "markdown-wireframe-preview.schema.json",
     "markdown_wireframe_feedback": "markdown-wireframe-feedback.schema.json",
     "markdown_wireframe_state": "markdown-wireframe-state.schema.json",
-    "wireframe_layout_requirements": "wireframe-layout-requirements.schema.json",
-    "wireframe_spec": "wireframe-spec.schema.json",
-    "wireframe_manifest": "wireframe-manifest.schema.json",
-    "wireframe_validation_report": "wireframe-validation-report.schema.json",
-    "wireframe_correction_record": "wireframe-correction-record.schema.json",
-    "wireframe_preview": "wireframe-preview.schema.json",
-    "wireframe_feedback": "wireframe-feedback.schema.json",
-    "wireframe_state": "wireframe-state.schema.json",
+    "markdown_wireframe_host_call_record": "markdown-wireframe-host-call-record.schema.json",
 }
 
 SUPPORTED_SCHEMA_VERSIONS = {
@@ -86,14 +79,7 @@ SUPPORTED_SCHEMA_VERSIONS = {
     "markdown_wireframe_preview": {"1.0"},
     "markdown_wireframe_feedback": {"1.0"},
     "markdown_wireframe_state": {"1.0"},
-    "wireframe_layout_requirements": {"1.0"},
-    "wireframe_spec": {"1.0"},
-    "wireframe_manifest": {"1.0"},
-    "wireframe_validation_report": {"1.0"},
-    "wireframe_correction_record": {"1.0"},
-    "wireframe_preview": {"1.0"},
-    "wireframe_feedback": {"1.1"},
-    "wireframe_state": {"1.1"},
+    "markdown_wireframe_host_call_record": {"1.0"},
 }
 
 

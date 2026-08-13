@@ -1,0 +1,8 @@
+{
+  "role": "host_wireframe",
+  "role_version": "1.0.0",
+  "mode": "single_initial_pass",
+  "max_contract_corrections": 2,
+  "automatic_redesign": false,
+  "specialist_agent_calls": 0
+}

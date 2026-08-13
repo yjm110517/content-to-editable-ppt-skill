@@ -1,0 +1,25 @@
+{
+  "schema_version": "1.0",
+  "phase": "P2-markdown",
+  "status": "pass",
+  "integration_gate_candidate": "pass",
+  "cases": [
+    {"case_id": "D03", "status": "pass", "pages": 3, "authority_drift": 0, "missing_or_unknown_content_refs": 0, "host_model_invocations": 1, "contract_corrections": 0, "wireframe_sha256": "52f4b660f763eaf7fb5222f1e1450a0a5736354c8fd692e6dfdf23efbf5933ae"},
+    {"case_id": "D05", "status": "pass", "pages": 5, "authority_drift": 0, "missing_or_unknown_content_refs": 0, "host_model_invocations": 0, "contract_corrections": 0, "wireframe_sha256": "0ec98483c31184951b6a90a09f27f864b3b0bffbe82d0dff3b4bc4e8f0f458c0"},
+    {"case_id": "D08", "status": "pass", "pages": 8, "authority_drift": 0, "missing_or_unknown_content_refs": 0, "host_model_invocations": 0, "contract_corrections": 0, "wireframe_sha256": "52118031f5862dd3dc9114f64432b840f7b1103bf0d6bf9f5d2ff10e012cbd7e"}
+  ],
+  "blocking_issues": 0,
+  "authority_drift": 0,
+  "missing_or_unknown_content_refs": 0,
+  "formal_p2_svg_generation": 0,
+  "automatic_redesign": 0,
+  "specialist_agent_calls": 0,
+  "review_run": {"live_host_model_invocations": 0, "planner_calls": 0, "reviewer_calls": 0, "image_generation_calls": 0},
+  "recorded_d03_host_model_invocations": 1,
+  "p0_baseline_unchanged": true,
+  "d03_host_call_evidence": {
+    "status": "pass",
+    "host_model_invocations": 1,
+    "candidate_sha256": "1dea1397c155a5587f416a3deedec24027837d816024078e0456d6a3702f55dc"
+  }
+}
