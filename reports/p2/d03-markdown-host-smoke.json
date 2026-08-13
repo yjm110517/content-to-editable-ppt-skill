@@ -1,0 +1,13 @@
+{
+  "schema_version": "1.0",
+  "case_id": "D03",
+  "mode": "captured_live_host_initial",
+  "host_model_invocations": 1,
+  "contract_corrections": 0,
+  "automatic_redesign": 0,
+  "planner_calls": 0,
+  "reviewer_calls": 0,
+  "image_generation_calls": 0,
+  "candidate_artifact_id": "D03-markdown-wireframe-r1",
+  "status": "captured"
+}

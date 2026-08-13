@@ -1,13 +1,13 @@
 ---
 name: content-to-editable-ppt
-description: Plan and freeze presentation content or rebuild a reference image with the reusable PowerPoint runtime. Use for P1 content planning, repository development, and image-to-editable single-slide reconstruction. The Markdown Wireframe P2 is being realigned and is not yet executable; do not run the legacy SVG P2 path or claim complete multi-page PPT generation.
+description: Plan and freeze presentation content, generate model-authored Markdown wireframes, or rebuild a reference image with the reusable PowerPoint runtime. Use for P1 content planning, P2 text wireframes, repository development, and image-to-editable single-slide reconstruction. Final visual design and complete multi-page PPT generation remain future stages.
 ---
 
 # Content to Editable PPT
 
 ## Development status
 
-The Skill has two independent entry paths. P1 routes readable user materials into a confirmed Outline and deterministically frozen per-slide content. The inherited executable Runtime rebuilds reference images as editable single slides. P2 is being realigned from the historical SVG implementation to model-generated Markdown Wireframes and is temporarily unavailable. Final visual design, Deck orchestration, assembly, charts, citations, and presentation-wide review are not yet complete.
+The Skill has two independent entry paths. P1 routes readable user materials into a confirmed Outline and deterministically frozen per-slide content; P2 then generates model-authored Markdown Wireframes. The inherited executable Runtime rebuilds reference images as editable single slides. Final visual design, Deck orchestration, assembly, charts, citations, and presentation-wide review are not yet complete.
 
 ## Route content planning
 
@@ -21,12 +21,16 @@ The Skill has two independent entry paths. P1 routes readable user materials int
 
 Image-to-Editable-PPT bypasses every P1 Outline stage and continues through the inherited single-slide workflow below.
 
-## Stop before P2 Markdown Wireframes
+## Generate P2 Markdown Wireframes
 
-1. Stop after `content_to_ppt + p1_complete` and report `P2 Markdown realignment pending`.
-2. Do not invoke the legacy Wireframe Spec, geometry Validator, or SVG Renderer.
-3. Do not claim that the planned Markdown Binder, Manifest, Validator, revision workflow, or Gate is already executable.
-4. Read [references/wireframe-planning.md](references/wireframe-planning.md) only to understand the migration boundary. Image-to-Editable-PPT continues to bypass P2.
+1. Require `content_to_ppt + p1_complete`, then read [references/wireframe-planning.md](references/wireframe-planning.md).
+2. In one Host pass, produce the lightweight JSON Candidate. Use only Content Ref placeholders, approved-text substring labels, controlled visual-zone placeholders, and layout notes.
+3. Run `manage_wireframe.py submit-candidate`; use at most two issue-bound Contract Corrections and never redesign automatically.
+4. Run `bind` to create the immutable revision Markdown and thin Manifest. Show the complete Markdown in chat by default.
+5. Record `user_visible` preview and route feedback: layout changes create a new P2 revision; content changes return to P1; explicit skip records the user-message hash and completes without pausing.
+6. Run `verify` before treating P2 as complete. Never generate SVG, PNG, PPTX, or final visual design in P2.
+
+Image-to-Editable-PPT bypasses P2.
 
 ## Core requirements
 
@@ -90,7 +94,7 @@ Never describe a structural QA pass as final completion. `run_pipeline.py` retur
 
 ## Follow the execution contract
 
-Read [references/task-routing.md](references/task-routing.md), [references/content-planning.md](references/content-planning.md), and [references/outline-contract.md](references/outline-contract.md) for P1 tasks. After P1 completes, stop at the P2 migration boundary described in [references/wireframe-planning.md](references/wireframe-planning.md). Do not load reconstruction references until the route actually enters the single-slide Runtime.
+Read [references/task-routing.md](references/task-routing.md), [references/content-planning.md](references/content-planning.md), and [references/outline-contract.md](references/outline-contract.md) for P1 tasks. After P1 completes, follow [references/wireframe-planning.md](references/wireframe-planning.md) for P2. Do not load reconstruction references until the route actually enters the single-slide Runtime.
 
 Read [references/agent-orchestration.md](references/agent-orchestration.md) before invoking or implementing a deterministic command. Follow its path, output, logging, and exit-code rules.
 

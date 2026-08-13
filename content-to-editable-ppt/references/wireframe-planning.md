@@ -1,22 +1,27 @@
-# Markdown Wireframe Migration Boundary
+# Markdown Wireframe Execution
 
-ADR-035 supersedes the historical SVG-based P2 workflow. The formal Wireframe is now defined as a Host-generated Markdown document that shows the real approved content and a per-slide layout draft.
+Use this workflow only after P1 reaches `p1_complete`. The formal P2 artifacts are `wireframes/deck-wireframe.md` and the thin `wireframes/wireframe-manifest.json`.
 
-The Markdown Binder, thin Manifest, Validator, revision workflow, and new P2 Gate have not yet been implemented. Until that implementation is complete:
+## Host Candidate
 
-- stop after `content_to_ppt + p1_complete`;
-- report `P2 Markdown realignment pending`;
-- do not invoke `manage_wireframe.py`, `validate_wireframe.py`, `render_wireframe.py`, or the historical SVG P2 route;
-- do not enter P3;
-- preserve all P1 Approved Slide Content without rewriting it.
+Produce one lightweight JSON Candidate per Deck. For each slide provide `slide_id`, `order`, `layout_draft`, `content_labels`, and `layout_notes`.
 
-The future formal artifacts are:
+- Use `{{p2:content-ref=S03-C01}}` exactly once for every approved Content Ref and in authority order.
+- Set each label to a short continuous substring of the approved text.
+- Use only controlled visual zones: `image`, `chart`, `diagram`, `process`, `timeline`, `icon`, `decoration`, or `whitespace`.
+- Keep free page copy out of `layout_draft`. Put hierarchy, relationships, reserved visual areas, and reading order in `layout_notes`.
+- Do not write HTML metadata. The deterministic Binder inserts it.
 
-```text
-wireframes/deck-wireframe.md
-wireframes/wireframe-manifest.json
-```
+Run `manage_wireframe.py submit-candidate`. Correct only reported contract issues, bind every Patch operation to `validation_issue_id`, and stop after two corrections. Do not automatically redesign.
 
-`deck-wireframe.md` will contain each slide's complete approved content, a text-based layout draft, and layout notes. The thin Manifest will bind Deck identity, P1 Authority hashes, Slide IDs, order, Content Refs, revision, Markdown hash, and status. It will not contain coordinates, regions, SVG data, or final visual style.
+## Bind and show
 
-This deprecation applies only to SVG as the P2 Wireframe representation. Sanitized SVG remains a supported visual asset format in the single-slide PowerPoint Runtime.
+Run `bind` only after Candidate validation passes. It reads the actual P1 Authority, injects every complete approved title and Content Block, creates the text layout and notes, audits the result, and writes an immutable revision.
+
+Show the entire generated Markdown to the user by default, then record `user_visible`. Record `skipped` only when the user explicitly asks not to view the wireframe.
+
+- `continue` or `accepted`: publish the accepted revision and complete P2.
+- Layout changes: create a new P2 revision and preserve the old revision.
+- Content changes: enter `p1_revision_required`; do not resume the old P2 State.
+
+Run `verify` before proceeding. P2 must not generate SVG, PNG, PPTX, final styling, or visual assets. Sanitized SVG remains supported only as a later PowerPoint Runtime asset format.

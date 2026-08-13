@@ -4,9 +4,9 @@
 
 ## 当前状态
 
-本仓库已完成 P0 Baseline Freeze、P0.5 Runtime Hardening 和 P1 Host Content Planning。原 SVG P2 已完成实现和集成，但 ADR-035 已将正式线稿重新定义为 Host 大模型生成的逐页 Markdown 文字线稿，因此 P2 已重新打开，P3 暂不 Ready。
+本仓库已完成 P0 Baseline Freeze、P0.5 Runtime Hardening、P1 Host Content Planning 和重新实现的 P2 Markdown Wireframe。原 SVG P2 仅保留为历史证据；当前正式 P2 是 Host 大模型生成、确定性绑定 P1 权威文字的逐页 Markdown 文字线稿。P3 Visual Design 已可进入设计阶段，但尚未实现。
 
-当前可执行流程为“材料 → 待确认大纲 → 冻结页面文字”和“参考图片 → 可编辑单页 PPT”。新的“冻结页面文字 → Markdown 文字线稿”仍待实现。以下能力尚未实现，不能视为当前承诺：
+当前可执行流程为“材料 → 待确认大纲 → 冻结页面文字 → Markdown 文字线稿”和“参考图片 → 可编辑单页 PPT”。以下能力尚未实现，不能视为当前承诺：
 
 - 最终页面视觉设计和设计图片生成；
 - 从冻结页面内容自动生成完整多页 PPT；
@@ -127,13 +127,13 @@ python .\content-to-editable-ppt\scripts\manage_content_plan.py project-slide-co
 
 P2 的正式目标是由 Host 逐页生成 `deck-wireframe.md`，同时体现完整 Approved Content、等宽字符布局草稿和布局说明；极薄的 `wireframe-manifest.json` 只绑定身份、Hash、页序、Content Ref、Revision 和状态。
 
-当前 Markdown Binder、Manifest、Validator、Revision 和 Gate 尚未实现。Skill 在 P1 完成后必须停止并报告 `P2 Markdown realignment pending`，不得调用旧 SVG P2，也不得进入 P3。
+Markdown Binder、极薄 Manifest、Validator、受限 Correction、不可变 Revision、聊天预览、反馈路由和新 Gate 均已实现。P2 不生成 SVG、PNG 或 PPTX，也不承担最终视觉设计。
 
-[旧 P2 Gate 报告](reports/p2/p2-wireframe-gate.json) 与已合并 PR #12–#16 只作为 SVG 历史实现证据，不代表新的 Markdown P2 Gate 已通过。新的执行方向见 [P2 Markdown 重对齐计划](docs/plans/p2/text-wireframe-realignment-plan.md)。
+[Markdown P2 Gate 报告](reports/p2/p2-markdown-wireframe-gate.json) 记录 D03、D05、D08 的 Authority、完整性和确定性验收。[旧 P2 Gate 报告](reports/p2/p2-wireframe-gate.json) 与已合并 PR #12–#16 只作为 SVG 历史实现证据。
 
 ## 下一阶段
 
-新的 Markdown P2 Gate 通过后才进入 P3 Visual Design。在此之前，Content-to-PPT 可执行输出只到 Approved Slide Content，不能宣称已经完成文字线稿、完整多页 PowerPoint 生成或 P3 已就绪。
+P2 Markdown Gate 已通过，因此下一阶段是 P3 Visual Design。当前仍不能宣称已经完成设计图片、完整多页 PowerPoint、Deck Assembly 或最终多页审核。
 
 ## 开发验证
 

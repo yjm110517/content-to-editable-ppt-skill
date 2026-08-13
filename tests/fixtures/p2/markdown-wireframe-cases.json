@@ -1,0 +1,22 @@
+{
+  "schema_version": "1.0",
+  "fixed_timestamp_utc": "2026-08-13T00:00:00Z",
+  "cases": {
+    "D03": {
+      "source": "captured_live_host_initial",
+      "host_model_invocations": 1,
+      "candidate": {
+        "schema_version": "1.0", "canonicalization_version": "p1-rfc8785-nfc-1", "artifact_type": "markdown_wireframe_candidate",
+        "artifact_id": "D03-markdown-wireframe-r1", "deck_id": "D03", "revision": 1, "parent_sha256": null,
+        "pass_id": "initial", "host_model_invocation_id": "D03-host-markdown-initial",
+        "slides": [
+          {"slide_id": "S01", "order": 1, "layout_draft": "┌────{{p2:content-ref=S01-TITLE}}────┐\n│        {{p2:zone=diagram}}        │\n└────{{p2:content-ref=S01-C01}}────┘", "content_labels": [{"content_ref": "S01-TITLE", "label": "内容规划先于页面设计"}, {"content_ref": "S01-C01", "label": "确认最终页面文字"}], "layout_notes": "封面式结构，标题为第一层级，正文短句位于下方，中央预留概念示意区。"},
+          {"slide_id": "S02", "order": 2, "layout_draft": "┌─{{p2:content-ref=S02-TITLE}}─┐\n│{{p2:content-ref=S02-C01}} → {{p2:zone=process}}│\n└────────────────┘", "content_labels": [{"content_ref": "S02-TITLE", "label": "用户确认建立内容边界"}, {"content_ref": "S02-C01", "label": "绑定候选大纲哈希"}], "layout_notes": "标题置顶，正文作为流程起点，箭头指向确认锁定区域，阅读顺序从左到右。"},
+          {"slide_id": "S03", "order": 3, "layout_draft": "┌─{{p2:content-ref=S03-TITLE}}─┐\n│{{p2:zone=diagram}} → {{p2:content-ref=S03-C01}}│\n└────────────────┘", "content_labels": [{"content_ref": "S03-TITLE", "label": "确定性冻结页面文字"}, {"content_ref": "S03-C01", "label": "确定性投影生成页面内容"}], "layout_notes": "用输入到输出的单向关系表达确定性冻结，正文作为结果区域，不增加过渡文案。"}
+        ], "created_at_utc": "2026-08-13T00:00:00Z"
+      }
+    },
+    "D05": {"source": "fixture", "host_model_invocations": 0},
+    "D08": {"source": "fixture", "host_model_invocations": 0}
+  }
+}
