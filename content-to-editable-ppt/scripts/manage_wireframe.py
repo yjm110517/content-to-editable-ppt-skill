@@ -107,6 +107,7 @@ def parser() -> argparse.ArgumentParser:
     accept.add_argument("--artifact-id", required=True)
     accept.add_argument("--revision", type=int, required=True)
     accept.add_argument("--previous-manifest", type=Path)
+    accept.add_argument("--changed-slide-id", action="append", default=[])
     accept.add_argument("--timestamp-utc")
     render = commands.add_parser("render")
     render.add_argument("--state", type=Path, required=True)
@@ -223,13 +224,39 @@ def _accept(args: argparse.Namespace) -> tuple[dict[str, Any], dict[str, Any]]:
     if canonical_sha256(approved) != state["current_artifacts"]["approved_outline_sha256"] or canonical_sha256(layout) != state["current_artifacts"]["layout_requirements_sha256"]:
         raise ContractError([error("$", "Accepted Authority does not match frozen P2 State", "authority_hash_mismatch")])
     previous = load_json(args.previous_manifest.resolve()) if args.previous_manifest else None
-    manifest = build_manifest(approved_outline=approved, specs=load_specs(args.spec_dir.resolve()), layout_requirements=layout, output_ratio=args.output_ratio, artifact_id=args.artifact_id, revision=args.revision, parent_sha256=canonical_sha256(previous) if previous else None, previous_manifest=previous, created_at_utc=args.timestamp_utc)
+    changed_ids = getattr(args, "changed_slide_id", [])
+    changed = set(changed_ids)
+    expected_changed = set(state["changed_slide_ids"])
+    valid_slide_ids = {page["slide_id"] for page in approved["pages"]}
+    if len(changed_ids) != len(changed):
+        raise ContractError([error("--changed-slide-id", "changed slides must be unique", "revision_scope_mismatch")])
+    if not changed.issubset(valid_slide_ids):
+        raise ContractError([error("--changed-slide-id", "changed slides must belong to the current Deck", "revision_scope_mismatch")])
+    if changed != expected_changed:
+        raise ContractError([error("--changed-slide-id", "changed slides must exactly match current user feedback", "revision_scope_mismatch")])
+    manifest = build_manifest(approved_outline=approved, slide_content_manifest_sha256=state["current_artifacts"]["slide_content_manifest_sha256"], specs=load_specs(args.spec_dir.resolve()), layout_requirements=layout, output_ratio=args.output_ratio, artifact_id=args.artifact_id, revision=args.revision, parent_sha256=canonical_sha256(previous) if previous else None, previous_manifest=previous, changed_slide_ids=changed, created_at_utc=args.timestamp_utc)
     next_state = copy.deepcopy(state)
     next_state["current_artifacts"]["wireframe_manifest_sha256"] = canonical_sha256(manifest)
+    next_state["changed_slide_ids"] = []
     validate_schema("wireframe_state", next_state, SCHEMA_DIR)
     write_json(args.manifest_output.resolve(), manifest)
     replace_json(args.state.resolve(), next_state)
     return next_state, manifest
+
+
+def _validate_manifest_authority(state: dict[str, Any], manifest: dict[str, Any]) -> None:
+    expected = {
+        "approved_outline_sha256": state["current_artifacts"]["approved_outline_sha256"],
+        "slide_content_manifest_sha256": state["current_artifacts"]["slide_content_manifest_sha256"],
+        "layout_requirements_sha256": state["current_artifacts"]["layout_requirements_sha256"],
+    }
+    failures = [
+        error(f"$.{field}", "Wireframe Manifest does not bind frozen P2 Authority", "authority_hash_mismatch")
+        for field, value in expected.items()
+        if value is None or manifest.get(field) != value
+    ]
+    if failures:
+        raise ContractError(failures)
 
 
 def _render(args: argparse.Namespace) -> tuple[dict[str, Any], dict[str, Any]]:
@@ -239,6 +266,7 @@ def _render(args: argparse.Namespace) -> tuple[dict[str, Any], dict[str, Any]]:
     validate_schema("wireframe_manifest", manifest, SCHEMA_DIR)
     if state["state"] != "specs_accepted" or state["current_artifacts"]["wireframe_manifest_sha256"] != canonical_sha256(manifest):
         raise WireframeStateError("render requires the current accepted Wireframe Manifest")
+    _validate_manifest_authority(state, manifest)
     projection, content_paths = _projection_bundle(state, args.slide_content_dir.resolve())
     specs = {item["slide_id"]: item for item in load_specs(args.spec_dir.resolve())}
     expected_slides = {item["slide_id"] for item in manifest["slides"]}
@@ -344,6 +372,7 @@ def _verify(args: argparse.Namespace) -> dict[str, Any]:
     validate_schema("wireframe_manifest", manifest, SCHEMA_DIR)
     if canonical_sha256(manifest) != state["current_artifacts"]["wireframe_manifest_sha256"]:
         raise ContractError([error("--manifest", "Manifest does not match State", "authority_hash_mismatch")])
+    _validate_manifest_authority(state, manifest)
     projection, content_paths = _projection_bundle(state, args.slide_content_dir.resolve())
     specs = {item["slide_id"]: item for item in load_specs(args.spec_dir.resolve())}
     expected_slides = {item["slide_id"] for item in manifest["slides"]}

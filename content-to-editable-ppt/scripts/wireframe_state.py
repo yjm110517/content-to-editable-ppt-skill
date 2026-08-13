@@ -150,8 +150,8 @@ def advance(
     elif event == "start_contract_correction":
         _consume_host_invocation(updated, host_model_invocation_id, correction=True)
     if event in {"feedback_changes_requested", "feedback_content_changes_requested"}:
-        if not affected_slide_ids:
-            raise WireframeStateError(f"event {event} requires affected slides")
+        if not affected_slide_ids or len(affected_slide_ids) != len(set(affected_slide_ids)):
+            raise WireframeStateError(f"event {event} requires unique affected Slide IDs")
         updated["changed_slide_ids"] = list(affected_slide_ids)
     elif event == "feedback_continue":
         updated["changed_slide_ids"] = []

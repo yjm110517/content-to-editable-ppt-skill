@@ -14,7 +14,7 @@ sys.path.insert(0, str(ROOT / "content-to-editable-ppt" / "scripts"))
 
 from canonical_artifact import canonical_sha256
 from deterministic_project_slide_content import build_projection
-from manage_wireframe import _accept, _feedback, _preview, _projection_bundle
+from manage_wireframe import _accept, _feedback, _preview, _projection_bundle, _validate_manifest_authority
 from schema_utils import ContractError
 from wireframe_state import WireframeStateError, advance, initial_state
 from tests.runtime.test_p2_wireframe_rules import approved, requirements, spec
@@ -169,6 +169,7 @@ class P2PreviewFeedbackTests(unittest.TestCase):
                 state = advance(state, event=event, timestamp_utc=NOW)
             state["current_artifacts"]["approved_outline_sha256"] = canonical_sha256(outline)
             state["current_artifacts"]["layout_requirements_sha256"] = canonical_sha256(layout)
+            state["current_artifacts"]["slide_content_manifest_sha256"] = H
             state_path, outline_path, layout_path = root / "state.json", root / "outline.json", root / "layout.json"
             spec_dir, output = root / "specs", root / "manifest.json"
             spec_dir.mkdir()
@@ -189,6 +190,53 @@ class P2PreviewFeedbackTests(unittest.TestCase):
                         _accept(args)
                     self.assertFalse(output.exists())
                     self.assertEqual(state_path.read_bytes(), state_before)
+
+    def test_manifest_authority_tampering_is_rejected(self) -> None:
+        state = initial_state(task_id="t", deck_id="D")
+        state["current_artifacts"].update({
+            "approved_outline_sha256": "a" * 64,
+            "slide_content_manifest_sha256": "b" * 64,
+            "layout_requirements_sha256": "c" * 64,
+        })
+        manifest = {
+            "approved_outline_sha256": "a" * 64,
+            "slide_content_manifest_sha256": "b" * 64,
+            "layout_requirements_sha256": "c" * 64,
+        }
+        _validate_manifest_authority(state, manifest)
+        for field in manifest:
+            with self.subTest(field=field):
+                tampered = {**manifest, field: "d" * 64}
+                with self.assertRaises(ContractError) as caught:
+                    _validate_manifest_authority(state, tampered)
+                self.assertIn("authority_hash_mismatch", {item["code"] for item in caught.exception.errors})
+
+    def test_accept_specs_consumes_exact_feedback_scope(self) -> None:
+        with tempfile.TemporaryDirectory() as temporary:
+            root = Path(temporary)
+            outline, layout = approved(), requirements()
+            state = initial_state(task_id="t", deck_id="D")
+            for event in ("start_input_validation", "inputs_accepted"):
+                state = advance(state, event=event, timestamp_utc=NOW)
+            state = advance(state, event="start_initial_planning", pass_id="p", host_model_invocation_id="h1", timestamp_utc=NOW)
+            for event in ("candidate_specs_ready", "start_spec_validation", "specs_accepted"):
+                state = advance(state, event=event, timestamp_utc=NOW)
+            state["current_artifacts"].update({"approved_outline_sha256": canonical_sha256(outline), "layout_requirements_sha256": canonical_sha256(layout), "slide_content_manifest_sha256": H})
+            state["changed_slide_ids"] = ["S01"]
+            state_path, outline_path, layout_path = root / "state.json", root / "outline.json", root / "layout.json"
+            spec_dir, output = root / "specs", root / "manifest.json"
+            spec_dir.mkdir()
+            self.write(state_path, state); self.write(outline_path, outline); self.write(layout_path, layout); self.write(spec_dir / "S01-r001.json", spec())
+            base = dict(state=state_path, spec_dir=spec_dir, approved_outline=outline_path, layout_requirements=layout_path, output_ratio="16:9", manifest_output=output, artifact_id="m", revision=1, previous_manifest=None, timestamp_utc=NOW)
+            for changed in ([], ["S99"], ["S01", "S01"]):
+                with self.subTest(changed=changed):
+                    before = state_path.read_bytes()
+                    with self.assertRaises(ContractError):
+                        _accept(SimpleNamespace(**base, changed_slide_id=changed))
+                    self.assertEqual(state_path.read_bytes(), before)
+                    self.assertFalse(output.exists())
+            next_state, _ = _accept(SimpleNamespace(**base, changed_slide_id=["S01"]))
+            self.assertEqual(next_state["changed_slide_ids"], [])
 
     def test_projection_bundle_binds_actual_manifest_and_slide_content(self) -> None:
         with tempfile.TemporaryDirectory() as temporary:

@@ -12,6 +12,7 @@ sys.path.insert(0, str(ROOT / "content-to-editable-ppt" / "scripts"))
 
 from schema_utils import ContractError
 from render_wireframe import audit_svg, canonical_number, render_document
+from schema_utils import ContractError
 from wireframe_rules import expected_authority
 from tests.runtime.test_p2_wireframe_rules import approved, content, page, requirements, spec
 
@@ -43,6 +44,8 @@ class P2WireframeRendererTests(unittest.TestCase):
         self.assertEqual(warnings_first, warnings_second)
         self.assertIn(b'viewBox="0 0 1600 900"', first)
         self.assertEqual(audit_svg(first, spec=document, slide_content=authority)["content_refs"], 2)
+        with self.assertRaises(ContractError):
+            audit_svg(first.replace(b">Body<", b">Bady<"), spec=document, slide_content=authority)
 
     def test_long_text_is_truncated_without_authority_drift(self) -> None:
         authority = content()

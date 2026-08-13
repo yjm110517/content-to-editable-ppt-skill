@@ -132,11 +132,27 @@ class P2WireframeRulesTests(unittest.TestCase):
 
     def test_order_only_change_reuses_page_spec(self) -> None:
         document = spec(order=1)
-        first = build_manifest(approved_outline=approved(1), specs=[document], layout_requirements=requirements(), output_ratio="16:9", artifact_id="m1", revision=1, created_at_utc=NOW)
-        second = build_manifest(approved_outline=approved(2), specs=[document], layout_requirements=requirements(), output_ratio="16:9", artifact_id="m2", revision=2, previous_manifest=first, created_at_utc=NOW)
+        first = build_manifest(approved_outline=approved(1), slide_content_manifest_sha256=H, specs=[document], layout_requirements=requirements(), output_ratio="16:9", artifact_id="m1", revision=1, created_at_utc=NOW)
+        second = build_manifest(approved_outline=approved(2), slide_content_manifest_sha256=H, specs=[document], layout_requirements=requirements(), output_ratio="16:9", artifact_id="m2", revision=2, previous_manifest=first, created_at_utc=NOW)
         self.assertEqual(second["slides"][0]["order"], 2)
         self.assertEqual(second["slides"][0]["build_status"], "reused")
         self.assertEqual(first["slides"][0]["spec_sha256"], second["slides"][0]["spec_sha256"])
+
+    def test_changed_scope_forces_rebuild_and_ratio_change_invalidates_page(self) -> None:
+        document = spec()
+        first = build_manifest(approved_outline=approved(), slide_content_manifest_sha256=H, specs=[document], layout_requirements=requirements(), output_ratio="16:9", artifact_id="m1", revision=1, created_at_utc=NOW)
+        scoped = build_manifest(approved_outline=approved(), slide_content_manifest_sha256=H, specs=[document], layout_requirements=requirements(), output_ratio="16:9", artifact_id="m2", revision=2, previous_manifest=first, changed_slide_ids={"S01"}, created_at_utc=NOW)
+        self.assertEqual(scoped["slides"][0]["build_status"], "rebuilt")
+
+        changed_ratio = copy.deepcopy(document)
+        changed_ratio["output_ratio"] = "4:3"
+        changed_ratio["authority"] = expected_authority(approved_outline=approved(), slide_content=content(), page=page(), layout_requirements=requirements(), output_ratio="4:3")
+        ratio_manifest = build_manifest(approved_outline=approved(), slide_content_manifest_sha256=H, specs=[changed_ratio], layout_requirements=requirements(), output_ratio="4:3", artifact_id="m3", revision=2, previous_manifest=first, created_at_utc=NOW)
+        self.assertEqual(ratio_manifest["slides"][0]["build_status"], "rebuilt")
+
+    def test_manifest_rejects_spec_with_mismatched_ratio(self) -> None:
+        with self.assertRaises(ContractError):
+            build_manifest(approved_outline=approved(), slide_content_manifest_sha256=H, specs=[spec()], layout_requirements=requirements(), output_ratio="4:3", artifact_id="m", revision=1, created_at_utc=NOW)
 
     def test_correction_cannot_replace_a_legal_semantic_reference(self) -> None:
         document = spec()

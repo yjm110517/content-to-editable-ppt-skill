@@ -1,0 +1,36 @@
+{
+  "schema_version": "1.0",
+  "phase": "P2",
+  "case_id": "D03",
+  "status": "pass",
+  "mode": "deterministic_fixture_host_contract_smoke",
+  "pages": 3,
+  "host_contract": {
+    "content_region": true,
+    "container_child": true,
+    "semantic_source_ref": true,
+    "relationship": true,
+    "explicit_overlay": true
+  },
+  "preview_mode": "user_visible",
+  "user_driven_revision": {
+    "affected_slide_id": "S02",
+    "unrelated_spec_hashes_unchanged": true,
+    "unrelated_svg_hashes_unchanged": true
+  },
+  "budgets": {
+    "host_wireframe_initial_pass_count": 1,
+    "host_wireframe_revision_pass_count": 1,
+    "host_wireframe_contract_correction_count": 0,
+    "host_model_invocation_count": 2,
+    "absolute_host_model_invocation_ceiling": 6,
+    "automatic_wireframe_redesign_count": 0,
+    "specialist_agent_calls": 0
+  },
+  "review_run": {
+    "live_host_model_invocations": 0,
+    "planner_calls": 0,
+    "reviewer_calls": 0
+  },
+  "final_manifest_sha256": "436074ba97f6c949fd569c63c956d7f1d47eb75520e3ec60ad911be6d1eb5715"
+}

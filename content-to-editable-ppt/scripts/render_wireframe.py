@@ -16,6 +16,7 @@ from defusedxml.common import DefusedXmlException
 
 from canonical_artifact import canonical_sha256
 from schema_utils import ContractError, error, load_json, validate_schema
+from wireframe_rules import slide_content_payload
 
 
 SCHEMA_DIR = Path(__file__).resolve().parents[1] / "schemas"
@@ -119,7 +120,7 @@ def preview_text(
 def _text_svg(*, region: dict[str, Any], item: dict[str, Any], index: int, count: int, width: int, height: int) -> tuple[str, dict[str, Any] | None]:
     box = region["bbox"]
     font_size = 28 if region["role"] == "title" else 14 if region["role"] == "footer" else 18
-    preview, mode, lines, part_height = preview_text(region, item, index, count)
+    _preview, mode, lines, part_height = preview_text(region, item, index, count)
     x = project(box["x"] + 180, width)
     base_y = box["y"] + index * part_height + 260
     line_height = font_size * Decimal("1.25")
@@ -142,8 +143,8 @@ def render_document(spec: dict[str, Any], slide_content: dict[str, Any]) -> tupl
     validate_schema("approved_slide_content", slide_content, SCHEMA_DIR)
     if spec["deck_id"] != slide_content["deck_id"] or spec["slide_id"] != slide_content["slide_id"]:
         raise ContractError([error("$", "Wireframe Spec and Approved Slide Content identity mismatch", "authority_identity_mismatch")])
-    if spec["authority"]["approved_slide_content_sha256"] != canonical_sha256(slide_content):
-        raise ContractError([error("$.authority.approved_slide_content_sha256", "Spec does not bind Slide Content", "authority_hash_mismatch")])
+    if spec["authority"]["slide_content_payload_sha256"] != canonical_sha256(slide_content_payload(slide_content)):
+        raise ContractError([error("$.authority.slide_content_payload_sha256", "Spec does not bind Slide Content payload", "authority_hash_mismatch")])
     width, height = VIEWBOX[spec["output_ratio"]]
     regions = sorted(spec["regions"], key=lambda item: (item["z_index"], item["region_id"]))
     texts = content_map(slide_content)
