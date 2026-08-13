@@ -1,7 +1,9 @@
 from __future__ import annotations
 
 import copy
+import json
 import sys
+import tempfile
 import unittest
 from pathlib import Path
 
@@ -10,8 +12,9 @@ ROOT = Path(__file__).resolve().parents[2]
 sys.path.insert(0, str(ROOT / "content-to-editable-ppt" / "scripts"))
 
 from canonical_artifact import canonical_sha256
+from deterministic_project_slide_content import build_projection
 from schema_utils import ContractError
-from wireframe_rules import apply_correction, build_manifest, candidate_manifest_digest, expected_authority, layout_constraints_payload, validate_spec, validation_report
+from wireframe_rules import apply_correction, build_manifest, candidate_manifest_digest, expected_authority, layout_constraints_payload, load_authority_bundle, validate_spec, validation_report
 
 
 H = "a" * 64
@@ -53,6 +56,60 @@ def spec(order: int = 1) -> dict:
 
 
 class P2WireframeRulesTests(unittest.TestCase):
+    def authority_bundle(self, root: Path) -> dict[str, Path]:
+        outline = approved()
+        deck_request = {
+            "schema_version": "1.0", "canonicalization_version": "p1-rfc8785-nfc-1",
+            "task_id": "t", "deck_id": "D", "topic": "P2", "objective": "test authority",
+            "audience": "developers", "language": "en", "page_count": 1, "output_ratio": "16:9",
+            "source_material_ids": ["M01"], "must_preserve": [], "prohibited_changes": [],
+            "visual_requirements": [], "external_research": "not_authorized",
+        }
+        layout = requirements()
+        layout["deck_request_sha256"] = canonical_sha256(deck_request)
+        slides, projection = build_projection(outline, frozen_at_utc=NOW)
+        state = {
+            "schema_version": "1.0", "canonicalization_version": "p1-rfc8785-nfc-1",
+            "task_id": "t", "deck_id": "D", "state": "p1_complete",
+            "counters": {"host_planning_pass_count": 1, "host_revision_pass_count": 0,
+                         "automatic_regeneration_count": 0, "planner_calls": 0, "reviewer_calls": 0},
+            "current_artifacts": {
+                "task_route_sha256": None, "materials_sha256": None, "candidate_outline_sha256": None,
+                "confirmation_sha256": None, "approved_outline_sha256": canonical_sha256(outline),
+                "slide_content_manifest_sha256": canonical_sha256(projection),
+            },
+            "history": [],
+        }
+        paths = {
+            "state": root / "state.json", "deck_request": root / "deck-request.json",
+            "approved_outline": root / "approved-outline.json", "layout": root / "layout.json",
+            "slide_content_dir": root / "slide-content",
+        }
+        paths["slide_content_dir"].mkdir()
+        for path, document in ((paths["state"], state), (paths["deck_request"], deck_request),
+                               (paths["approved_outline"], outline), (paths["layout"], layout)):
+            path.write_text(json.dumps(document, ensure_ascii=False, indent=2), encoding="utf-8")
+        for slide, item in zip(slides, projection["slides"]):
+            (paths["slide_content_dir"] / item["path"]).write_text(
+                json.dumps(slide, ensure_ascii=False, indent=2), encoding="utf-8"
+            )
+        (paths["slide_content_dir"] / "projection-manifest.json").write_text(
+            json.dumps(projection, ensure_ascii=False, indent=2), encoding="utf-8"
+        )
+        return paths
+
+    def load_bundle(self, paths: dict[str, Path]) -> dict:
+        return load_authority_bundle(
+            p1_state_path=paths["state"], deck_request_path=paths["deck_request"],
+            approved_outline_path=paths["approved_outline"], slide_content_dir=paths["slide_content_dir"],
+            layout_requirements_path=paths["layout"],
+        )
+
+    def mutate_json(self, path: Path, mutation) -> None:
+        document = json.loads(path.read_text(encoding="utf-8"))
+        mutation(document)
+        path.write_text(json.dumps(document, ensure_ascii=False, indent=2), encoding="utf-8")
+
     def validate(self, document: dict, *, order: int = 1) -> list[dict]:
         return validate_spec(document, approved_outline=approved(order), slide_content=content(order), page=page(order), layout_requirements=requirements(), output_ratio="16:9")
 
@@ -81,12 +138,88 @@ class P2WireframeRulesTests(unittest.TestCase):
         self.assertEqual(second["slides"][0]["build_status"], "reused")
         self.assertEqual(first["slides"][0]["spec_sha256"], second["slides"][0]["spec_sha256"])
 
+    def test_changed_scope_forces_rebuild_and_ratio_change_invalidates_page(self) -> None:
+        document = spec()
+        first = build_manifest(approved_outline=approved(), slide_content_manifest_sha256=H, specs=[document], layout_requirements=requirements(), output_ratio="16:9", artifact_id="m1", revision=1, created_at_utc=NOW)
+        scoped = build_manifest(approved_outline=approved(), slide_content_manifest_sha256=H, specs=[document], layout_requirements=requirements(), output_ratio="16:9", artifact_id="m2", revision=2, previous_manifest=first, changed_slide_ids={"S01"}, created_at_utc=NOW)
+        self.assertEqual(scoped["slides"][0]["build_status"], "rebuilt")
+
+        changed_ratio = copy.deepcopy(document)
+        changed_ratio["output_ratio"] = "4:3"
+        changed_ratio["authority"] = expected_authority(approved_outline=approved(), slide_content=content(), page=page(), layout_requirements=requirements(), output_ratio="4:3")
+        ratio_manifest = build_manifest(approved_outline=approved(), slide_content_manifest_sha256=H, specs=[changed_ratio], layout_requirements=requirements(), output_ratio="4:3", artifact_id="m3", revision=2, previous_manifest=first, created_at_utc=NOW)
+        self.assertEqual(ratio_manifest["slides"][0]["build_status"], "rebuilt")
+
+    def test_manifest_rejects_spec_with_mismatched_ratio(self) -> None:
+        with self.assertRaises(ContractError):
+            build_manifest(approved_outline=approved(), slide_content_manifest_sha256=H, specs=[spec()], layout_requirements=requirements(), output_ratio="4:3", artifact_id="m", revision=1, created_at_utc=NOW)
+
     def test_correction_cannot_replace_a_legal_semantic_reference(self) -> None:
         document = spec()
         report = validation_report(deck_id="D", candidate_sha256=candidate_manifest_digest([document]), issues=[{"issue_id": "i1", "slide_id": "S01", "classification": "correctable_contract_error", "code": "bbox_out_of_bounds", "path": "$.regions", "message": "bad box", "correctable": True}], report_id="r", validated_at_utc=NOW)
         correction = {"schema_version": "1.0", "canonicalization_version": "p1-rfc8785-nfc-1", "correction_id": "c", "deck_id": "D", "pass_id": "p", "attempt": 1, "host_model_invocation_id": "h2", "candidate_manifest_sha256": candidate_manifest_digest([document]), "validation_report_sha256": canonical_sha256(report), "operations": [{"validation_issue_id": "i1", "slide_id": "S01", "target_type": "region", "target_id": "chart", "field": "semantic_source_refs", "before": ["S01-C01"], "after": ["S01-TITLE"]}], "created_at_utc": NOW}
         with self.assertRaises(ContractError):
             apply_correction(specs=[document], report=report, correction=correction)
+
+    def test_authority_bundle_binds_p1_state_to_frozen_artifacts(self) -> None:
+        with tempfile.TemporaryDirectory() as temporary:
+            paths = self.authority_bundle(Path(temporary))
+            bundle = self.load_bundle(paths)
+            self.assertEqual(bundle["p1_state"]["state"], "p1_complete")
+
+    def test_authority_bundle_rejects_outline_state_hash_mismatch(self) -> None:
+        with tempfile.TemporaryDirectory() as temporary:
+            paths = self.authority_bundle(Path(temporary))
+            self.mutate_json(paths["state"], lambda value: value["current_artifacts"].update(approved_outline_sha256="0" * 64))
+            with self.assertRaises(ContractError) as caught:
+                self.load_bundle(paths)
+            self.assertIn("authority_hash_mismatch", {item["code"] for item in caught.exception.errors})
+
+    def test_authority_bundle_rejects_manifest_state_hash_mismatch(self) -> None:
+        with tempfile.TemporaryDirectory() as temporary:
+            paths = self.authority_bundle(Path(temporary))
+            self.mutate_json(paths["state"], lambda value: value["current_artifacts"].update(slide_content_manifest_sha256="0" * 64))
+            with self.assertRaises(ContractError) as caught:
+                self.load_bundle(paths)
+            self.assertIn("authority_hash_mismatch", {item["code"] for item in caught.exception.errors})
+
+    def test_authority_bundle_rejects_missing_frozen_hashes(self) -> None:
+        for field in ("approved_outline_sha256", "slide_content_manifest_sha256"):
+            with self.subTest(field=field), tempfile.TemporaryDirectory() as temporary:
+                paths = self.authority_bundle(Path(temporary))
+                self.mutate_json(paths["state"], lambda value, key=field: value["current_artifacts"].update({key: None}))
+                with self.assertRaises(ContractError) as caught:
+                    self.load_bundle(paths)
+                matching = [item for item in caught.exception.errors if item["path"].endswith(field)]
+                self.assertEqual([item["code"] for item in matching], ["missing_authority"])
+
+    def test_authority_bundle_rejects_invalid_empty_hashes_at_schema_gate(self) -> None:
+        for field in ("approved_outline_sha256", "slide_content_manifest_sha256"):
+            with self.subTest(field=field), tempfile.TemporaryDirectory() as temporary:
+                paths = self.authority_bundle(Path(temporary))
+                self.mutate_json(paths["state"], lambda value, key=field: value["current_artifacts"].update({key: ""}))
+                with self.assertRaises(ContractError) as caught:
+                    self.load_bundle(paths)
+                self.assertIn("schema_error", {item["code"] for item in caught.exception.errors})
+
+    def test_authority_bundle_rejects_artifact_tampering_with_stale_state_hash(self) -> None:
+        for artifact in ("approved_outline", "projection_manifest"):
+            with self.subTest(artifact=artifact), tempfile.TemporaryDirectory() as temporary:
+                paths = self.authority_bundle(Path(temporary))
+                target = paths["approved_outline"] if artifact == "approved_outline" else paths["slide_content_dir"] / "projection-manifest.json"
+                self.mutate_json(target, lambda value: value.update(revision=2))
+                with self.assertRaises(ContractError) as caught:
+                    self.load_bundle(paths)
+                self.assertIn("authority_hash_mismatch", {item["code"] for item in caught.exception.errors})
+
+    def test_authority_bundle_classifies_unreadable_projection_manifest(self) -> None:
+        with tempfile.TemporaryDirectory() as temporary:
+            paths = self.authority_bundle(Path(temporary))
+            (paths["slide_content_dir"] / "projection-manifest.json").write_text("{", encoding="utf-8")
+            with self.assertRaises(ContractError) as caught:
+                self.load_bundle(paths)
+            matching = [item for item in caught.exception.errors if item["path"] == "$.slide_content_manifest"]
+            self.assertEqual([item["code"] for item in matching], ["missing_authority"])
 
 
 if __name__ == "__main__":

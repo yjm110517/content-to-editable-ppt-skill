@@ -27,12 +27,12 @@ TRANSITIONS = {
     ("preview_recorded", "wait_for_feedback"): "awaiting_wireframe_feedback",
     ("awaiting_wireframe_feedback", "feedback_continue"): "p2_complete",
     ("awaiting_wireframe_feedback", "feedback_changes_requested"): "revision_requested",
-    ("p2_complete", "feedback_changes_requested"): "revision_requested",
+    ("awaiting_wireframe_feedback", "feedback_content_changes_requested"): "p1_revision_required",
     ("revision_requested", "start_revision_planning"): "wireframe_planning",
 }
 
 
-TERMINAL = {"p2_bypassed", "wireframe_failed"}
+TERMINAL = {"p2_bypassed", "p1_revision_required", "wireframe_failed"}
 
 
 def utc_now() -> str:
@@ -43,13 +43,12 @@ def initial_state(*, task_id: str, deck_id: str, absolute_host_model_invocation_
     if absolute_host_model_invocation_ceiling is not None and absolute_host_model_invocation_ceiling < 1:
         raise WireframeStateError("absolute Host invocation ceiling must be positive")
     return {
-        "schema_version": "1.0",
+        "schema_version": "1.1",
         "canonicalization_version": "p1-rfc8785-nfc-1",
         "task_id": task_id,
         "deck_id": deck_id,
         "state": "received",
         "active_pass_id": None,
-        "pending_revision_slide_ids": [],
         "budgets": {
             "max_contract_corrections_per_pass": 2,
             "max_host_invocations_per_pass": 3,
@@ -74,7 +73,9 @@ def initial_state(*, task_id: str, deck_id: str, absolute_host_model_invocation_
             "candidate_manifest_sha256": None,
             "wireframe_manifest_sha256": None,
             "preview_sha256": None,
+            "feedback_sha256": None,
         },
+        "changed_slide_ids": [],
         "page_results": [],
         "history": [],
     }
@@ -107,9 +108,9 @@ def advance(
     artifact_kind: str | None = None,
     artifact_sha256: str | None = None,
     user_evidence_sha256: str | None = None,
+    affected_slide_ids: list[str] | None = None,
     host_model_invocation_id: str | None = None,
     pass_id: str | None = None,
-    affected_slide_ids: list[str] | None = None,
     timestamp_utc: str | None = None,
 ) -> dict[str, Any]:
     current = state.get("state")
@@ -123,12 +124,8 @@ def advance(
             raise WireframeStateError(f"event {event} is invalid from {current}")
     updated = copy.deepcopy(state)
     counters = updated["counters"]
-    if event in {"start_revision_planning", "feedback_changes_requested", "feedback_continue"} and not user_evidence_sha256:
+    if event in {"start_revision_planning", "feedback_changes_requested", "feedback_content_changes_requested", "feedback_continue"} and not user_evidence_sha256:
         raise WireframeStateError(f"event {event} requires user evidence")
-    if event == "feedback_changes_requested":
-        if not affected_slide_ids or len(affected_slide_ids) != len(set(affected_slide_ids)):
-            raise WireframeStateError("Wireframe change feedback requires unique affected Slide IDs")
-        updated["pending_revision_slide_ids"] = list(affected_slide_ids)
     if event == "start_initial_planning":
         if counters["host_wireframe_initial_pass_count"] != 0:
             raise WireframeStateError("automatic Host Wireframe regeneration is forbidden")
@@ -152,8 +149,12 @@ def advance(
         _consume_host_invocation(updated, host_model_invocation_id, correction=False)
     elif event == "start_contract_correction":
         _consume_host_invocation(updated, host_model_invocation_id, correction=True)
-    elif event in {"complete_without_feedback", "feedback_continue"}:
-        updated["pending_revision_slide_ids"] = []
+    if event in {"feedback_changes_requested", "feedback_content_changes_requested"}:
+        if not affected_slide_ids or len(affected_slide_ids) != len(set(affected_slide_ids)):
+            raise WireframeStateError(f"event {event} requires unique affected Slide IDs")
+        updated["changed_slide_ids"] = list(affected_slide_ids)
+    elif event == "feedback_continue":
+        updated["changed_slide_ids"] = []
     if counters["automatic_wireframe_redesign_count"] or counters["layout_planner_calls"] or counters["reviewer_calls"] or counters["image_generation_calls"]:
         raise WireframeStateError("P2 forbids automatic redesign and Specialist Agent calls")
     if artifact_kind:
@@ -168,6 +169,7 @@ def advance(
         "artifact_kind": artifact_kind,
         "artifact_sha256": artifact_sha256,
         "user_evidence_sha256": user_evidence_sha256,
+        "affected_slide_ids": list(affected_slide_ids or []),
         "host_model_invocation_id": host_model_invocation_id,
         "timestamp_utc": timestamp_utc or utc_now(),
     })

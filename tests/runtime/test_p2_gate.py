@@ -13,6 +13,7 @@ class P2GateReportTests(unittest.TestCase):
     def test_committed_gate_is_complete_and_passed(self) -> None:
         report = json.loads(REPORT.read_text(encoding="utf-8"))
         self.assertEqual(report["status"], "pass")
+        self.assertEqual(report["integration_gate_candidate"], "pass")
         self.assertEqual(report["blocking_issues"], 0)
         self.assertEqual(report["authority_drift"], 0)
         self.assertEqual(report["non_deterministic_svg"], 0)
@@ -22,6 +23,11 @@ class P2GateReportTests(unittest.TestCase):
         self.assertLessEqual(report["budgets"]["m5_observed_host_model_invocations"], report["budgets"]["m5_host_model_invocation_ceiling"])
         self.assertTrue(report["gates"]["frozen_cases"]["D03"]["revision_isolation"])
         self.assertTrue(report["gates"]["frozen_cases"]["D08"]["order_only_page_reuse"])
+        self.assertEqual(report["gates"]["runtime_and_p2_tests"]["tests"], 99)
+        self.assertEqual(report["review_run"]["live_host_model_invocations"], 0)
+        self.assertEqual(report["review_run"]["planner_calls"], 0)
+        self.assertEqual(report["review_run"]["reviewer_calls"], 0)
+        self.assertIn("pending post-merge verification", report["next_phase"])
 
 
 if __name__ == "__main__":

@@ -3,7 +3,7 @@
   "phase": "P2",
   "case_id": "D03",
   "status": "pass",
-  "mode": "host_contract_smoke",
+  "mode": "deterministic_fixture_host_contract_smoke",
   "pages": 3,
   "host_contract": {
     "content_region": true,
@@ -26,6 +26,11 @@
     "absolute_host_model_invocation_ceiling": 6,
     "automatic_wireframe_redesign_count": 0,
     "specialist_agent_calls": 0
+  },
+  "review_run": {
+    "live_host_model_invocations": 0,
+    "planner_calls": 0,
+    "reviewer_calls": 0
   },
   "final_manifest_sha256": "436074ba97f6c949fd569c63c956d7f1d47eb75520e3ec60ad911be6d1eb5715"
 }

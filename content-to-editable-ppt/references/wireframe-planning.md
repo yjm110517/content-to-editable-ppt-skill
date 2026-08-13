@@ -22,4 +22,4 @@ Every Correction Operation must reference a correctable Validation Issue. Do not
 
 ## Preview and feedback
 
-Every page must render an SVG even when Preview mode is `internal_only`. Pause only when `pause_for_feedback` is true. User layout feedback creates a new Wireframe revision for the affected slides. User text changes return to P1 and require a new Candidate confirmation.
+Every page must render an SVG even when Preview mode is `internal_only`. Pause only when `pause_for_feedback` is true. User layout feedback records only the affected Slide IDs for a later Wireframe revision. User text changes terminate the old P2 State as `p1_revision_required`; route the original request back to P1, create and confirm a new Candidate revision, then initialize a new P2 Authority Bundle. Never resume the old P2 State with new content.

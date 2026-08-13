@@ -2,11 +2,12 @@
   "schema_version": "1.0",
   "phase": "P2",
   "status": "pass",
+  "integration_gate_candidate": "pass",
   "baseline_commit": "66253f849ea789dbbe742dcdcd9b2840bfae916a",
   "gates": {
     "runtime_and_p2_tests": {
       "status": "pass",
-      "tests": 77
+      "tests": 99
     },
     "json_schemas": {
       "status": "pass",
@@ -22,6 +23,9 @@
     },
     "authority_and_geometry": {
       "status": "pass",
+      "p1_state_binds_actual_authority": true,
+      "manifest_records_deck_authority": true,
+      "page_level_provenance": true,
       "content_refs_exactly_once": true,
       "semantic_refs_repeatable": true,
       "legal_semantic_swap_by_correction_rejected": true,
@@ -73,6 +77,7 @@
       "p0_baseline_unchanged": true,
       "p05_frozen_replay_cases": ["B01", "B02", "B03", "B04", "B05", "B06"],
       "p05_agent_calls": 0,
+      "p05_b06_environmental_com_retry_rerun": "pass",
       "p1_cases": ["D03", "D05", "D08"],
       "p1_content_projection_drift": 0
     },
@@ -88,10 +93,16 @@
     "visual_reviewer_calls": 0,
     "image_generation_calls": 0
   },
+  "review_run": {
+    "live_host_model_invocations": 0,
+    "planner_calls": 0,
+    "reviewer_calls": 0,
+    "image_generation_calls": 0
+  },
   "blocking_issues": 0,
   "authority_drift": 0,
   "non_deterministic_svg": 0,
   "unsafe_svg": 0,
   "unexpected_page_rebuild": 0,
-  "next_phase": "P3 Visual Design"
+  "next_phase": "P3 pending post-merge verification"
 }

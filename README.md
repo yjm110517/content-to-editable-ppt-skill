@@ -4,7 +4,7 @@
 
 ## 当前状态
 
-本仓库已完成 P0 Baseline Freeze、P0.5 Runtime Hardening、P1 Host Content Planning 和 P2 Host Wireframe 基线。当前代码支持材料路由、内容确认与冻结、Host 页面分区规划、确定性 Wireframe 校验和低保真 SVG 渲染。
+本仓库已完成 P0 Baseline Freeze、P0.5 Runtime Hardening 和 P1 Host Content Planning；P2 Host Wireframe 正在进行集成审核。当前开发分支支持材料路由、内容确认与冻结、Host 页面分区规划、确定性 Wireframe 校验和低保真 SVG 渲染。
 
 当前支持“材料 → 待确认大纲 → 冻结页面文字 → Wireframe SVG”和“参考图片 → 可编辑单页 PPT”两套独立基础流程。以下能力尚未实现，不能视为当前承诺：
 
@@ -136,7 +136,7 @@ python .\content-to-editable-ppt\scripts\render_wireframe.py --help
 
 ## 下一阶段
 
-下一阶段是 P3 Visual Design。在 P3–P5 完成前，Content-to-PPT 输出只到 Approved Slide Content 和 Wireframe SVG，不能宣称已经完成完整多页 PowerPoint 生成。
+P2 集成 Gate 通过后才进入 P3 Visual Design。在 P2–P5 完成前，Content-to-PPT 输出只到 Approved Slide Content 和 Wireframe SVG，不能宣称已经完成完整多页 PowerPoint 生成或 P3 已就绪。
 
 ## 开发验证
 

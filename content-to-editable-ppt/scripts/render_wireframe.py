@@ -102,21 +102,25 @@ def _region_svg(region: dict[str, Any], *, width: int, height: int) -> str:
     return f"  <rect {_attrs(attrs)}/>"
 
 
-def preview_text(*, region: dict[str, Any], item: dict[str, Any], index: int, count: int) -> tuple[str, str, list[str], int]:
+def preview_text(
+    region: dict[str, Any], authority_item: dict[str, Any], index: int, count: int
+) -> tuple[str, str, list[str], int]:
+    """Return the one canonical preview calculation used by render and audit."""
+    del index  # Position affects SVG coordinates, not the displayed preview text.
     box = region["bbox"]
     part_height = max(1, box["h"] // max(1, count))
     cells_per_line = max(4, box["w"] // (220 if region["role"] == "title" else 170))
     max_lines = max(1, part_height // (700 if region["role"] == "title" else 520))
     capacity = max(4, cells_per_line * max_lines)
-    preview, mode = truncate_cells(item["text"], capacity)
-    lines = wrap_cells(preview, cells_per_line)[:max_lines]
-    return preview, mode, lines, part_height
+    preview, mode = truncate_cells(authority_item["text"], capacity)
+    ordered_lines = wrap_cells(preview, cells_per_line)[:max_lines]
+    return preview, mode, ordered_lines, part_height
 
 
 def _text_svg(*, region: dict[str, Any], item: dict[str, Any], index: int, count: int, width: int, height: int) -> tuple[str, dict[str, Any] | None]:
     box = region["bbox"]
     font_size = 28 if region["role"] == "title" else 14 if region["role"] == "footer" else 18
-    _preview, mode, lines, part_height = preview_text(region=region, item=item, index=index, count=count)
+    _preview, mode, lines, part_height = preview_text(region, item, index, count)
     x = project(box["x"] + 180, width)
     base_y = box["y"] + index * part_height + 260
     line_height = font_size * Decimal("1.25")
@@ -196,20 +200,27 @@ def audit_svg(content: bytes, *, spec: dict[str, Any], slide_content: dict[str, 
     expected = content_map(slide_content)
     if Counter(actual_refs) != Counter({key: 1 for key in expected}):
         raise ContractError([error("$", "SVG Content Ref groups do not exactly match Approved Content", "svg_content_mapping")])
+    mapped_regions: dict[str, list[tuple[dict[str, Any], int, int]]] = {ref: [] for ref in expected}
+    for region in spec["regions"]:
+        refs = region["content_refs"]
+        for index, ref in enumerate(refs):
+            if ref in mapped_regions:
+                mapped_regions[ref].append((region, index, len(refs)))
     for group in groups:
         ref = group.attrib["data-content-ref"]
+        mappings = mapped_regions[ref]
+        if len(mappings) != 1:
+            raise ContractError([error("$", f"SVG Content Ref does not map to one Region: {ref}", "svg_content_mapping")])
+        region, index, count = mappings[0]
+        _, expected_mode, expected_lines, _ = preview_text(region, expected[ref], index, count)
         if group.attrib.get("data-authority-sha256") != canonical_sha256(expected[ref]):
             raise ContractError([error("$", f"SVG Authority Hash mismatch: {ref}", "svg_authority_hash")])
-        region = next((item for item in spec["regions"] if ref in item["content_refs"]), None)
-        if region is None:
-            raise ContractError([error("$", f"SVG Content Ref has no Region: {ref}", "svg_content_mapping")])
-        index = region["content_refs"].index(ref)
-        _preview, mode, lines, _part_height = preview_text(region=region, item=expected[ref], index=index, count=len(region["content_refs"]))
-        actual_lines = [item.text or "" for item in group.iter() if item.tag.split("}")[-1] == "tspan"]
-        if group.attrib.get("data-preview-display") != mode or actual_lines != lines:
-            raise ContractError([error("$", f"SVG Preview Text mismatch: {ref}", "svg_preview_text")])
         if group.attrib.get("data-authority-length") != str(len(expected[ref]["text"])):
             raise ContractError([error("$", f"SVG Authority Length mismatch: {ref}", "svg_authority_length")])
+        actual_mode = group.attrib.get("data-preview-display")
+        actual_lines = ["".join(item.itertext()) for item in group.iter() if item.tag.split("}")[-1] == "tspan"]
+        if actual_mode != expected_mode or actual_lines != expected_lines:
+            raise ContractError([error("$", f"SVG Preview Text mismatch: {ref}", "svg_preview_text")])
     return {"status": "pass", "sha256": hashlib.sha256(content).hexdigest(), "content_refs": len(groups)}
 
 

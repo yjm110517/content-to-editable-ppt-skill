@@ -148,28 +148,66 @@ def render_manifest(manifest: dict[str, Any], specs: list[dict[str, Any]], conte
     return result, warnings
 
 
-def state_for_case(case_id: str, manifest: dict[str, Any], *, user_revision: bool, timestamp: str) -> dict[str, Any]:
+def state_for_case(case_id: str, manifest: dict[str, Any], *, user_revision: bool, timestamp: str, evidence_dir: Path) -> dict[str, Any]:
     state = initial_state(task_id=f"p2-{case_id.lower()}", deck_id=case_id, absolute_host_model_invocation_ceiling=6 if user_revision else 3)
     for event in ("start_input_validation", "inputs_accepted"):
         state = advance(state, event=event, timestamp_utc=timestamp)
     state = advance(state, event="start_initial_planning", pass_id="initial", host_model_invocation_id=f"{case_id}-host-initial", timestamp_utc=timestamp)
-    for event in ("candidate_specs_ready", "start_spec_validation", "specs_accepted", "start_rendering", "rendering_complete", "preview_recorded"):
+    for event in ("candidate_specs_ready", "start_spec_validation", "specs_accepted", "start_rendering", "rendering_complete"):
         state = advance(state, event=event, timestamp_utc=timestamp)
     state["current_artifacts"]["wireframe_manifest_sha256"] = canonical_sha256(manifest)
+    state["page_results"] = [{"slide_id": item["slide_id"], "wireframe_input_sha256": item["wireframe_input_sha256"], "build_status": item["build_status"], "spec_sha256": item["spec_sha256"], "svg_sha256": item["svg_sha256"]} for item in manifest["slides"]]
+    preview = {
+        "schema_version": "1.0", "canonicalization_version": "p1-rfc8785-nfc-1",
+        "artifact_id": f"{case_id}-preview-r1", "deck_id": case_id,
+        "wireframe_manifest_sha256": canonical_sha256(manifest),
+        "mode": "user_visible" if user_revision else "internal_only",
+        "decided_by": "user" if user_revision else "host",
+        "visible_slide_ids": [item["slide_id"] for item in manifest["slides"]] if user_revision else [],
+        "pause_for_feedback": user_revision, "decision_reason": "deterministic P2 Gate",
+        "user_message_sha256": canonical_sha256({"message": "review wireframe"}) if user_revision else None,
+        "presented_at_utc": timestamp if user_revision else None,
+    }
+    validate_schema("wireframe_preview", preview, SCHEMA_DIR)
+    write_json(evidence_dir / "wireframe-preview.json", preview)
+    state = advance(state, event="preview_recorded", artifact_kind="preview", artifact_sha256=canonical_sha256(preview), timestamp_utc=timestamp)
     if user_revision:
         state = advance(state, event="wait_for_feedback", timestamp_utc=timestamp)
         evidence = canonical_sha256({"message": "move the second page content region"})
-        state = advance(state, event="feedback_changes_requested", user_evidence_sha256=evidence, affected_slide_ids=["S02"], timestamp_utc=timestamp)
+        feedback = {
+            "schema_version": "1.1", "canonicalization_version": "p1-rfc8785-nfc-1",
+            "feedback_id": f"{case_id}-feedback-r1", "deck_id": case_id,
+            "wireframe_manifest_sha256": canonical_sha256(manifest),
+            "wireframe_preview_sha256": canonical_sha256(preview), "decision": "changes_requested",
+            "change_scope": "layout", "affected_slide_ids": ["S02"],
+            "user_message_sha256": evidence, "created_at_utc": timestamp,
+        }
+        validate_schema("wireframe_feedback", feedback, SCHEMA_DIR)
+        write_json(evidence_dir / "wireframe-feedback.json", feedback)
+        state = advance(state, event="feedback_changes_requested", artifact_kind="feedback", artifact_sha256=canonical_sha256(feedback), user_evidence_sha256=evidence, affected_slide_ids=["S02"], timestamp_utc=timestamp)
         state = advance(state, event="start_revision_planning", pass_id="revision-1", user_evidence_sha256=evidence, host_model_invocation_id=f"{case_id}-host-revision-1", timestamp_utc=timestamp)
     else:
         state = advance(state, event="complete_without_feedback", timestamp_utc=timestamp)
     return state
 
 
-def complete_revision_state(state: dict[str, Any], manifest: dict[str, Any], timestamp: str) -> dict[str, Any]:
-    for event in ("candidate_specs_ready", "start_spec_validation", "specs_accepted", "start_rendering", "rendering_complete", "preview_recorded", "complete_without_feedback"):
+def complete_revision_state(state: dict[str, Any], manifest: dict[str, Any], timestamp: str, evidence_dir: Path) -> dict[str, Any]:
+    for event in ("candidate_specs_ready", "start_spec_validation", "specs_accepted", "start_rendering", "rendering_complete"):
         state = advance(state, event=event, timestamp_utc=timestamp)
     state["current_artifacts"]["wireframe_manifest_sha256"] = canonical_sha256(manifest)
+    state["page_results"] = [{"slide_id": item["slide_id"], "wireframe_input_sha256": item["wireframe_input_sha256"], "build_status": item["build_status"], "spec_sha256": item["spec_sha256"], "svg_sha256": item["svg_sha256"]} for item in manifest["slides"]]
+    preview = {
+        "schema_version": "1.0", "canonicalization_version": "p1-rfc8785-nfc-1",
+        "artifact_id": f"{state['deck_id']}-preview-r2", "deck_id": state["deck_id"],
+        "wireframe_manifest_sha256": canonical_sha256(manifest), "mode": "internal_only",
+        "decided_by": "host", "visible_slide_ids": [], "pause_for_feedback": False,
+        "decision_reason": "deterministic revision verification", "user_message_sha256": None,
+        "presented_at_utc": None,
+    }
+    validate_schema("wireframe_preview", preview, SCHEMA_DIR)
+    write_json(evidence_dir / "wireframe-preview-r2.json", preview)
+    state = advance(state, event="preview_recorded", artifact_kind="preview", artifact_sha256=canonical_sha256(preview), timestamp_utc=timestamp)
+    state = advance(state, event="complete_without_feedback", timestamp_utc=timestamp)
     return state
 
 
@@ -187,7 +225,7 @@ def evaluate_case(case: dict[str, Any], config: dict[str, Any], timestamp: str, 
     persist_specs(spec_dir, specs)
     manifest = build_manifest(approved_outline=authority["approved"], slide_content_manifest_sha256=canonical_sha256(authority["projection"]), specs=specs, layout_requirements=layout, output_ratio=authority["request"]["output_ratio"], artifact_id=f"{case_id}-wireframes-r1", revision=1, created_at_utc=timestamp)
     rendered, warnings = render_manifest(manifest, specs, authority["contents"], target / "wireframes")
-    state = state_for_case(case_id, rendered, user_revision=case_id == "D03", timestamp=timestamp)
+    state = state_for_case(case_id, rendered, user_revision=case_id == "D03", timestamp=timestamp, evidence_dir=target)
     revision_isolation = None
     if case_id == "D03":
         revision_specs = copy.deepcopy(specs)
@@ -209,7 +247,7 @@ def evaluate_case(case: dict[str, Any], config: dict[str, Any], timestamp: str, 
         if not revision_isolation:
             raise RuntimeError("D03 user revision invalidated an unrelated page")
         rendered = rendered_second
-        state = complete_revision_state(state, rendered, timestamp)
+        state = complete_revision_state(state, rendered, timestamp, target)
     order_only_reuse = None
     if case_id == "D08":
         reordered = copy.deepcopy(authority["approved"])
