@@ -110,7 +110,16 @@ def normalize_svg(content: bytes) -> bytes:
     return ET.tostring(root, encoding="utf-8", xml_declaration=True, short_empty_elements=True) + b"\n"
 
 
-def source_for_record(record: dict[str, Any], vendor_root: Path) -> Path:
+def source_for_record(record: dict[str, Any], vendor_root: Path | None, supplied_source: Path | None = None) -> Path:
+    if record["resolution_method"] != "tabler_existing":
+        if supplied_source is None:
+            raise ContractError([error("$.source_svg", "generated fallback records require the immutable source SVG", "missing_authority")])
+        source = supplied_source.resolve()
+        if not source.is_file() or sha256_file(source) != record["source_sha256"]:
+            raise ContractError([error("$.resolution_record.source_sha256", "generated source does not match immutable record", "source_hash_mismatch")])
+        return source
+    if vendor_root is None:
+        raise ContractError([error("$.vendor_root", "Tabler resolution requires the pinned vendor root", "missing_authority")])
     source = (vendor_root.resolve() / "icons" / "outline" / f"{record['icon_name']}.svg").resolve()
     try:
         source.relative_to(vendor_root.resolve())
@@ -178,7 +187,11 @@ def _stage_materialization(record: dict[str, Any], source: Path, stage_root: Pat
         "id": record["visual_ref"],
         "type": "svg",
         "path": f"assets/{normalized_path.name}",
-        "source": "library-resolved",
+        "source": {
+            "tabler_existing": "library-resolved",
+            "tabler_composition": "composite",
+            "programmatic_svg": "programmatic",
+        }[record["resolution_method"]],
         "width_px": 24,
         "height_px": 24,
         "size_bytes": len(normalized),
@@ -220,7 +233,9 @@ def _stage_materialization(record: dict[str, Any], source: Path, stage_root: Pat
 def materialize(args: argparse.Namespace) -> dict[str, Any]:
     record = load_json(args.resolution_record.resolve())
     validate_schema("icon_resolution", record, SCHEMA_DIR)
-    source = source_for_record(record, args.vendor_root.resolve())
+    vendor_root = getattr(args, "vendor_root", None)
+    source_svg = getattr(args, "source_svg", None)
+    source = source_for_record(record, vendor_root.resolve() if vendor_root else None, source_svg)
     output_dir = args.output_dir.resolve()
     root = output_dir.parent
     destinations = {
@@ -275,13 +290,18 @@ def verify(args: argparse.Namespace) -> dict[str, Any]:
         raise ContractError([error("$.resolution_record.p2_manifest_sha256", "Resolution Record does not bind current P2 Authority", "authority_hash_mismatch")])
     find_visual(manifest, record["visual_ref"])
     validate_direction(args.visual_direction.resolve(), manifest, manifest_sha)
-    evidence = validate_search_evidence(
-        args.search_evidence.resolve(), visual_ref=record["visual_ref"], manifest_sha=manifest_sha,
-        icon_name=record["icon_name"], selection_method=record["selection_method"],
-    )
-    if canonical_sha256(evidence) != record["search_evidence_sha256"]:
-        raise ContractError([error("$.resolution_record.search_evidence_sha256", "Search Evidence hash mismatch", "authority_hash_mismatch")])
-    source_for_record(record, args.vendor_root.resolve())
+    if record["resolution_method"] == "tabler_existing":
+        if args.search_evidence is None:
+            raise ContractError([error("$.search_evidence", "Tabler resolution requires Search Evidence", "missing_authority")])
+        evidence = validate_search_evidence(
+            args.search_evidence.resolve(), visual_ref=record["visual_ref"], manifest_sha=manifest_sha,
+            icon_name=record["icon_name"], selection_method=record["selection_method"],
+        )
+        if canonical_sha256(evidence) != record["search_evidence_sha256"]:
+            raise ContractError([error("$.resolution_record.search_evidence_sha256", "Search Evidence hash mismatch", "authority_hash_mismatch")])
+    vendor_root = getattr(args, "vendor_root", None)
+    source_svg = getattr(args, "source_svg", None)
+    source_for_record(record, vendor_root.resolve() if vendor_root else None, source_svg)
     asset_manifest = load_json(args.asset_manifest.resolve())
     validate_schema("asset_manifest", asset_manifest, SCHEMA_DIR)
     if len(asset_manifest["assets"]) != 1:
@@ -328,15 +348,17 @@ def parser() -> argparse.ArgumentParser:
     record.add_argument("--output", type=Path, required=True)
     material = sub.add_parser("materialize")
     material.add_argument("--resolution-record", type=Path, required=True)
-    material.add_argument("--vendor-root", type=Path, required=True)
+    material.add_argument("--vendor-root", type=Path)
+    material.add_argument("--source-svg", type=Path)
     material.add_argument("--output-dir", type=Path, required=True)
     check = sub.add_parser("verify")
     check.add_argument("--p2-manifest", type=Path, required=True)
     check.add_argument("--wireframe-root", type=Path, required=True)
     check.add_argument("--visual-direction", type=Path, required=True)
-    check.add_argument("--search-evidence", type=Path, required=True)
+    check.add_argument("--search-evidence", type=Path)
     check.add_argument("--resolution-record", type=Path, required=True)
-    check.add_argument("--vendor-root", type=Path, required=True)
+    check.add_argument("--vendor-root", type=Path)
+    check.add_argument("--source-svg", type=Path)
     check.add_argument("--asset-manifest", type=Path, required=True)
     check.add_argument("--security-report", type=Path, required=True)
     check.add_argument("--consumption-contract", type=Path, required=True)
