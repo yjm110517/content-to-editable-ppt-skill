@@ -13,6 +13,8 @@
 - Existing、Composition、Programmatic 和 Raster Handoff 路由正确；
 - 正常解析无网络、无独立 Agent、无任意 SVG；
 - Resolution Record 不覆盖；
-- Composition Input 和 PPT Builder Input 均绑定 Asset Manifest Sanitized SVG Hash；
-- synthetic resvg/Pillow fixture 记录独立 PNG 和 Preview Hash；
+- Composition Plan Source Input 与 PPT Builder Source Input 均绑定 Asset Manifest Sanitized SVG Hash；
+- 不比较 SVG 与 PNG/OOXML Hash；synthetic resvg/Pillow fixture 分别记录 Sanitized SVG、Rendered Icon PNG 和 Preview Hash；
+- P3.1 synthetic fixture 不含正式像素位置、颜色、Slot、Z-Order 或 Design Preview；
+- 后续 Preview 与 PPT Runtime 必须物理消费已解析 SVG，Generative Icon Substitution 为 0；
 - Tabler、resvg、Sanitizer、Asset Validator 与既有 P0–P2 无回归。
