@@ -32,6 +32,10 @@ Image-to-Editable-PPT bypasses every P1 Outline stage and continues through the 
 
 Image-to-Editable-PPT bypasses P2.
 
+## Resolve P3.1 icon assets
+
+After an accepted P2 1.1 Manifest, read [references/icon-asset-resolution.md](references/icon-asset-resolution.md). Resolve only `role=icon` placeholders from the pinned offline Tabler index, create immutable Resolution Records, and materialize through the existing SVG sanitizer. Do not parse placeholder business fields from Markdown, call an independent Icon Reviewer, use an online service, or generate the final Design Preview. P3.2 must define final visual direction before P3.3 design-image work begins.
+
 ## Core requirements
 
 - Rebuild readable text as native PowerPoint text.
