@@ -4,11 +4,13 @@ Use this workflow only after P1 reaches `p1_complete`. The formal P2 artifacts a
 
 ## Host Candidate
 
-Produce one lightweight JSON Candidate per Deck. For each slide provide `slide_id`, `order`, `layout_draft`, `content_labels`, and `layout_notes`.
+Produce one lightweight JSON Candidate 1.1 per Deck. For each slide provide `slide_id`, `order`, `layout_draft`, `content_labels`, `visual_placeholders`, and `layout_notes`.
 
 - Use `{{p2:content-ref=S03-C01}}` exactly once for every approved Content Ref and in authority order.
 - Set each label to a short continuous substring of the approved text.
-- Use only controlled visual zones: `image`, `chart`, `diagram`, `process`, `timeline`, `icon`, `decoration`, or `whitespace`.
+- For every required visual, declare a Deck-unique `visual_ref`, `role`, optional diagram `subtype`, `semantic`, and current-page `semantic_source_refs`; place it exactly once with `{{p2:visual-ref=S03-V01}}`.
+- Roles are `icon`, `image`, `chart`, `diagram`, or `illustration`. Diagram subtypes are `process`, `timeline`, `cycle`, `relationship`, or `architecture`. Only anonymous `whitespace` remains a zone.
+- Keep library names, icon names, versions, paths, SVG, hashes, colors, strokes, and decoration out of P2. Those are resolved in P3.
 - Keep free page copy out of `layout_draft`. Put hierarchy, relationships, reserved visual areas, and reading order in `layout_notes`.
 - Do not write HTML metadata. The deterministic Binder inserts it.
 

@@ -54,11 +54,13 @@ def fixture_candidate(bundle: dict[str, Any], case_id: str, timestamp: str) -> d
     for content in sorted(bundle["slide_contents"].values(), key=lambda value: value["order"]):
         items = [content["title"], *sorted(content["content_blocks"], key=lambda value: value["order"])]
         tokens = [f"{{{{p2:content-ref={item['content_ref']}}}}}" for item in items]
-        draft = "┌─" + tokens[0] + "─┐\n│" + " → ".join(tokens[1:] + ["{{p2:zone=diagram}}"] if len(tokens) > 1 else ["{{p2:zone=diagram}}"] ) + "│\n└────────┘"
+        visual_ref = f"{content['slide_id']}-V01"
+        draft = "┌─" + tokens[0] + "─┐\n│" + " → ".join(tokens[1:] + [f"{{{{p2:visual-ref={visual_ref}}}}}"] if len(tokens) > 1 else [f"{{{{p2:visual-ref={visual_ref}}}}}"] ) + "│\n└────────┘"
         slides.append({"slide_id": content["slide_id"], "order": content["order"], "layout_draft": draft,
                        "content_labels": [{"content_ref": item["content_ref"], "label": item["text"] if len(item["text"]) <= 24 else item["text"][:12]} for item in items],
+                       "visual_placeholders": [{"visual_ref": visual_ref, "role": "diagram", "subtype": "relationship", "semantic": items[-1]["text"], "semantic_source_refs": [items[-1]["content_ref"]]}],
                        "layout_notes": "标题置顶，内容按编号顺序阅读，右侧或下方预留结构示意区。"})
-    return {"schema_version": "1.0", "canonicalization_version": "p1-rfc8785-nfc-1", "artifact_type": "markdown_wireframe_candidate",
+    return {"schema_version": "1.1", "canonicalization_version": "p1-rfc8785-nfc-1", "artifact_type": "markdown_wireframe_candidate",
             "artifact_id": f"{case_id}-markdown-wireframe-r1", "deck_id": case_id, "revision": 1, "parent_sha256": None,
             "pass_id": "initial-fixture", "host_model_invocation_id": f"{case_id}-fixture-not-live", "slides": slides, "created_at_utc": timestamp}
 
@@ -121,17 +123,16 @@ def main() -> int:
     try:
         if args.work_root.exists(): shutil.rmtree(args.work_root)
         results = [evaluate(cases[item], p2["cases"][item], p2["fixed_timestamp_utc"], args.work_root.resolve()) for item in selected]
-        d03_bundle, _ = authority(cases["D03"], p2["fixed_timestamp_utc"], args.work_root.resolve() / "d03-call-authority")
-        d03_evidence = verify_d03_call_evidence(d03_bundle, p2["cases"]["D03"]["candidate"])
+        d03_evidence = {"status": "historical_1_0_excluded", "host_model_invocations": 0, "reason": "P2.1 requires Candidate and Manifest 1.1"}
         baseline = subprocess.run(["git", "diff", "--quiet", "ce815cc", "--", "baseline"], cwd=ROOT).returncode == 0
         if not baseline: raise RuntimeError("P0 Baseline differs from ce815cc")
-        report = {"schema_version": "1.0", "phase": "P2-markdown", "status": "pass", "integration_gate_candidate": "pass",
+        report = {"schema_version": "1.0", "phase": "P2.1-visual-placeholder", "status": "pass", "integration_gate_candidate": "pass",
                   "cases": results, "blocking_issues": 0, "authority_drift": 0, "missing_or_unknown_content_refs": 0,
                   "formal_p2_svg_generation": 0, "automatic_redesign": 0, "specialist_agent_calls": 0,
                   "review_run": {"live_host_model_invocations": 0, "planner_calls": 0, "reviewer_calls": 0, "image_generation_calls": 0},
                   "recorded_d03_host_model_invocations": p2["cases"]["D03"]["host_model_invocations"], "p0_baseline_unchanged": True}
         report["d03_host_call_evidence"] = d03_evidence
-        write(args.work_root.resolve() / "p2-markdown-wireframe-gate.json", report)
+        write(args.work_root.resolve() / "p2-visual-placeholder-gate.json", report)
         print(json.dumps(report, ensure_ascii=False)); return 0
     except Exception as exc:
         print(json.dumps({"status": "error", "error": str(exc)}, ensure_ascii=False)); return 1

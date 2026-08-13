@@ -17,7 +17,8 @@ from schema_utils import ContractError, error, is_safe_relative_path, load_json,
 SCHEMA_DIR = Path(__file__).resolve().parents[1] / "schemas"
 CANONICALIZATION_VERSION = "p1-rfc8785-nfc-1"
 CONTENT_TOKEN = re.compile(r"\{\{p2:content-ref=([^{}]+)\}\}")
-ZONE_TOKEN = re.compile(r"\{\{p2:zone=(image|chart|diagram|process|timeline|icon|decoration|whitespace)\}\}")
+VISUAL_TOKEN = re.compile(r"\{\{p2:visual-ref=([^{}]+)\}\}")
+ZONE_TOKEN = re.compile(r"\{\{p2:zone=(whitespace)\}\}")
 SLIDE_MARKER = re.compile(r"<!-- p2:slide-id=([^\s]+) -->")
 CONTENT_BLOCK = re.compile(
     r"<!-- p2:content-ref=([^\s]+):start -->\n(.*?)\n<!-- p2:content-ref=\1:end -->",
@@ -25,6 +26,9 @@ CONTENT_BLOCK = re.compile(
 )
 FORBIDDEN_TEXT = re.compile(r"(?is)<!--|-->|```|<script\b|javascript:|(?:https?|file|data):|\\\\|[A-Za-z]:\\")
 NON_STRUCTURAL = re.compile(r"[A-Za-z0-9\u3400-\u9fff]")
+FORBIDDEN_ASSET_HINT = re.compile(r"(?i)\b(?:tabler|lucide|phosphor|iconify|openmoji|stroke|fill|rgb|rgba|hsl|hsla)\b|\.svg\b|#[a-f0-9]{3,8}\b|\b[a-f0-9]{64}\b|(?:^|[\\/])(?:icons?|assets?)[\\/]|(?:蓝色|红色|绿色|黑色|白色|黄色|紫色|橙色|灰色|线宽)")
+VISUAL_LABELS = {"icon": "图标", "image": "图片", "chart": "图表", "illustration": "插画"}
+DIAGRAM_LABELS = {"process": "流程图", "timeline": "时间线", "cycle": "循环图", "relationship": "关系图", "architecture": "架构图"}
 
 
 def utc_now() -> str:
@@ -41,6 +45,11 @@ def sha256_bytes(value: bytes) -> str:
 
 def authority_items(slide: dict[str, Any]) -> list[dict[str, Any]]:
     return [slide["title"], *sorted(slide["content_blocks"], key=lambda item: item["order"])]
+
+
+def visual_display(item: dict[str, Any]) -> str:
+    role = DIAGRAM_LABELS[item["subtype"]] if item["role"] == "diagram" else VISUAL_LABELS[item["role"]]
+    return f"[{role} {item['visual_ref']}：{normalize_text(item['semantic'])}]"
 
 
 def load_markdown_authority(
@@ -144,6 +153,7 @@ def validate_candidate(candidate: dict[str, Any], bundle: dict[str, Any]) -> lis
     if actual_ids != expected_ids:
         problems.append((None, "slide_sequence_mismatch", "$.slides", "Candidate slide IDs and order must exactly match P1 Authority", False))
     seen_ids: set[str] = set()
+    seen_visual_refs: set[str] = set()
     for slide_index, slide in enumerate(candidate["slides"]):
         slide_id = slide["slide_id"]
         base = f"$.slides[{slide_index}]"
@@ -157,6 +167,7 @@ def validate_candidate(candidate: dict[str, Any], bundle: dict[str, Any]) -> lis
         if slide["order"] != authority["order"]:
             problems.append((slide_id, "order_mismatch", base + ".order", "slide order differs from P1 Authority", False))
         refs = [item["content_ref"] for item in authority_items(authority)]
+        authority_text = {item["content_ref"]: normalize_text(item["text"]) for item in authority_items(authority)}
         labels = slide["content_labels"]
         label_refs = [item["content_ref"] for item in labels]
         if label_refs != refs:
@@ -170,10 +181,34 @@ def validate_candidate(candidate: dict[str, Any], bundle: dict[str, Any]) -> lis
         draft = normalize_text(slide["layout_draft"])
         if FORBIDDEN_TEXT.search(draft) or FORBIDDEN_TEXT.search(normalize_text(slide["layout_notes"])):
             problems.append((slide_id, "unsafe_candidate_text", base, "Candidate contains forbidden markup, script, path, or external reference", True))
+        if FORBIDDEN_ASSET_HINT.search(normalize_text(slide["layout_notes"])):
+            problems.append((slide_id, "concrete_asset_forbidden", base + ".layout_notes", "P2 layout notes must not prescribe a library, file, hash, color, fill, or stroke", True))
         draft_refs = CONTENT_TOKEN.findall(draft)
         if draft_refs != refs:
             problems.append((slide_id, "content_placeholder_sequence_mismatch", base + ".layout_draft", "Layout draft must contain every Content Ref exactly once in Authority order", False))
-        remainder = CONTENT_TOKEN.sub("", ZONE_TOKEN.sub("", draft))
+        declared_visual_refs: list[str] = []
+        for visual_index, visual in enumerate(slide["visual_placeholders"]):
+            visual_base = f"{base}.visual_placeholders[{visual_index}]"
+            visual_ref = visual["visual_ref"]
+            declared_visual_refs.append(visual_ref)
+            if visual_ref in seen_visual_refs:
+                problems.append((slide_id, "duplicate_visual_ref", visual_base + ".visual_ref", "Visual Ref must be unique in the Deck", False))
+            seen_visual_refs.add(visual_ref)
+            if not visual_ref.startswith(slide_id + "-V"):
+                problems.append((slide_id, "cross_slide_visual_ref", visual_base + ".visual_ref", "Visual Ref must be bound to the current Slide", True))
+            source_refs = visual["semantic_source_refs"]
+            if any(ref not in authority_text for ref in source_refs):
+                problems.append((slide_id, "unknown_semantic_source_ref", visual_base + ".semantic_source_refs", "Semantic Source Refs must reference current-page Approved Content", True))
+            else:
+                semantic = normalize_text(visual["semantic"]).casefold()
+                if not any(semantic in authority_text[ref].casefold() for ref in source_refs):
+                    problems.append((slide_id, "unsupported_visual_semantic", visual_base + ".semantic", "Visual semantic must be a continuous substring of its Approved Content sources", True))
+            if FORBIDDEN_ASSET_HINT.search(json.dumps(visual, ensure_ascii=False)):
+                problems.append((slide_id, "concrete_asset_forbidden", visual_base, "P2 Visual Placeholder must not name a library, icon file, path, hash, color, or stroke", True))
+        draft_visual_refs = VISUAL_TOKEN.findall(draft)
+        if len(draft_visual_refs) != len(set(draft_visual_refs)) or sorted(draft_visual_refs) != sorted(declared_visual_refs):
+            problems.append((slide_id, "visual_placeholder_mapping_mismatch", base + ".layout_draft", "Every declared Visual Ref must occur exactly once in the layout draft", False))
+        remainder = CONTENT_TOKEN.sub("", VISUAL_TOKEN.sub("", ZONE_TOKEN.sub("", draft)))
         if "{{" in remainder or "}}" in remainder:
             problems.append((slide_id, "unknown_placeholder", base + ".layout_draft", "Layout draft contains an unknown placeholder", False))
         if NON_STRUCTURAL.search(remainder):
@@ -204,6 +239,9 @@ def _render_slide(candidate_slide: dict[str, Any], authority: dict[str, Any]) ->
     labels = {item["content_ref"]: normalize_text(item["label"]) for item in candidate_slide["content_labels"]}
     draft = normalize_text(candidate_slide["layout_draft"])
     draft = CONTENT_TOKEN.sub(lambda match: labels[match.group(1)], draft)
+    visual_map = {item["visual_ref"]: visual_display(item) for item in candidate_slide["visual_placeholders"]}
+    draft = VISUAL_TOKEN.sub(lambda match: visual_map[match.group(1)], draft)
+    draft = ZONE_TOKEN.sub("[留白]", draft)
     lines = [
         f"<!-- p2:slide-id={authority['slide_id']} -->",
         f"## 第 {authority['order']} 页｜{authority['slide_id']}",
@@ -244,7 +282,7 @@ def bind_markdown(candidate: dict[str, Any], bundle: dict[str, Any]) -> tuple[by
         _render_slide(slide, bundle["slide_contents"][slide["slide_id"]]) for slide in slides
     ) + "\n").encode("utf-8")
     manifest = {
-        "schema_version": "1.0",
+        "schema_version": "1.1",
         "canonicalization_version": CANONICALIZATION_VERSION,
         "artifact_type": "markdown_wireframe_manifest",
         "deck_id": candidate["deck_id"],
@@ -259,6 +297,7 @@ def bind_markdown(candidate: dict[str, Any], bundle: dict[str, Any]) -> tuple[by
                 "slide_id": slide["slide_id"],
                 "order": slide["order"],
                 "content_refs": [item["content_ref"] for item in authority_items(bundle["slide_contents"][slide["slide_id"]])],
+                "visual_placeholders": copy.deepcopy(slide["visual_placeholders"]),
             }
             for slide in slides
         ],
@@ -285,6 +324,10 @@ def audit_markdown(markdown: bytes, manifest: dict[str, Any], bundle: dict[str, 
         expected_blocks.extend((item["content_ref"], normalize_text(item["text"])) for item in authority_items(bundle["slide_contents"][slide["slide_id"]]))
     if actual_blocks != expected_blocks:
         failures.append(error("$.wireframe", "Markdown content metadata or visible Authority text differs", "markdown_authority_drift"))
+    for slide in manifest["slides"]:
+        for visual in slide["visual_placeholders"]:
+            if text.count(visual_display(visual)) != 1:
+                failures.append(error("$.wireframe", f"Visual Placeholder {visual['visual_ref']} is missing, duplicated, or changed", "markdown_visual_mapping"))
     if failures:
         raise ContractError(failures)
 

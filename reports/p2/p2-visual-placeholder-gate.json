@@ -1,0 +1,57 @@
+{
+  "schema_version": "1.0",
+  "phase": "P2.1-visual-placeholder",
+  "status": "pass",
+  "integration_gate_candidate": "pass",
+  "cases": [
+    {
+      "case_id": "D03",
+      "status": "pass",
+      "pages": 3,
+      "authority_drift": 0,
+      "missing_or_unknown_content_refs": 0,
+      "host_model_invocations": 0,
+      "contract_corrections": 0,
+      "wireframe_sha256": "3b9e105d546b9094b97a214ada133c34ac8524dc8eac508a378ae06ca653270d"
+    },
+    {
+      "case_id": "D05",
+      "status": "pass",
+      "pages": 5,
+      "authority_drift": 0,
+      "missing_or_unknown_content_refs": 0,
+      "host_model_invocations": 0,
+      "contract_corrections": 0,
+      "wireframe_sha256": "066e0bc13e175f8e8a78ea1f094a87c7228ced08e50b26c5de86883a42ee1ba7"
+    },
+    {
+      "case_id": "D08",
+      "status": "pass",
+      "pages": 8,
+      "authority_drift": 0,
+      "missing_or_unknown_content_refs": 0,
+      "host_model_invocations": 0,
+      "contract_corrections": 0,
+      "wireframe_sha256": "4c8875b3ad4fdcec8bd08d6459fe402bb1e99fa39baae3fea32f36a6d127b197"
+    }
+  ],
+  "blocking_issues": 0,
+  "authority_drift": 0,
+  "missing_or_unknown_content_refs": 0,
+  "formal_p2_svg_generation": 0,
+  "automatic_redesign": 0,
+  "specialist_agent_calls": 0,
+  "review_run": {
+    "live_host_model_invocations": 0,
+    "planner_calls": 0,
+    "reviewer_calls": 0,
+    "image_generation_calls": 0
+  },
+  "recorded_d03_host_model_invocations": 0,
+  "p0_baseline_unchanged": true,
+  "d03_host_call_evidence": {
+    "status": "historical_1_0_excluded",
+    "host_model_invocations": 0,
+    "reason": "P2.1 requires Candidate and Manifest 1.1"
+  }
+}
