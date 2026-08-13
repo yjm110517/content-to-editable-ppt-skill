@@ -17,7 +17,7 @@
       "version": "2.6.2",
       "license": "MPL-2.0",
       "reference_platform": "win32-x64",
-      "status": "declared_for_materialization_pr"
+      "status": "active"
     }
   }
 }

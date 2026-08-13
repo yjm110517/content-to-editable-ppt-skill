@@ -1,0 +1,17 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "resolved-asset-consumption.schema.json",
+  "title": "P3.1 Resolved Asset Consumption Contract",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["schema_version", "artifact_type", "visual_ref", "resolution_record_sha256", "asset_manifest_entry_sha256", "sanitized_svg_sha256"],
+  "properties": {
+    "schema_version": {"const": "1.0"},
+    "artifact_type": {"const": "resolved_asset_consumption_contract"},
+    "visual_ref": {"type": "string", "minLength": 1},
+    "resolution_record_sha256": {"$ref": "#/$defs/hash"},
+    "asset_manifest_entry_sha256": {"$ref": "#/$defs/hash"},
+    "sanitized_svg_sha256": {"$ref": "#/$defs/hash"}
+  },
+  "$defs": {"hash": {"type": "string", "pattern": "^[a-f0-9]{64}$"}}
+}

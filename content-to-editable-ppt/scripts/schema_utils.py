@@ -53,12 +53,16 @@ SCHEMA_FILES = {
     "markdown_wireframe_feedback": "markdown-wireframe-feedback.schema.json",
     "markdown_wireframe_state": "markdown-wireframe-state.schema.json",
     "markdown_wireframe_host_call_record": "markdown-wireframe-host-call-record.schema.json",
+    "icon_resolution": "icon-resolution.schema.json",
+    "resolved_asset_consumption": "resolved-asset-consumption.schema.json",
+    "deck_visual_direction": "deck-visual-direction.schema.json",
+    "icon_search_evidence": "icon-search-evidence.schema.json",
 }
 
 SUPPORTED_SCHEMA_VERSIONS = {
     "layout": {"1.3", "1.4"},
     "run_state": {"1.3", "1.4"},
-    "runtime_manifest": {"1.0"},
+    "runtime_manifest": {"1.0", "1.1"},
     "runtime_error": {"1.0"},
     "reviewer_technical_failure": {"1.0"},
     "content_authority_report": {"1.0"},
@@ -80,6 +84,11 @@ SUPPORTED_SCHEMA_VERSIONS = {
     "markdown_wireframe_feedback": {"1.0"},
     "markdown_wireframe_state": {"1.0"},
     "markdown_wireframe_host_call_record": {"1.0"},
+    "icon_resolution": {"1.0"},
+    "resolved_asset_consumption": {"1.0"},
+    "deck_visual_direction": {"1.0"},
+    "icon_search_evidence": {"1.0"},
+    "asset_manifest": {"1.3", "1.4"},
 }
 
 

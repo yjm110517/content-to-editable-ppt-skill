@@ -6,7 +6,7 @@
   "additionalProperties": false,
   "required": ["schema_version", "assets"],
   "properties": {
-    "schema_version": {"const": "1.3"},
+    "schema_version": {"enum": ["1.3", "1.4"]},
     "assets": {
       "type": "array",
       "items": {
@@ -17,7 +17,7 @@
           "id": {"type": "string", "minLength": 1},
           "type": {"enum": ["png", "jpeg", "svg"]},
           "path": {"type": "string", "minLength": 1},
-          "source": {"enum": ["cropped", "user-provided", "agent-generated", "locally-redrawn"]},
+          "source": {"enum": ["cropped", "user-provided", "agent-generated", "locally-redrawn", "library-resolved", "programmatic", "composite", "raster-handoff"]},
           "width_px": {"type": "integer", "minimum": 1},
           "height_px": {"type": "integer", "minimum": 1},
           "size_bytes": {"type": "integer", "minimum": 1},
@@ -27,13 +27,46 @@
           "contains_text": {"type": "boolean"},
           "text_editability_exempt": {"type": "boolean"},
           "exemption_reason": {"type": "string", "minLength": 1},
-          "security_status": {"enum": ["pending", "passed", "rejected"]}
+          "security_status": {"enum": ["pending", "passed", "rejected"]},
+          "provenance": {
+            "oneOf": [
+              {
+                "type": "object", "additionalProperties": false,
+                "required": ["provenance_type", "visual_ref", "resolution_record_sha256", "source_svg_sha256", "normalized_svg_sha256", "sanitized_svg_sha256"],
+                "properties": {
+                  "provenance_type": {"const": "resolved_svg"},
+                  "visual_ref": {"type": "string", "minLength": 1},
+                  "resolution_record_sha256": {"type": "string", "pattern": "^[a-f0-9]{64}$"},
+                  "source_svg_sha256": {"type": "string", "pattern": "^[a-f0-9]{64}$"},
+                  "normalized_svg_sha256": {"type": "string", "pattern": "^[a-f0-9]{64}$"},
+                  "sanitized_svg_sha256": {"type": ["string", "null"], "pattern": "^[a-f0-9]{64}$"}
+                }
+              },
+              {
+                "type": "object", "additionalProperties": false,
+                "required": ["provenance_type", "visual_ref", "source_raster_sha256"],
+                "properties": {
+                  "provenance_type": {"const": "raster_handoff"},
+                  "visual_ref": {"type": "string", "minLength": 1},
+                  "source_raster_sha256": {"type": "string", "pattern": "^[a-f0-9]{64}$"}
+                }
+              }
+            ]
+          }
         },
         "allOf": [
           {"if": {"properties": {"text_editability_exempt": {"const": true}}, "required": ["text_editability_exempt"]}, "then": {"required": ["exemption_reason"]}},
-          {"if": {"properties": {"type": {"const": "svg"}}, "required": ["type"]}, "then": {"required": ["view_box"]}}
+          {"if": {"properties": {"type": {"const": "svg"}}, "required": ["type"]}, "then": {"required": ["view_box"]}},
+          {
+            "if": {"properties": {"security_status": {"const": "passed"}, "provenance": {"properties": {"provenance_type": {"const": "resolved_svg"}}}}, "required": ["security_status", "provenance"]},
+            "then": {"properties": {"provenance": {"properties": {"sanitized_svg_sha256": {"type": "string", "pattern": "^[a-f0-9]{64}$"}}}}}
+          }
         ]
       }
     }
-  }
+  },
+  "allOf": [{
+    "if": {"properties": {"schema_version": {"const": "1.4"}}},
+    "then": {"properties": {"assets": {"items": {"required": ["provenance"]}}}}
+  }]
 }

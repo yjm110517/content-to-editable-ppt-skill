@@ -86,6 +86,9 @@ def validate_asset_set(*, asset_dir: Path, manifest_path: Path, schema_dir: Path
                 raise AssetError("raster asset is unreadable", path=item["path"], code="unreadable_asset") from exc
         else:
             report = svg_results.get(item["id"])
+            provenance = item.get("provenance") if manifest.get("schema_version") == "1.4" else None
+            if provenance and provenance.get("provenance_type") == "resolved_svg" and provenance.get("sanitized_svg_sha256") != item["sha256"]:
+                raise AssetError("resolved SVG provenance does not match the asset hash", path=item["path"], code="integrity_mismatch")
             report_matches = report and all(
                 (
                     report.get("status") == "passed",
@@ -94,6 +97,7 @@ def validate_asset_set(*, asset_dir: Path, manifest_path: Path, schema_dir: Path
                     report.get("view_box") == item["view_box"],
                     report.get("width_px") == item["width_px"],
                     report.get("height_px") == item["height_px"],
+                    not provenance or provenance.get("provenance_type") != "resolved_svg" or report.get("source_sha256") == provenance.get("normalized_svg_sha256"),
                 )
             )
             if not report_matches:

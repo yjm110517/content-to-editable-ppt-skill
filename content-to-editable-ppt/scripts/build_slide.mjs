@@ -180,7 +180,7 @@ async function buildImage(slide, element, assets, usedAssets) {
   const options = { ...basePosition(element, `ivt:${element.id}`), path: asset.path, altText: element.alt_text ?? element.asset_id, rounding: element.rounding ?? false };
   if (element.fit !== "stretch") options.sizing = { type: element.fit, w: element.w, h: element.h };
   slide.addImage(options);
-  usedAssets.set(asset.id, { asset_id: asset.id, type: asset.type, sha256: asset.sha256 });
+  usedAssets.set(asset.id, { asset_id: asset.id, type: asset.type, sha256: asset.sha256, source_input_sha256: asset.sha256 });
 }
 
 function runProcess(executable, args) {

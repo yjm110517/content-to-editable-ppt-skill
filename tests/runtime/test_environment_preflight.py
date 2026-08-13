@@ -25,6 +25,7 @@ class EnvironmentPreflightTests(unittest.TestCase):
             skip_powerpoint_smoke=False,
             schema_dir=ROOT / "content-to-editable-ppt" / "schemas",
             runtime_dir=SCRIPTS,
+            require_svg_rasterizer=False,
         )
 
     @patch("environment_preflight.platform.system", return_value="Windows")
