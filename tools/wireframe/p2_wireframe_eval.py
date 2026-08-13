@@ -7,6 +7,7 @@ import json
 import shutil
 import subprocess
 import sys
+import unicodedata
 from pathlib import Path
 from typing import Any
 
@@ -90,13 +91,13 @@ def verify_d03_call_evidence(bundle: dict[str, Any], fixture_candidate_value: di
     raw = load(D03_CALL / "raw_response.json")
     record = load(D03_CALL / "call_record.json")
     validate_schema("markdown_wireframe_host_call_record", record, ROOT / "content-to-editable-ppt" / "schemas")
-    expected_files = {
-        "config_sha256": D03_CALL / "config.json",
-        "prompt_sha256": D03_CALL / "prompt.md",
-        "output_schema_sha256": ROOT / "content-to-editable-ppt" / "schemas" / "markdown-wireframe-candidate.schema.json",
-    }
-    for field, path in expected_files.items():
-        if hashlib.sha256(path.read_bytes()).hexdigest() != record[field]:
+    config_digest = canonical_sha256(load(D03_CALL / "config.json"))
+    schema_digest = canonical_sha256(load(ROOT / "content-to-editable-ppt" / "schemas" / "markdown-wireframe-candidate.schema.json"))
+    prompt = unicodedata.normalize("NFC", (D03_CALL / "prompt.md").read_text(encoding="utf-8").replace("\r\n", "\n").replace("\r", "\n"))
+    prompt_digest = hashlib.sha256(prompt.encode("utf-8")).hexdigest()
+    expected_digests = {"config_sha256": config_digest, "prompt_sha256": prompt_digest, "output_schema_sha256": schema_digest}
+    for field, digest in expected_digests.items():
+        if digest != record[field]:
             raise RuntimeError(f"D03 Host Call {field} mismatch")
     expected_inputs = {
         "p1_state": canonical_sha256(bundle["p1_state"]),
