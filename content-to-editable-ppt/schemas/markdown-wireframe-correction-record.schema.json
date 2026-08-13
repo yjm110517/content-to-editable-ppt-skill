@@ -14,6 +14,6 @@
     "hash": {"type": "string", "pattern": "^[a-f0-9]{64}$"}, "time": {"type": "string", "format": "date-time", "pattern": "Z$"},
     "op": {"type": "object", "additionalProperties": false, "required": ["op", "validation_issue_id", "path", "before", "after"],
       "properties": {"op": {"enum": ["add", "remove", "replace"]}, "validation_issue_id": {"type": "string", "minLength": 1},
-        "path": {"type": "string", "pattern": "^/slides/[0-9]+/(order|layout_draft|layout_notes|content_labels(?:/[0-9]+(?:/(content_ref|label))?)?)$"}, "before": {}, "after": {}}}
+        "path": {"type": "string", "pattern": "^/slides/[0-9]+/(order|layout_draft|layout_notes|content_labels(?:/[0-9]+(?:/(content_ref|label))?)?|visual_placeholders(?:/[0-9]+(?:/(visual_ref|role|subtype|semantic|semantic_source_refs))?)?)$"}, "before": {}, "after": {}}}
   }
 }

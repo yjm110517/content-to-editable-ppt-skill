@@ -24,7 +24,7 @@ Image-to-Editable-PPT bypasses every P1 Outline stage and continues through the 
 ## Generate P2 Markdown Wireframes
 
 1. Require `content_to_ppt + p1_complete`, then read [references/wireframe-planning.md](references/wireframe-planning.md).
-2. In one Host pass, produce the lightweight JSON Candidate. Use only Content Ref placeholders, approved-text substring labels, controlled visual-zone placeholders, and layout notes.
+2. In one Host pass, produce Candidate 1.1. Use Content Ref placeholders, approved-text substring labels, and stable Visual Placeholder intents bound through `semantic_source_refs`; never name a library or concrete asset in P2.
 3. Run `manage_wireframe.py submit-candidate`; use at most two issue-bound Contract Corrections and never redesign automatically.
 4. Run `bind` to create the immutable revision Markdown and thin Manifest. Show the complete Markdown in chat by default.
 5. Record `user_visible` preview and route feedback: layout changes create a new P2 revision; content changes return to P1; explicit skip records the user-message hash and completes without pausing.

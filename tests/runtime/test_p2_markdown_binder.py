@@ -41,17 +41,21 @@ def approved() -> dict:
 
 def candidate() -> dict:
     return {
-        "schema_version": "1.0", "canonicalization_version": "p1-rfc8785-nfc-1",
+        "schema_version": "1.1", "canonicalization_version": "p1-rfc8785-nfc-1",
         "artifact_type": "markdown_wireframe_candidate", "artifact_id": "wf-candidate-1",
         "deck_id": "D01", "revision": 1, "parent_sha256": None, "pass_id": "initial",
         "host_model_invocation_id": "host-1",
         "slides": [{
             "slide_id": "S01", "order": 1,
-            "layout_draft": "┌──{{p2:content-ref=S01-TITLE}}──┐\n│ {{p2:zone=diagram}} │\n└──{{p2:content-ref=S01-C01}}──┘",
+            "layout_draft": "┌──{{p2:content-ref=S01-TITLE}}──┐\n│ {{p2:visual-ref=S01-V01}} │\n└──{{p2:content-ref=S01-C01}}──┘",
             "content_labels": [
                 {"content_ref": "S01-TITLE", "label": "生成式AI如何支持学习"},
                 {"content_ref": "S01-C01", "label": "即时反馈"},
             ],
+            "visual_placeholders": [{
+                "visual_ref": "S01-V01", "role": "icon", "subtype": None,
+                "semantic": "生成式AI", "semantic_source_refs": ["S01-TITLE"],
+            }],
             "layout_notes": "标题置顶，正文位于图示下方，阅读顺序由上到下。",
         }],
         "created_at_utc": NOW,
@@ -140,6 +144,8 @@ class MarkdownWireframeBinderTests(unittest.TestCase):
             text = first.decode("utf-8")
             self.assertIn("提供即时反馈与个性化支持", text)
             self.assertIn("<!-- p2:content-ref=S01-C01:start -->", text)
+            self.assertIn("[图标 S01-V01：生成式AI]", text)
+            self.assertEqual(first_manifest["slides"][0]["visual_placeholders"], candidate()["slides"][0]["visual_placeholders"])
             validate_schema("markdown_wireframe_manifest", first_manifest, ROOT / "content-to-editable-ppt" / "schemas")
 
     def test_visible_authority_and_metadata_tamper_fail_audit(self) -> None:
@@ -163,6 +169,29 @@ class MarkdownWireframeBinderTests(unittest.TestCase):
                 report = build_validation_report(document, bundle, report_id="unsafe", validated_at_utc=NOW)
                 self.assertEqual(report["status"], "blocking")
                 self.assertIn("unsafe_candidate_text", {item["code"] for item in report["issues"]})
+
+    def test_visual_placeholder_contract_and_semantic_binding(self) -> None:
+        with tempfile.TemporaryDirectory() as temporary:
+            bundle = self.bundle(Path(temporary))
+            cases = []
+            duplicate = candidate(); duplicate["slides"][0]["layout_draft"] += "{{p2:visual-ref=S01-V01}}"; cases.append((duplicate, "visual_placeholder_mapping_mismatch"))
+            unknown = candidate(); unknown["slides"][0]["visual_placeholders"][0]["semantic_source_refs"] = ["S01-C99"]; cases.append((unknown, "unknown_semantic_source_ref"))
+            unsupported = candidate(); unsupported["slides"][0]["visual_placeholders"][0]["semantic"] = "机器人教师"; cases.append((unsupported, "unsupported_visual_semantic"))
+            concrete = candidate(); concrete["slides"][0]["visual_placeholders"][0]["semantic"] = "Tabler"; cases.append((concrete, "concrete_asset_forbidden"))
+            color = candidate(); color["slides"][0]["layout_notes"] += " 使用蓝色图标。"; cases.append((color, "concrete_asset_forbidden"))
+            cross = candidate(); cross["slides"][0]["visual_placeholders"][0]["visual_ref"] = "S02-V01"; cross["slides"][0]["layout_draft"] = cross["slides"][0]["layout_draft"].replace("S01-V01", "S02-V01"); cases.append((cross, "cross_slide_visual_ref"))
+            for document, code in cases:
+                report = build_validation_report(document, bundle, report_id=code, validated_at_utc=NOW)
+                self.assertIn(code, {item["code"] for item in report["issues"]})
+
+    def test_p2_1_rejects_concrete_asset_fields_and_old_candidate(self) -> None:
+        document = candidate()
+        document["slides"][0]["visual_placeholders"][0]["icon_name"] = "code-ai"
+        with self.assertRaises(ContractError):
+            validate_schema("markdown_wireframe_candidate", document, ROOT / "content-to-editable-ppt" / "schemas")
+        old = candidate(); old["schema_version"] = "1.0"
+        with self.assertRaises(ContractError):
+            validate_schema("markdown_wireframe_candidate", old, ROOT / "content-to-editable-ppt" / "schemas")
 
 
 if __name__ == "__main__":

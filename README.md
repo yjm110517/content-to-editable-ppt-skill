@@ -4,7 +4,7 @@
 
 ## 当前状态
 
-本仓库已完成 P0 Baseline Freeze、P0.5 Runtime Hardening、P1 Host Content Planning 和 P2.0 Markdown Wireframe Core。P2.1 正在增加稳定 Visual Placeholder Intent；在该 Gate 通过前，P2 Overall 保持开发中，P3.1 Tabler-first Asset Resolution 仍被阻塞。
+本仓库已完成 P0 Baseline Freeze、P0.5 Runtime Hardening、P1 Host Content Planning、P2.0 Markdown Wireframe Core 和 P2.1 Visual Placeholder Intent。P2 Overall 已重新完成；下一阶段是 P3.1 Tabler-first Asset Resolution，尚未完成完整视觉设计。
 
 当前可执行流程为“材料 → 待确认大纲 → 冻结页面文字 → Markdown 文字线稿”和“参考图片 → 可编辑单页 PPT”。以下能力尚未实现，不能视为当前承诺：
 
@@ -133,7 +133,7 @@ Markdown Binder、极薄 Manifest、Validator、受限 Correction、不可变 Re
 
 ## 下一阶段
 
-下一步先完成 P2.1 Visual Placeholder Intent，再实施 P3.1 Tabler-first Asset Resolution。当前不能宣称 P2 Overall、P3 Visual Design、完整多页 PowerPoint、Deck Assembly 或最终多页审核已经完成。
+下一步实施 P3.1 Tabler-first Asset Resolution。当前不能宣称 P3 Visual Design、完整多页 PowerPoint、Deck Assembly 或最终多页审核已经完成。
 
 ## 开发验证
 
