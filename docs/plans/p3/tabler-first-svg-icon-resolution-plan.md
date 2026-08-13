@@ -9,9 +9,10 @@ P2.0 Markdown Wireframe Core       COMPLETE
 P2.1 Visual Placeholder Intent     COMPLETE
 P2 Overall                         COMPLETE
 P3.1 Vendor / Index / Search       COMPLETE
-P3.1 Materialization / Fallback    PENDING
-P3.1 Final Gate                    PENDING
-P3.2 / P3.3                        BLOCKED
+P3.1 Materialization / Fallback    COMPLETE
+P3.1 Final Gate                    COMPLETE
+P3.2 Visual Design Brief           READY
+P3.3 Design Image Generation       BLOCKED BY P3.2
 ```
 
 已合并实现保留：

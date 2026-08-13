@@ -1,0 +1,79 @@
+{
+  "schema_version": "1.0",
+  "phase": "P3.1-icon-resolution",
+  "status": "pass",
+  "integration_gate_candidate": "pass",
+  "blocking_issues": 0,
+  "primary_library": "tabler-icons",
+  "online_resolution_calls": 0,
+  "hallucinated_icon_paths": 0,
+  "resolution_record_overwrites": 0,
+  "arbitrary_host_svg": 0,
+  "independent_agent_calls": 0,
+  "generative_icon_substitution": 0,
+  "cases": [
+    {
+      "case_id": "D03",
+      "status": "pass",
+      "icon_placeholders": 1,
+      "non_icon_placeholders_excluded": 2,
+      "resolver_calls": 1,
+      "visual_ref": "S01-V01"
+    },
+    {
+      "case_id": "D05",
+      "status": "pass",
+      "icon_placeholders": 1,
+      "non_icon_placeholders_excluded": 4,
+      "resolver_calls": 1,
+      "visual_ref": "S01-V01"
+    },
+    {
+      "case_id": "D08",
+      "status": "pass",
+      "icon_placeholders": 1,
+      "non_icon_placeholders_excluded": 7,
+      "resolver_calls": 1,
+      "visual_ref": "S01-V01"
+    }
+  ],
+  "fallback_routes": {
+    "existing": "pass",
+    "composition": {
+      "status": "pass",
+      "sanitized_svg_sha256": "84c4e4de994a4d9ba4b0d2987e96c98d455043d3d2e0a1143b740c7e39388381"
+    },
+    "programmatic": {
+      "status": "pass",
+      "sanitized_svg_sha256": "c1adfb0a218e4a525c16fb877ab3eb61a355f168f437f2987b9e0c97c271ac50"
+    },
+    "raster_handoff": {
+      "status": "raster_handoff_required",
+      "false_svg_success_artifacts": 0
+    }
+  },
+  "synthetic_preview": {
+    "sanitized_svg_sha256": "72eec587fe9030a6c974a19eba178837ede995098e34a0af62a48ea698b5fece",
+    "rendered_icon_png_sha256": "fbf8975a421aaa5d65dddbdf8ef422af5b1cfa72b19150faa7c282c11babb58e",
+    "synthetic_preview_sha256": "2f51f188ba0ed0b27ff9e70dfff01164777eb9ebdd2c80572276484787e476bb",
+    "resvg_version": "2.6.2",
+    "node_version": "v24.19.0",
+    "platform": "win32-x64"
+  },
+  "ppt_runtime": {
+    "builder_source_svg_sha256": "72eec587fe9030a6c974a19eba178837ede995098e34a0af62a48ea698b5fece",
+    "pptx_sha256": "3b941c80f5e26ddec1eb12c569087e8385c5e0a2b0eec753da3dce0eb4d08e02",
+    "render_sha256": "4c8df4af93c748dd6af523c43c97f9db5a0e481e0127171f001a6e9ab264b6b1",
+    "powerpoint_render": "passed"
+  },
+  "source_hashes_equal": true,
+  "p1_p2_drift": 0,
+  "p0_baseline_unchanged": true,
+  "review_run": {
+    "live_host_model_invocations": 0,
+    "planner_calls": 0,
+    "reviewer_calls": 0,
+    "icon_reviewer_calls": 0,
+    "image_generation_calls": 0
+  }
+}

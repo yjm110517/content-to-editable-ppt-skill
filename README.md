@@ -4,7 +4,7 @@
 
 ## 当前状态
 
-本仓库已完成 P0 Baseline Freeze、P0.5 Runtime Hardening、P1 Host Content Planning、P2.0 Markdown Wireframe Core 和 P2.1 Visual Placeholder Intent。P2 Overall 已重新完成；下一阶段是 P3.1 Tabler-first Asset Resolution，尚未完成完整视觉设计。
+本仓库已完成 P0 Baseline Freeze、P0.5 Runtime Hardening、P1 Host Content Planning、P2 Markdown Wireframe 和 P3.1 Tabler-first Asset Resolution。P3.2 Visual Design Brief 已 Ready；尚未完成正式页面视觉设计或多页 PPT 生成。
 
 当前可执行流程为“材料 → 待确认大纲 → 冻结页面文字 → Markdown 文字线稿”和“参考图片 → 可编辑单页 PPT”。以下能力尚未实现，不能视为当前承诺：
 
@@ -131,9 +131,15 @@ Markdown Binder、极薄 Manifest、Validator、受限 Correction、不可变 Re
 
 [Markdown P2 Gate 报告](reports/p2/p2-markdown-wireframe-gate.json) 记录 D03、D05、D08 的 Authority、完整性和确定性验收。[旧 P2 Gate 报告](reports/p2/p2-wireframe-gate.json) 与已合并 PR #12–#16 只作为 SVG 历史实现证据。
 
+## P3.1 Asset Resolution
+
+P3.1 使用固定的 Tabler Outline 3.46.0、不可变 Resolution Record、真实 SVG Sanitizer、Asset Manifest 1.4 和 Consumption Contract。它已经证明同一 Sanitized SVG Source 能被 synthetic Preview Compositor 与 PPT Runtime 消费，但不产生正式 Design Preview。
+
+[P3.1 Gate 报告](reports/p3/p3-icon-resolution-gate.json) 记录 D03、D05、D08、fallback、resvg/Pillow synthetic consumption 和 PowerPoint Render Smoke。
+
 ## 下一阶段
 
-下一步实施 P3.1 Tabler-first Asset Resolution。当前不能宣称 P3 Visual Design、完整多页 PowerPoint、Deck Assembly 或最终多页审核已经完成。
+下一步实施 P3.2 Visual Design Brief。当前不能宣称正式 Design Preview、完整多页 PowerPoint、Deck Assembly 或最终多页审核已经完成。
 
 ## 开发验证
 
