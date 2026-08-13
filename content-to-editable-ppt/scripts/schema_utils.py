@@ -78,8 +78,8 @@ SUPPORTED_SCHEMA_VERSIONS = {
     "wireframe_validation_report": {"1.0"},
     "wireframe_correction_record": {"1.0"},
     "wireframe_preview": {"1.0"},
-    "wireframe_feedback": {"1.0"},
-    "wireframe_state": {"1.0"},
+    "wireframe_feedback": {"1.1"},
+    "wireframe_state": {"1.1"},
 }
 
 
