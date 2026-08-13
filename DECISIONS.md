@@ -959,6 +959,31 @@ P2 的产品目标是让用户和 Host 低成本讨论“每页放什么、如�
 
 ---
 
+## ADR-036 — Tabler-first Visual Asset Resolution
+
+**Status:** Accepted
+
+**Decision**
+
+P2.1 只冻结 Visual Placeholder 的语义、当前页 P1 内容来源绑定和布局位置；不得决定图库、图标文件或 SVG。P3.1 v1 以固定的 Tabler Icons `v3.46.0` outline 作为唯一正式图标库，并将 Placeholder 解析为不可变 Icon Resolution Record。
+
+只有唯一 canonical icon name 或 official alias 可以自动选择；其他候选由当前 P3 Host Pass 从确定性 Top-K 中选择。找不到单图标时依次尝试最多两个 Tabler 图标组合、受限 Programmatic SVG 和 Raster/Image Handoff。
+
+任意 SVG 都必须经过 Normalize、`sanitize_svg.py` 和 `validate_assets.py`。Design Preview Compositor 和 PPT Runtime 必须实际消费 Asset Manifest 绑定的同一 Sanitized SVG Source；生成模型不得重绘或替代已解析图标。
+
+P3.1 只建立资产解析与物化能力，不生成正式 Design Preview，也不代表完整 P3 Visual Design 完成。
+
+**Consequences**
+
+- P3 Resolver 只读取 Accepted P2 Manifest 的 Placeholder 字段，不重新解析 Markdown 业务数据；
+- Resolution Record 写入一次，Normalize/Sanitize Hash 记录在 Asset Manifest；
+- Tabler 固定为 `v3.46.0` / `8ac7d81b72ece11072ef25ea9fd92e80c6f3c9fc`；
+- `@resvg/resvg-js` 固定为 `2.6.2`，只用于消费验证和后续 Preview Composition；
+- 不新增 Icon Agent、Icon Reviewer 或在线检索；
+- Lucide、Phosphor、Iconify 和 OpenMoji 属于 Future Work。
+
+---
+
 # 决策变更规则
 
 如果后续需要修改 `Accepted` ADR，应遵循：

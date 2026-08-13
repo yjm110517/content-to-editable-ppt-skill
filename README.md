@@ -4,7 +4,7 @@
 
 ## 当前状态
 
-本仓库已完成 P0 Baseline Freeze、P0.5 Runtime Hardening、P1 Host Content Planning 和重新实现的 P2 Markdown Wireframe。原 SVG P2 仅保留为历史证据；当前正式 P2 是 Host 大模型生成、确定性绑定 P1 权威文字的逐页 Markdown 文字线稿。P3 Visual Design 已可进入设计阶段，但尚未实现。
+本仓库已完成 P0 Baseline Freeze、P0.5 Runtime Hardening、P1 Host Content Planning 和 P2.0 Markdown Wireframe Core。P2.1 正在增加稳定 Visual Placeholder Intent；在该 Gate 通过前，P2 Overall 保持开发中，P3.1 Tabler-first Asset Resolution 仍被阻塞。
 
 当前可执行流程为“材料 → 待确认大纲 → 冻结页面文字 → Markdown 文字线稿”和“参考图片 → 可编辑单页 PPT”。以下能力尚未实现，不能视为当前承诺：
 
@@ -72,18 +72,18 @@ content-to-editable-ppt-skill/
 
 ### 权威层级
 
-1. [总体架构与开发计划 v2.1](docs/architecture/v2.1/overall-architecture-and-development-plan.md) 决定当前阶段、模块边界、Markdown P2 和 Windows-only 范围。
+1. [总体架构与开发计划 v2.2](docs/architecture/v2.2/overall-architecture-and-development-plan.md) 决定当前阶段、P2.1/P3.1 边界、Markdown P2 和 Windows-only 范围。
 2. [Architecture Decision Log](DECISIONS.md) 记录已经接受的关键决策、原因、后果和变更规则。
 3. 对应产品、Runtime 和 Agent 专项规范定义实现要求。
-4. [Artifact、State 与权威数据契约 v1.1](docs/contracts/v1.1/artifact-state-authority-contract.md) 定义 Source of Truth、写权限和状态分离。
-5. [测试与验收计划 v1.1](docs/testing/v1.1/test-and-acceptance-plan.md) 定义新的 Markdown P2 Gate 及其余阶段验收标准。
+4. [Artifact、State 与权威数据契约 v1.2](docs/contracts/v1.2/artifact-state-authority-contract.md) 定义 Source of Truth、写权限和状态分离。
+5. [测试与验收计划 v1.2](docs/testing/v1.2/test-and-acceptance-plan.md) 定义 P2.1 与 P3.1 Gate。
 
-### 当前产品规格（v1.3）
+### 当前产品规格（v1.4）
 
-- [需求规格说明](docs/specifications/v1.3/requirements.md)
-- [功能规格说明](docs/specifications/v1.3/functional-specification.md)
-- [Agent 职责与交接契约](docs/specifications/v1.3/agent-handoff-contract.md)
-- [非功能需求与质量指标](docs/specifications/v1.3/non-functional-requirements.md)
+- [需求规格说明](docs/specifications/v1.4/requirements.md)
+- [功能规格说明](docs/specifications/v1.4/functional-specification.md)
+- [Agent 职责与交接契约](docs/specifications/v1.4/agent-handoff-contract.md)
+- [非功能需求与质量指标](docs/specifications/v1.4/non-functional-requirements.md)
 
 ### Runtime 与实现规范
 
@@ -133,7 +133,7 @@ Markdown Binder、极薄 Manifest、Validator、受限 Correction、不可变 Re
 
 ## 下一阶段
 
-P2 Markdown Gate 已通过，因此下一阶段是 P3 Visual Design。当前仍不能宣称已经完成设计图片、完整多页 PowerPoint、Deck Assembly 或最终多页审核。
+下一步先完成 P2.1 Visual Placeholder Intent，再实施 P3.1 Tabler-first Asset Resolution。当前不能宣称 P2 Overall、P3 Visual Design、完整多页 PowerPoint、Deck Assembly 或最终多页审核已经完成。
 
 ## 开发验证
 

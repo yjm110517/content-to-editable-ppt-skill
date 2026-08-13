@@ -16,6 +16,11 @@ htmlcov/
 /content-to-editable-ppt/runtime-manifest.json
 **/.agent-runtime/
 
+# Reproducible upstream research mirrors and managed vendor payloads
+/.vendor-sources/
+/content-to-editable-ppt/runtime/vendor/
+/content-to-editable-ppt/runtime/cache/
+
 # Local configuration and temporary files
 .env
 .env.*
