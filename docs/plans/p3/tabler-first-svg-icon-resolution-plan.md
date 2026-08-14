@@ -1,5 +1,7 @@
 # P2.1 Visual Placeholder 与 P3.1 Tabler Asset Resolution 执行计划
 
+> **历史状态：Partially superseded by ADR-039。** 本计划记录已完成的 P3.1 工程实现与 Gate。Tabler Core、离线检索、不可变 Resolution Record、Normalize/Sanitize 和同源 Hash 继续有效；Two-icon Composition 与 Programmatic SVG 不再属于正式生产回退。当前生产要求见 [总体架构 v2.3](../../architecture/v2.3/overall-architecture-and-development-plan.md) 和 [P3 视觉设计与受约束重建计划](visual-design-and-constrained-reconstruction-plan.md)。以下正文及历史 Gate 内容保持原样作为执行证据。
+
 ## 状态与已完成基线
 
 本计划细化 [总体架构 v2.2](../../architecture/v2.2/overall-architecture-and-development-plan.md)、[功能规格 v1.4](../../specifications/v1.4/functional-specification.md)和[测试计划 v1.2](../../testing/v1.2/test-and-acceptance-plan.md)。
