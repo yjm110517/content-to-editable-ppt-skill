@@ -2,9 +2,9 @@
 
 > Content to Editable PPT Skill — Architecture Decision Log  
 > Status: Active  
-> Scope: v2.0 Specification Baseline
+> Scope: v2.3 Specification Baseline
 
-本文件记录 `content-to-editable-ppt-skill` v2.0 已接受的关键架构与产品决策。
+本文件记录 `content-to-editable-ppt-skill` 各版本已接受的关键架构与产品决策；当前有效范围由最新未被取代的 ADR 和 v2.3 权威规范共同确定。
 
 它不是需求规格、功能规格或测试计划的替代品。其作用是说明：
 
@@ -331,7 +331,7 @@ Skill 定义视觉输入、输出和质量要求，但不绑定固定 Visual Des
 
 ## ADR-013 — 页面设计默认采用 ≤5 页全量、>5 页 Sample-first
 
-**Status:** Accepted
+**Status:** Superseded by ADR-038
 
 **Decision**
 
@@ -477,7 +477,7 @@ Technical Retry 与 Visual Revision 计数器必须分离。
 
 ## ADR-019 — Visual Reviewer 必须尝试调用，但技术不可用时允许受控降级
 
-**Status:** Accepted
+**Status:** Accepted; Content-to-Deck amended by ADR-038
 
 **Decision**
 
@@ -532,7 +532,7 @@ Minor 可以交付，但必须作为 Reviewer Evidence 保留。
 
 ## ADR-021 — 不设置固定总运行时间 SLA
 
-**Status:** Accepted
+**Status:** Accepted; call budgets clarified by ADR-038
 
 **Decision**
 
@@ -710,7 +710,7 @@ v2.0 不开发完整通用 OOXML Merge Engine。未来若有充分需求，可�
 
 ## ADR-028 — Deck QA 第一版采用 Deterministic QA，不新增 Deck Reviewer Agent
 
-**Status:** Accepted
+**Status:** Accepted; Deck consistency checkpoint added by ADR-038
 
 **Decision**
 
@@ -961,7 +961,7 @@ P2 的产品目标是让用户和 Host 低成本讨论“每页放什么、如�
 
 ## ADR-036 — Tabler-first Visual Asset Resolution
 
-**Status:** Accepted
+**Status:** Accepted; production fallback narrowed by ADR-039
 
 **Decision**
 
@@ -981,6 +981,110 @@ P3.1 只建立资产解析与物化能力，不生成正式 Design Preview，也
 - `@resvg/resvg-js` 固定为 `2.6.2`，只用于消费验证和后续 Preview Composition；
 - 不新增 Icon Agent、Icon Reviewer 或在线检索；
 - Lucide、Phosphor、Iconify 和 OpenMoji 属于 Future Work。
+
+---
+
+## ADR-037 — Approved Design Preview 是确认后的视觉权威
+
+**Status:** Accepted
+
+**Decision**
+
+Content-to-PPT 必须先形成高质量图片版页面并取得用户确认。确认后的 `Approved Design Preview` 是页面构图、空间关系、视觉层级、样式、资产位置和相对比例的视觉权威；P1 Approved Slide Content 仍是唯一正式文字权威。
+
+```text
+Approved Content + Wireframe + Resolved Assets
+→ Design Preview Candidate
+→ User Confirmation
+→ Approved Design Preview
+→ Visual Reconstruction Spec
+→ Editable PPT
+```
+
+最终 PowerPoint Render 必须与 Approved Design Preview 比较。目标是感知结构保真，不要求像素级一致。
+
+**Why**
+
+纯结构化规则直接生成 PPT 容易得到可编辑但设计质量普通的页面；只看图片重新猜测又会丢失已冻结的内容、结构和资产。双 Authority 可以同时保持视觉质量、内容准确性和可编辑性。
+
+**Consequences**
+
+- 生图模型不得成为正式文字权威；
+- P4 必须建立 Preview 元素到 PPT 对象的 Visual Reconstruction Spec；
+- 用户确认后的 Design Preview 不得被 Runtime 自由改版；
+- 正常交付要求视觉 Critical = 0 且 Major = 0；
+- 禁止使用含正式内容的整页位图代替可编辑重建。
+
+---
+
+## ADR-038 — Deck Prompt Package、Style Anchor 与调用预算是强制机制
+
+**Status:** Accepted
+
+**Decision**
+
+所有 Deck 在批量生成设计图前都必须冻结 Deck Visual System、Prompt Package、Negative Prompt、生成参数和一个用户确认的主 Style Anchor。每页 Prompt 由确定性 Compiler 注入页面内容、线稿、视觉占位、已解析资产和页面角色；Host 不得逐页自由重写整体视觉风格。
+
+```text
+Deck Visual Direction Host Pass = 1
+Prompt Compilation Agent Calls = 0
+Style Anchor Generation = 1
+Initial Design Generation <= 1 per slide
+Automatic Design Regeneration = 0
+Automatic Full-deck Redesign = 0
+Technical Retry <= 2 per stage
+Deck Consistency Review = 1
+Per-page Reviewer = exception pages only
+```
+
+**Why**
+
+固定 Prompt 只能降低随机漂移，Style Anchor 和 Deck 一致性审核才能形成实际跨页约束。先确认代表页再批量生成，可避免全套页面因整体风格错误而返工。调用预算、页面级缓存和 Fail-Fast 用于控制时间，而不是通过降低内容、编辑性或视觉质量换取速度。
+
+**Consequences**
+
+- ADR-013 的页数分支被替代，所有 Deck 默认先确认 Style Anchor；
+- Content-to-Deck 全页运行确定性 QA，只将异常页交给页面 Reviewer；
+- 使用现有 Visual Reviewer 完成一次 Deck Consistency Review，不新增 Deck Reviewer Agent；
+- 独立 Image-to-Editable-PPT 继续保留逐页 Reviewer Gate；
+- 不设置固定总时长 SLA，但必须记录调用、重试、缓存、复用和阶段耗时；
+- 任一确定性 Blocking 在后续模型调用前停止。
+
+---
+
+## ADR-039 — 标准 SVG 只来自准确匹配图库，缺失时从确认设计图提取
+
+**Status:** Accepted
+
+**Decision**
+
+标准 SVG 只用于固定 Tabler 库中能够准确表达 Visual Placeholder 语义的图标。没有准确匹配时进入 `Raster Handoff Pending`；在 Design Preview 获得用户确认后，从 Approved Design Preview 提取对应小型视觉元素作为独立 PNG。
+
+```text
+Accurate Tabler SVG
+→ Sanitized SVG
+
+No accurate match
+→ Raster Handoff Pending
+→ Approved Design Preview
+→ Target Element Extraction
+→ Independent PNG
+```
+
+Two-icon Composition 和 Programmatic SVG 不再属于正式生产回退链。
+
+**Why**
+
+强行组合或程序化绘制语义不准确的 SVG 会牺牲用户确认的视觉效果，并把复杂视觉错误地扩大为矢量绘制问题。复杂视觉只需对象级可移动、缩放和替换，不要求内部路径全部可编辑。
+
+**Consequences**
+
+- ADR-036 的 Tabler Core、离线解析、不可变 Resolution Record、Sanitize 和同源 Hash 继续有效；
+- ADR-036 的 Composition/Programmatic 正式回退被本决策取代；
+- 历史代码、测试和 Gate 报告保留为工程证据，但不得进入正式 Skill 路由；
+- 提取必须绑定 Approved Preview Hash、Visual Ref、Crop BBox 和 PNG Hash；
+- 提取不得包含正文、数字、标签、无关对象或整页；
+- 低分辨率、背景融合、遮挡或无法分离时返回 `extraction_failure`。
 
 ---
 
@@ -1044,7 +1148,7 @@ Status: Deprecated
 
 # 当前基线
 
-当前 v2.1 Specification Baseline 的核心方向为：
+当前 v2.3 Specification Baseline 的核心方向为：
 
 ```text
 Windows only
@@ -1078,4 +1182,16 @@ Gate-based Development
 P2 Markdown Wireframe
 +
 Legacy SVG P2 Isolation
++
+Approved Design Preview Visual Authority
++
+Deck Visual System + Locked Prompt Package
++
+Style Anchor before batch generation
++
+Accurate Tabler SVG or Approved Preview extraction
++
+Constrained Visual Reconstruction
++
+Call budgets + page-level reuse
 ```

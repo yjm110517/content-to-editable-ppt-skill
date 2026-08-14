@@ -34,13 +34,15 @@ Image-to-Editable-PPT bypasses P2.
 
 ## Resolve P3.1 icon assets
 
-After an accepted P2 1.1 Manifest, read [references/icon-asset-resolution.md](references/icon-asset-resolution.md). Resolve only `role=icon` placeholders from the pinned offline Tabler index, create immutable Resolution Records, and materialize through the existing SVG sanitizer. Do not parse placeholder business fields from Markdown, call an independent Icon Reviewer, use an online service, or generate the final Design Preview. P3.2 must define final visual direction before P3.3 design-image work begins.
+After an accepted P2 1.1 Manifest, read [references/icon-asset-resolution.md](references/icon-asset-resolution.md). Resolve only `role=icon` placeholders from the pinned offline Tabler index. Materialize an accurate selection through the existing SVG sanitizer; when no accurate Tabler icon exists, record `Raster Handoff Pending` and stop that asset path until an Approved Design Preview exists. Never use the historical composition or programmatic-SVG fallback in the formal route. Do not parse placeholder business fields from Markdown, call an independent Icon Reviewer, use an online service, or generate the final Design Preview.
+
+Stop the Content-to-PPT route after P3.1. P3.2 Deck Visual System, locked Prompt Package, Style Anchor, Approved Design Preview, extraction, constrained reconstruction, Deck assembly, and multi-page visual review are specified but not yet executable. Do not improvise them with the inherited single-slide Runtime.
 
 ## Core requirements
 
 - Rebuild readable text as native PowerPoint text.
 - Rebuild cards, borders, lines, arrows, labels, and simple diagrams as native shapes.
-- Use isolated PNG, JPEG, or sanitized SVG assets for complex visuals that do not need native editing, including polished source icons whose identity depends on gradients, highlights, shadows, depth, texture, or irregular detail.
+- Use sanitized SVG only for an accurate standard-library icon. Use isolated PNG or JPEG objects for unmatched icons, complex illustrations, photos, textures, 3D, gradients, highlights, shadows, depth, or irregular scene detail.
 - Never replace a distinctive source icon with a Unicode glyph, letter, emoji, or generic polygon merely to maximize native editability.
 - Never use the complete source image as the final slide background or rasterize a text-bearing card.
 - Preserve semantic connector topology. A closed loop, curved cycle, merge, or branch must remain visibly connected and directional; do not flatten it into disconnected straight segments.
