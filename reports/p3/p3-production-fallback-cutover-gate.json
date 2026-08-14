@@ -1,0 +1,54 @@
+{
+  "schema_version": "1.0",
+  "phase": "P3.1-production-fallback-cutover",
+  "status": "pass",
+  "blocking_issues": 0,
+  "production_routes": [
+    {
+      "case_id": "D03",
+      "status": "pass",
+      "selection_method": "exact_canonical_name",
+      "icon_name": "code",
+      "sanitized_svg_sha256": "72eec587fe9030a6c974a19eba178837ede995098e34a0af62a48ea698b5fece"
+    },
+    {
+      "case_id": "D05",
+      "status": "pass",
+      "selection_method": "exact_official_alias",
+      "icon_name": "auth-2fa",
+      "sanitized_svg_sha256": "d97b3753bef82d8afb2838a5f0a60c29064c51777c0759614e8648851e28a8d3"
+    },
+    {
+      "case_id": "D08",
+      "status": "pass",
+      "selection_method": "host_from_top_k",
+      "icon_name": "code",
+      "sanitized_svg_sha256": "72eec587fe9030a6c974a19eba178837ede995098e34a0af62a48ea698b5fece"
+    }
+  ],
+  "raster_handoff": {
+    "status": "raster_handoff_pending",
+    "false_svg_success_artifacts": 0
+  },
+  "legacy_isolation": {
+    "rejected_methods": [
+      "tabler_composition",
+      "programmatic_svg"
+    ],
+    "production_calls": 0
+  },
+  "static_route_check": {
+    "status": "pass",
+    "legacy_imports_or_calls": 0
+  },
+  "historical_gate_report_sha256": "020a619bc912de09350532d3a11ac19813c659b719cd7508455f2cf018e73979",
+  "p0_baseline_unchanged": true,
+  "review_run": {
+    "live_host_model_invocations": 0,
+    "planner_calls": 0,
+    "reviewer_calls": 0,
+    "icon_reviewer_calls": 0,
+    "image_generation_calls": 0,
+    "powerpoint_calls": 0
+  }
+}

@@ -36,7 +36,7 @@ class IconResolutionMaterializationTests(unittest.TestCase):
             raise unittest.SkipTest("managed Tabler vendor copy has not been synchronized")
         cls.index = build_index(VENDOR)
 
-    def fixture(self, root: Path, *, query: str = "code", icon_name: str = "code", method: str = "exact_canonical") -> dict[str, Path]:
+    def fixture(self, root: Path, *, query: str = "code", icon_name: str = "code", method: str = "exact_canonical_name") -> dict[str, Path]:
         root.mkdir(parents=True, exist_ok=True)
         helper = MarkdownWireframeBinderTests()
         bundle = helper.bundle(root)
@@ -107,7 +107,7 @@ class IconResolutionMaterializationTests(unittest.TestCase):
             paths = self.fixture(root)
             args = argparse.Namespace(
                 p2_manifest=paths["p2_manifest"], wireframe_root=paths["wireframe_root"], visual_direction=paths["direction"],
-                search_evidence=paths["evidence"], visual_ref="S01-V01", icon_name="code", selection_method="exact_canonical",
+                search_evidence=paths["evidence"], visual_ref="S01-V01", icon_name="code", selection_method="exact_canonical_name",
                 vendor_root=VENDOR, created_at_utc=NOW, output=paths["record"],
             )
             with self.assertRaises(ContractError) as raised:

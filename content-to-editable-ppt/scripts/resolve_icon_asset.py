@@ -61,11 +61,20 @@ def validate_p2(manifest_path: Path, wireframe_root: Path) -> tuple[dict[str, An
     return manifest, canonical_sha256(manifest)
 
 
-def find_visual(manifest: dict[str, Any], visual_ref: str) -> dict[str, Any]:
-    matches = [visual for slide in manifest["slides"] for visual in slide["visual_placeholders"] if visual["visual_ref"] == visual_ref]
-    if len(matches) != 1 or matches[0]["role"] != "icon":
+def find_visual_context(manifest: dict[str, Any], visual_ref: str) -> tuple[dict[str, Any], dict[str, Any]]:
+    matches = [
+        (slide, visual)
+        for slide in manifest["slides"]
+        for visual in slide["visual_placeholders"]
+        if visual["visual_ref"] == visual_ref
+    ]
+    if len(matches) != 1 or matches[0][1]["role"] != "icon":
         raise ContractError([error("$.visual_ref", "Visual Ref must resolve to exactly one P2 icon placeholder", "unknown_visual_ref")])
     return matches[0]
+
+
+def find_visual(manifest: dict[str, Any], visual_ref: str) -> dict[str, Any]:
+    return find_visual_context(manifest, visual_ref)[1]
 
 
 def validate_direction(path: Path, manifest: dict[str, Any], manifest_sha: str) -> dict[str, Any]:
@@ -85,13 +94,55 @@ def validate_search_evidence(path: Path, *, visual_ref: str, manifest_sha: str, 
     if len(candidates) != 1:
         raise ContractError([error("$.search_evidence.top_k", "selected icon is not a unique Top-K candidate", "selection_not_in_top_k")])
     selected = candidates[0]
-    exact_key = "exact_canonical" if selection_method == "exact_canonical" else "exact_official_alias"
-    if selection_method in {"exact_canonical", "exact_official_alias"}:
+    exact_key = "exact_canonical" if selection_method == "exact_canonical_name" else "exact_official_alias"
+    if selection_method in {"exact_canonical_name", "exact_official_alias"}:
         if evidence["status"] != "auto_selected" or evidence["automatic_icon_name"] != icon_name or not selected["evidence"][exact_key]:
             raise ContractError([error("$.selection_method", "exact selection is not supported by the search evidence", "invalid_selection")])
     elif evidence["status"] != "host_selection_required":
         raise ContractError([error("$.selection_method", "host_from_top_k requires host-selection evidence", "invalid_selection")])
     return evidence
+
+
+def validate_selection_decision(
+    path: Path,
+    *,
+    manifest: dict[str, Any],
+    manifest_sha: str,
+    direction: dict[str, Any],
+    evidence: dict[str, Any],
+    expected_decision: str,
+    selected_icon: str | None,
+) -> dict[str, Any]:
+    decision = load_json(path)
+    validate_schema("icon_selection_decision", decision, SCHEMA_DIR)
+    slide, _visual = find_visual_context(manifest, decision["visual_ref"])
+    expected = {
+        "deck_id": manifest["deck_id"],
+        "slide_id": slide["slide_id"],
+        "p2_manifest_sha256": manifest_sha,
+        "visual_direction_sha256": canonical_sha256(direction),
+        "search_evidence_sha256": canonical_sha256(evidence),
+    }
+    for key, value in expected.items():
+        if decision[key] != value:
+            raise ContractError([error(f"$.selection_decision.{key}", "selection decision does not bind current authority", "authority_hash_mismatch")])
+    if decision["visual_ref"] != evidence["visual_ref"]:
+        raise ContractError([error("$.selection_decision.visual_ref", "selection decision does not bind search evidence", "authority_hash_mismatch")])
+    if decision["decision"] != expected_decision or decision["selected_icon"] != selected_icon:
+        raise ContractError([error("$.selection_decision", "selection decision does not authorize the requested route", "invalid_selection")])
+    if expected_decision == "select_tabler":
+        candidates = [item for item in evidence["top_k"] if item["name"] == selected_icon]
+        if evidence["status"] != "host_selection_required" or len(candidates) != 1:
+            raise ContractError([error("$.selection_decision.selected_icon", "Host selection must be a unique current Top-K candidate", "selection_not_in_top_k")])
+    return decision
+
+
+def load_production_record(path: Path) -> dict[str, Any]:
+    record = load_json(path)
+    if record.get("resolution_method") in {"tabler_composition", "programmatic_svg"}:
+        raise ContractError([error("$.resolution_record.resolution_method", "historical SVG fallback is forbidden in the production route", "production_resolution_method_forbidden")])
+    validate_schema("production_icon_resolution", record, SCHEMA_DIR)
+    return record
 
 
 def normalize_svg(content: bytes) -> bytes:
@@ -111,13 +162,10 @@ def normalize_svg(content: bytes) -> bytes:
 
 
 def source_for_record(record: dict[str, Any], vendor_root: Path | None, supplied_source: Path | None = None) -> Path:
+    if supplied_source is not None:
+        raise ContractError([error("$.source_svg", "external SVG input is forbidden in the production route", "production_resolution_method_forbidden")])
     if record["resolution_method"] != "tabler_existing":
-        if supplied_source is None:
-            raise ContractError([error("$.source_svg", "generated fallback records require the immutable source SVG", "missing_authority")])
-        source = supplied_source.resolve()
-        if not source.is_file() or sha256_file(source) != record["source_sha256"]:
-            raise ContractError([error("$.resolution_record.source_sha256", "generated source does not match immutable record", "source_hash_mismatch")])
-        return source
+        raise ContractError([error("$.resolution_record.resolution_method", "historical SVG fallback is forbidden in the production route", "production_resolution_method_forbidden")])
     if vendor_root is None:
         raise ContractError([error("$.vendor_root", "Tabler resolution requires the pinned vendor root", "missing_authority")])
     source = (vendor_root.resolve() / "icons" / "outline" / f"{record['icon_name']}.svg").resolve()
@@ -133,7 +181,7 @@ def source_for_record(record: dict[str, Any], vendor_root: Path | None, supplied
 def create_record(args: argparse.Namespace) -> dict[str, Any]:
     manifest, manifest_sha = validate_p2(args.p2_manifest.resolve(), args.wireframe_root.resolve())
     find_visual(manifest, args.visual_ref)
-    validate_direction(args.visual_direction.resolve(), manifest, manifest_sha)
+    direction = validate_direction(args.visual_direction.resolve(), manifest, manifest_sha)
     evidence = validate_search_evidence(
         args.search_evidence.resolve(),
         visual_ref=args.visual_ref,
@@ -142,6 +190,16 @@ def create_record(args: argparse.Namespace) -> dict[str, Any]:
         selection_method=args.selection_method,
     )
     selected = next(item for item in evidence["top_k"] if item["name"] == args.icon_name)
+    decision_sha = None
+    if args.selection_method == "host_from_top_k":
+        decision_path = getattr(args, "selection_decision", None)
+        if decision_path is None:
+            raise ContractError([error("$.selection_decision", "host_from_top_k requires an immutable Host decision", "missing_authority")])
+        decision = validate_selection_decision(
+            decision_path.resolve(), manifest=manifest, manifest_sha=manifest_sha, direction=direction,
+            evidence=evidence, expected_decision="select_tabler", selected_icon=args.icon_name,
+        )
+        decision_sha = canonical_sha256(decision)
     source = (args.vendor_root.resolve() / selected["relative_path"]).resolve()
     try:
         source.relative_to(args.vendor_root.resolve())
@@ -163,7 +221,9 @@ def create_record(args: argparse.Namespace) -> dict[str, Any]:
         "search_evidence_sha256": canonical_sha256(evidence),
         "created_at_utc": args.created_at_utc,
     }
-    validate_schema("icon_resolution", record, SCHEMA_DIR)
+    if decision_sha is not None:
+        record["selection_decision_sha256"] = decision_sha
+    validate_schema("production_icon_resolution", record, SCHEMA_DIR)
     write_once(args.output.resolve(), json_bytes(record))
     return {"resolution_record": str(args.output.resolve()), "resolution_record_sha256": canonical_sha256(record)}
 
@@ -187,11 +247,7 @@ def _stage_materialization(record: dict[str, Any], source: Path, stage_root: Pat
         "id": record["visual_ref"],
         "type": "svg",
         "path": f"assets/{normalized_path.name}",
-        "source": {
-            "tabler_existing": "library-resolved",
-            "tabler_composition": "composite",
-            "programmatic_svg": "programmatic",
-        }[record["resolution_method"]],
+        "source": "library-resolved",
         "width_px": 24,
         "height_px": 24,
         "size_bytes": len(normalized),
@@ -231,8 +287,7 @@ def _stage_materialization(record: dict[str, Any], source: Path, stage_root: Pat
 
 
 def materialize(args: argparse.Namespace) -> dict[str, Any]:
-    record = load_json(args.resolution_record.resolve())
-    validate_schema("icon_resolution", record, SCHEMA_DIR)
+    record = load_production_record(args.resolution_record.resolve())
     vendor_root = getattr(args, "vendor_root", None)
     source_svg = getattr(args, "source_svg", None)
     source = source_for_record(record, vendor_root.resolve() if vendor_root else None, source_svg)
@@ -284,21 +339,29 @@ def materialize(args: argparse.Namespace) -> dict[str, Any]:
 
 def verify(args: argparse.Namespace) -> dict[str, Any]:
     manifest, manifest_sha = validate_p2(args.p2_manifest.resolve(), args.wireframe_root.resolve())
-    record = load_json(args.resolution_record.resolve())
-    validate_schema("icon_resolution", record, SCHEMA_DIR)
+    record = load_production_record(args.resolution_record.resolve())
     if record["p2_manifest_sha256"] != manifest_sha:
         raise ContractError([error("$.resolution_record.p2_manifest_sha256", "Resolution Record does not bind current P2 Authority", "authority_hash_mismatch")])
     find_visual(manifest, record["visual_ref"])
-    validate_direction(args.visual_direction.resolve(), manifest, manifest_sha)
-    if record["resolution_method"] == "tabler_existing":
-        if args.search_evidence is None:
-            raise ContractError([error("$.search_evidence", "Tabler resolution requires Search Evidence", "missing_authority")])
-        evidence = validate_search_evidence(
-            args.search_evidence.resolve(), visual_ref=record["visual_ref"], manifest_sha=manifest_sha,
-            icon_name=record["icon_name"], selection_method=record["selection_method"],
+    direction = validate_direction(args.visual_direction.resolve(), manifest, manifest_sha)
+    if args.search_evidence is None:
+        raise ContractError([error("$.search_evidence", "Tabler resolution requires Search Evidence", "missing_authority")])
+    evidence = validate_search_evidence(
+        args.search_evidence.resolve(), visual_ref=record["visual_ref"], manifest_sha=manifest_sha,
+        icon_name=record["icon_name"], selection_method=record["selection_method"],
+    )
+    if canonical_sha256(evidence) != record["search_evidence_sha256"]:
+        raise ContractError([error("$.resolution_record.search_evidence_sha256", "Search Evidence hash mismatch", "authority_hash_mismatch")])
+    if record["selection_method"] == "host_from_top_k":
+        decision_path = getattr(args, "selection_decision", None)
+        if decision_path is None:
+            raise ContractError([error("$.selection_decision", "host_from_top_k requires an immutable Host decision", "missing_authority")])
+        decision = validate_selection_decision(
+            decision_path.resolve(), manifest=manifest, manifest_sha=manifest_sha, direction=direction,
+            evidence=evidence, expected_decision="select_tabler", selected_icon=record["icon_name"],
         )
-        if canonical_sha256(evidence) != record["search_evidence_sha256"]:
-            raise ContractError([error("$.resolution_record.search_evidence_sha256", "Search Evidence hash mismatch", "authority_hash_mismatch")])
+        if canonical_sha256(decision) != record["selection_decision_sha256"]:
+            raise ContractError([error("$.resolution_record.selection_decision_sha256", "Host decision hash mismatch", "authority_hash_mismatch")])
     vendor_root = getattr(args, "vendor_root", None)
     source_svg = getattr(args, "source_svg", None)
     source_for_record(record, vendor_root.resolve() if vendor_root else None, source_svg)
@@ -342,23 +405,23 @@ def parser() -> argparse.ArgumentParser:
     record.add_argument("--search-evidence", type=Path, required=True)
     record.add_argument("--visual-ref", required=True)
     record.add_argument("--icon-name", required=True)
-    record.add_argument("--selection-method", choices=["exact_canonical", "exact_official_alias", "host_from_top_k"], required=True)
+    record.add_argument("--selection-method", choices=["exact_canonical_name", "exact_official_alias", "host_from_top_k"], required=True)
+    record.add_argument("--selection-decision", type=Path)
     record.add_argument("--vendor-root", type=Path, required=True)
     record.add_argument("--created-at-utc", required=True)
     record.add_argument("--output", type=Path, required=True)
     material = sub.add_parser("materialize")
     material.add_argument("--resolution-record", type=Path, required=True)
-    material.add_argument("--vendor-root", type=Path)
-    material.add_argument("--source-svg", type=Path)
+    material.add_argument("--vendor-root", type=Path, required=True)
     material.add_argument("--output-dir", type=Path, required=True)
     check = sub.add_parser("verify")
     check.add_argument("--p2-manifest", type=Path, required=True)
     check.add_argument("--wireframe-root", type=Path, required=True)
     check.add_argument("--visual-direction", type=Path, required=True)
     check.add_argument("--search-evidence", type=Path)
+    check.add_argument("--selection-decision", type=Path)
     check.add_argument("--resolution-record", type=Path, required=True)
-    check.add_argument("--vendor-root", type=Path)
-    check.add_argument("--source-svg", type=Path)
+    check.add_argument("--vendor-root", type=Path, required=True)
     check.add_argument("--asset-manifest", type=Path, required=True)
     check.add_argument("--security-report", type=Path, required=True)
     check.add_argument("--consumption-contract", type=Path, required=True)

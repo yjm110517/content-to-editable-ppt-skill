@@ -12,8 +12,9 @@ ROOT = Path(__file__).resolve().parents[2]
 SCRIPTS = ROOT / "content-to-editable-ppt" / "scripts"
 VENDOR = ROOT / "content-to-editable-ppt" / "runtime" / "vendor" / "tabler-icons" / "3.46.0"
 sys.path.insert(0, str(SCRIPTS))
+sys.path.insert(0, str(ROOT / "tools" / "legacy"))
 
-from generate_icon_fallback import compose, draw, handoff
+from icon_fallback_experiments import compose, draw, handoff
 from build_tabler_icon_index import build_index
 from resolve_icon_asset import materialize, verify
 from schema_utils import ContractError
@@ -23,6 +24,7 @@ from tests.runtime.test_p3_icon_resolution_materialization import IconResolution
 NOW = "2026-08-13T00:00:00Z"
 
 
+@unittest.skip("Historical ADR-036 experiment; excluded from the formal P3.1 production route")
 class IconFallbackTests(unittest.TestCase):
     def authority(self, root: Path) -> dict[str, Path]:
         root.mkdir(parents=True, exist_ok=True)
