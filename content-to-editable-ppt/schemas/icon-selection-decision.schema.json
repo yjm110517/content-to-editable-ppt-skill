@@ -1,0 +1,60 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "icon-selection-decision.schema.json",
+  "title": "P3.1 Immutable Host Icon Selection Decision",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schema_version",
+    "artifact_type",
+    "deck_id",
+    "slide_id",
+    "visual_ref",
+    "p2_manifest_sha256",
+    "visual_direction_sha256",
+    "search_evidence_sha256",
+    "decision",
+    "selected_icon",
+    "reason",
+    "created_at_utc"
+  ],
+  "properties": {
+    "schema_version": {"const": "1.0"},
+    "artifact_type": {"const": "icon_selection_decision"},
+    "deck_id": {"type": "string", "minLength": 1},
+    "slide_id": {"type": "string", "minLength": 1},
+    "visual_ref": {"type": "string", "minLength": 1},
+    "p2_manifest_sha256": {"$ref": "#/$defs/hash"},
+    "visual_direction_sha256": {"$ref": "#/$defs/hash"},
+    "search_evidence_sha256": {"$ref": "#/$defs/hash"},
+    "decision": {"enum": ["select_tabler", "raster_handoff"]},
+    "selected_icon": {
+      "oneOf": [
+        {"type": "null"},
+        {"type": "string", "pattern": "^[a-z0-9]+(?:-[a-z0-9]+)*$"}
+      ]
+    },
+    "reason": {"enum": ["accurate_top_k_match", "no_accurate_tabler_match"]},
+    "created_at_utc": {"type": "string", "format": "date-time", "pattern": "Z$"}
+  },
+  "allOf": [
+    {
+      "if": {"properties": {"decision": {"const": "select_tabler"}}},
+      "then": {
+        "properties": {
+          "selected_icon": {"type": "string"},
+          "reason": {"const": "accurate_top_k_match"}
+        }
+      },
+      "else": {
+        "properties": {
+          "selected_icon": {"type": "null"},
+          "reason": {"const": "no_accurate_tabler_match"}
+        }
+      }
+    }
+  ],
+  "$defs": {
+    "hash": {"type": "string", "pattern": "^[a-f0-9]{64}$"}
+  }
+}

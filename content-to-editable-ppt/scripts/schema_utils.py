@@ -54,11 +54,14 @@ SCHEMA_FILES = {
     "markdown_wireframe_state": "markdown-wireframe-state.schema.json",
     "markdown_wireframe_host_call_record": "markdown-wireframe-host-call-record.schema.json",
     "icon_resolution": "icon-resolution.schema.json",
+    "production_icon_resolution": "production-icon-resolution.schema.json",
+    "icon_selection_decision": "icon-selection-decision.schema.json",
     "resolved_asset_consumption": "resolved-asset-consumption.schema.json",
     "deck_visual_direction": "deck-visual-direction.schema.json",
     "icon_search_evidence": "icon-search-evidence.schema.json",
     "simple_icon_drawing": "simple-icon-drawing.schema.json",
     "raster_icon_handoff": "raster-icon-handoff.schema.json",
+    "raster_handoff_pending": "raster-handoff-pending.schema.json",
 }
 
 SUPPORTED_SCHEMA_VERSIONS = {
@@ -87,11 +90,14 @@ SUPPORTED_SCHEMA_VERSIONS = {
     "markdown_wireframe_state": {"1.0"},
     "markdown_wireframe_host_call_record": {"1.0"},
     "icon_resolution": {"1.0"},
+    "production_icon_resolution": {"1.0"},
+    "icon_selection_decision": {"1.0"},
     "resolved_asset_consumption": {"1.0"},
     "deck_visual_direction": {"1.0"},
     "icon_search_evidence": {"1.0"},
     "simple_icon_drawing": {"1.0"},
     "raster_icon_handoff": {"1.0"},
+    "raster_handoff_pending": {"1.0"},
     "asset_manifest": {"1.3", "1.4"},
 }
 

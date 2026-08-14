@@ -19,6 +19,7 @@ P1_FIXTURE = ROOT / "tests" / "fixtures" / "p1" / "content-planning-cases.json"
 P2_FIXTURE = ROOT / "tests" / "fixtures" / "p2" / "markdown-wireframe-cases.json"
 VENDOR = ROOT / "content-to-editable-ppt" / "runtime" / "vendor" / "tabler-icons" / "3.46.0"
 sys.path[:0] = [str(SCRIPTS), str(P1_TOOLS), str(ROOT / "tools" / "wireframe")]
+sys.path.insert(0, str(Path(__file__).resolve().parent))
 
 from build_tabler_icon_index import build_index
 from canonical_artifact import canonical_sha256
@@ -26,7 +27,7 @@ from markdown_wireframe import bind_markdown, build_validation_report
 from p1_content_planning_eval import load_fixtures
 from p2_wireframe_eval import authority, fixture_candidate
 from resolve_icon_asset import create_record, materialize
-from generate_icon_fallback import compose, draw, handoff
+from icon_fallback_experiments import compose, draw, handoff
 from search_tabler_icons import rank
 
 

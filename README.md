@@ -4,7 +4,7 @@
 
 ## 当前状态
 
-本仓库已完成 P0 Baseline Freeze、P0.5 Runtime Hardening、P1 Host Content Planning、P2 Markdown Wireframe 和 P3.1 Tabler Core。正式 P3.1 回退链正在调整：生产路径只允许准确匹配的 Tabler SVG，或进入等待 Approved Design Preview 的 Raster Handoff。P3.2 Visual System / Prompt Package 尚未实现，正式页面视觉设计和多页 PPT 生成仍不可用。
+本仓库已完成 P0 Baseline Freeze、P0.5 Runtime Hardening、P1 Host Content Planning、P2 Markdown Wireframe、P3.1 Tabler Core 和 Production Fallback Cutover。正式生产路径只允许准确匹配的 Tabler SVG，或进入等待 Approved Design Preview 的 Raster Handoff Pending。P3.2 Visual System / Prompt Package 已 Ready 但尚未实现，正式页面视觉设计和多页 PPT 生成仍不可用。
 
 当前可执行流程为“材料 → 待确认大纲 → 冻结页面文字 → Markdown 文字线稿”和“参考图片 → 可编辑单页 PPT”。以下能力尚未实现，不能视为当前承诺：
 
@@ -137,7 +137,7 @@ Markdown Binder、极薄 Manifest、Validator、受限 Correction、不可变 Re
 
 P3.1 Tabler Core 使用固定的 Tabler Outline 3.46.0、不可变 Resolution Record、真实 SVG Sanitizer、Asset Manifest 1.4 和 Consumption Contract。它已经证明同一 Sanitized SVG Source 能被 synthetic Preview Compositor 与 PPT Runtime 消费，但不产生正式 Design Preview。
 
-[P3.1 Gate 报告](reports/p3/p3-icon-resolution-gate.json) 记录历史 Existing、Composition、Programmatic、Raster Handoff、resvg/Pillow consumption 和 PowerPoint Render Smoke。按照 ADR-039，Composition 和 Programmatic 仅作为历史实验能力；正式生产链调整为“准确 Tabler SVG，或 Raster Handoff Pending 后从 Approved Design Preview 提取独立 PNG”。
+[历史 P3.1 Gate 报告](reports/p3/p3-icon-resolution-gate.json) 记录 Existing、Composition、Programmatic、Raster Handoff、resvg/Pillow consumption 和 PowerPoint Render Smoke。[Production Fallback Cutover Gate](reports/p3/p3-production-fallback-cutover-gate.json) 证明正式入口只允许准确 Tabler SVG，或生成绑定 Host 决策的 Raster Handoff Pending；Composition 和 Programmatic 仅保留为历史实验能力。
 
 ## 目标视觉链路
 
@@ -157,7 +157,7 @@ P1 Approved Content
 
 ## 下一阶段
 
-下一步先完成 P3.1 Production Fallback Cutover，再实施 [P3 视觉设计与受约束重建计划](docs/plans/p3/visual-design-and-constrained-reconstruction-plan.md)。当前不能宣称 Prompt Compiler、Approved Design Preview、完整多页 PowerPoint、Deck Assembly 或最终多页审核已经完成。
+下一步实施 [P3 视觉设计与受约束重建计划](docs/plans/p3/visual-design-and-constrained-reconstruction-plan.md) 中的 P3.2 Deck Visual System、Deterministic Prompt Package 和 Style Anchor。当前不能宣称 Prompt Compiler、Approved Design Preview、完整多页 PowerPoint、Deck Assembly 或最终多页审核已经完成。
 
 ## 开发验证
 
