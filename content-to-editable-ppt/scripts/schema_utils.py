@@ -69,6 +69,9 @@ SCHEMA_FILES = {
     "deck_visual_system_correction_record": "deck-visual-system-correction-record.schema.json",
     "visual_system_state": "visual-system-state.schema.json",
     "deck_visual_system_host_call_record": "deck-visual-system-host-call-record.schema.json",
+    "text_footprint_manifest": "text-footprint-manifest.schema.json",
+    "deck_prompt_package": "deck-prompt-package.schema.json",
+    "style_anchor_request": "style-anchor-request.schema.json",
 }
 
 SUPPORTED_SCHEMA_VERSIONS = {
@@ -112,6 +115,9 @@ SUPPORTED_SCHEMA_VERSIONS = {
     "deck_visual_system_correction_record": {"1.0"},
     "visual_system_state": {"1.0"},
     "deck_visual_system_host_call_record": {"1.0"},
+    "text_footprint_manifest": {"1.0"},
+    "deck_prompt_package": {"1.0"},
+    "style_anchor_request": {"1.0"},
     "asset_manifest": {"1.3", "1.4"},
 }
 
