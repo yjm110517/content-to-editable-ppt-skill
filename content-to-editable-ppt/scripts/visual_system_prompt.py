@@ -105,7 +105,7 @@ def _anchor(bundle: dict[str, Any], system: dict[str, Any]) -> tuple[str, list[s
         exceptional=any(item["role"]=="diagram" and item["subtype"]=="architecture" for item in visuals) or len(visuals)>=4
         if raster or exceptional or len(page["content_blocks"])>=5: high.append(slide["slide_id"])
         eligible=int(page["role"].casefold() not in special); core=int(bool(page["content_blocks"]))+int(bool(visuals))+int(any(item["role"] in {"icon","image"} for item in visuals)); moderate=int(1<=len(visuals)<=3)
-        scored.append(((eligible,frequencies[family],core,moderate,-int(exceptional),-slide["order"]),slide["slide_id"]))
+        scored.append(((eligible,frequencies[family],-int(exceptional or raster>0),core,moderate,-slide["order"]),slide["slide_id"]))
     scored.sort(reverse=True); return scored[0][1],sorted(high,key=lambda value:pages[value]["order"])
 
 
