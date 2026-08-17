@@ -1,0 +1,65 @@
+{
+  "schema_version": "1.0",
+  "phase": "P3.2-contract-prompt-gate",
+  "status": "pass",
+  "contract_prompt_gate": "pass",
+  "visual_quality_status": "not_evaluated",
+  "blocking_issues": 0,
+  "authority_drift": 0,
+  "prompt_drift": 0,
+  "text_footprint_drift": 0,
+  "layer_ownership_violations": 0,
+  "missing_element_bindings": 0,
+  "unexpected_page_recompile": 0,
+  "cases": [
+    {
+      "case_id": "D03",
+      "status": "pass",
+      "slides": 3,
+      "host_model_invocations": 1,
+      "contract_corrections": 0,
+      "prompt_drift": 0,
+      "text_footprint_drift": 0,
+      "style_anchor_slide_id": "S03",
+      "high_risk_slide_ids": [
+        "S01",
+        "S02"
+      ],
+      "prompt_package_sha256": "5a7537e2b813469be3e40f11c10715d9298bb4d414d4cf5873522479dce2a249"
+    },
+    {
+      "case_id": "D05",
+      "status": "pass",
+      "slides": 5,
+      "host_model_invocations": 0,
+      "contract_corrections": 0,
+      "prompt_drift": 0,
+      "text_footprint_drift": 0,
+      "style_anchor_slide_id": "S02",
+      "high_risk_slide_ids": [],
+      "prompt_package_sha256": "1c6f4441d076b78bb629a6b8e5bedf4553a5468323ce94f0005d3c0a75045f5b"
+    },
+    {
+      "case_id": "D08",
+      "status": "pass",
+      "slides": 8,
+      "host_model_invocations": 0,
+      "contract_corrections": 0,
+      "prompt_drift": 0,
+      "text_footprint_drift": 0,
+      "style_anchor_slide_id": "S02",
+      "high_risk_slide_ids": [],
+      "prompt_package_sha256": "127fc073dc4ef253940dba0f10351ffdd45ecb6727150db26027358dcf8710af"
+    }
+  ],
+  "recorded_d03_host_model_invocations": 1,
+  "review_run": {
+    "live_host_model_invocations": 0,
+    "prompt_compiler_agent_calls": 0,
+    "image_generation_calls": 0,
+    "planner_calls": 0,
+    "reviewer_calls": 0,
+    "powerpoint_calls": 0
+  },
+  "p0_baseline_unchanged": true
+}

@@ -52,6 +52,11 @@ class TextFootprintPromptTests(unittest.TestCase):
             self.assertFalse(first["slides"][0]["reused"]);self.assertTrue(second["slides"][0]["reused"]);self.assertEqual(first["slides"][0]["prompt_sha256"],second["slides"][0]["prompt_sha256"])
 
     @patch.dict(os.environ,{"IVT_AVAILABLE_FONTS":"Microsoft YaHei;Arial"})
+    def test_resolved_svg_is_compositor_owned(self)->None:
+        with tempfile.TemporaryDirectory() as temporary:
+            bundle,_=contracts.VisualSystemContractTests().authority(Path(temporary));entry=bundle["icon_asset_index"]["entries"][0];bundle["icon_asset_index"]["entries"][0]={"visual_ref":entry["visual_ref"],"status":"resolved_svg","resolution_record_sha256":"a"*64,"asset_manifest_entry_sha256":"b"*64,"sanitized_svg_sha256":"c"*64};system=freeze_visual_system(contracts.visual_candidate(),bundle);foot=compile_text_footprints(system,bundle);package,_=compile_prompt_package(system,foot,bundle);intent=next(item for item in package["slides"][0]["element_intents"] if item["source_ref"]=="S01-V01");self.assertEqual(intent["element_owner"],"deterministic_compositor");self.assertEqual(intent["render_policy"],"resolved_svg_overlay")
+
+    @patch.dict(os.environ,{"IVT_AVAILABLE_FONTS":"Microsoft YaHei;Arial"})
     def test_issue_bound_correction_only(self)->None:
         with tempfile.TemporaryDirectory() as temporary:
             bundle,_=contracts.VisualSystemContractTests().authority(Path(temporary));candidate=contracts.visual_candidate();candidate["hard_constraints"]["safe_area"]["top"]=3000;report=build_validation_report(candidate,bundle,report_id="R",validated_at_utc=contracts.NOW);issue=next(item for item in report["issues"] if item["code"]=="safe_area_too_large")

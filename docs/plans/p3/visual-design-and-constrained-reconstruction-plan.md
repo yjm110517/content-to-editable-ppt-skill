@@ -6,9 +6,9 @@
 
 ```text
 P3.1 Tabler Core                COMPLETE
-P3.1 Production Fallback       REALIGNMENT PENDING
-P3.2 Visual System / Prompt    IMPLEMENTATION PENDING
-P3.3 Design Preview            BLOCKED BY P3.2
+P3.1 Production Fallback       COMPLETE
+P3.2 Visual System / Prompt    COMPLETE (VISUAL QUALITY NOT EVALUATED)
+P3.3 Design Preview            READY
 P4 Reconstruction              BLOCKED BY P3.3 APPROVAL
 P5 Deck Delivery               BLOCKED BY P4
 ```

@@ -1,6 +1,6 @@
 ---
 name: content-to-editable-ppt
-description: Plan and freeze presentation content, generate model-authored Markdown wireframes, or rebuild a reference image with the reusable PowerPoint runtime. Use for P1 content planning, P2 text wireframes, repository development, and image-to-editable single-slide reconstruction. Final visual design and complete multi-page PPT generation remain future stages.
+description: Plan and freeze presentation content, generate Markdown wireframes, compile a deterministic Deck Visual System and design Prompt Package, or rebuild a reference image with the reusable PowerPoint runtime. Use for P1 content planning, P2 text wireframes, P3.1 icon resolution, P3.2 prompt preparation, repository development, and image-to-editable single-slide reconstruction. Final design-image generation and complete multi-page PPT delivery remain future stages.
 ---
 
 # Content to Editable PPT
@@ -36,7 +36,11 @@ Image-to-Editable-PPT bypasses P2.
 
 After an accepted P2 1.1 Manifest, read [references/icon-asset-resolution.md](references/icon-asset-resolution.md). Resolve only `role=icon` placeholders from the pinned offline Tabler index. Materialize an accurate selection through the existing SVG sanitizer; when no accurate Tabler icon exists, record `Raster Handoff Pending` and stop that asset path until an Approved Design Preview exists. Never use the historical composition or programmatic-SVG fallback in the formal route. Do not parse placeholder business fields from Markdown, call an independent Icon Reviewer, use an online service, or generate the final Design Preview.
 
-Stop the Content-to-PPT route after P3.1. P3.2 Deck Visual System, locked Prompt Package, Style Anchor, Approved Design Preview, extraction, constrained reconstruction, Deck assembly, and multi-page visual review are specified but not yet executable. Do not improvise them with the inherited single-slide Runtime.
+## Compile P3.2 visual design prompts
+
+After P3.1 icon decisions close, read [references/visual-system-and-prompts.md](references/visual-system-and-prompts.md). Run one Host Deck Visual System pass, keep Hard Constraints separate from Soft Design Guidance, and allow at most one issue-bound Contract Correction. Compile actual-font Text Footprints, layer ownership, page prompts, cache keys, the representative Style Anchor Request, and the Contract/Prompt Gate deterministically. Do not generate an image or claim visual quality was evaluated.
+
+Stop the Content-to-PPT route after P3.2. P3.3 Style Anchor generation, deterministic composition, Approved Design Preview, extraction, constrained reconstruction, Deck assembly, and multi-page visual review are specified but not yet executable. Do not improvise them with the inherited single-slide Runtime.
 
 ## Core requirements
 
