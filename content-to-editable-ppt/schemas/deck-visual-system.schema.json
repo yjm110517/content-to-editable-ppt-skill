@@ -1,0 +1,6 @@
+{
+  "$schema":"https://json-schema.org/draft/2020-12/schema","$id":"deck-visual-system.schema.json","title":"P3.2 Frozen Deck Visual System","type":"object","additionalProperties":false,
+  "required":["schema_version","canonicalization_version","artifact_type","deck_id","revision","parent_sha256","candidate_sha256","deck_request_sha256","approved_outline_sha256","slide_content_manifest_sha256","p2_manifest_sha256","p3_icon_asset_index_sha256","hard_constraints","soft_design_guidance","status"],
+  "properties":{"schema_version":{"const":"1.0"},"canonicalization_version":{"const":"p1-rfc8785-nfc-1"},"artifact_type":{"const":"deck_visual_system"},"deck_id":{"type":"string","minLength":1},"revision":{"type":"integer","minimum":1},"parent_sha256":{"oneOf":[{"$ref":"#/$defs/hash"},{"type":"null"}]},"candidate_sha256":{"$ref":"#/$defs/hash"},"deck_request_sha256":{"$ref":"#/$defs/hash"},"approved_outline_sha256":{"$ref":"#/$defs/hash"},"slide_content_manifest_sha256":{"$ref":"#/$defs/hash"},"p2_manifest_sha256":{"$ref":"#/$defs/hash"},"p3_icon_asset_index_sha256":{"$ref":"#/$defs/hash"},"hard_constraints":{"$ref":"deck-visual-system-candidate.schema.json#/$defs/hard"},"soft_design_guidance":{"$ref":"deck-visual-system-candidate.schema.json#/$defs/soft"},"status":{"const":"frozen"}},
+  "$defs":{"hash":{"type":"string","pattern":"^[a-f0-9]{64}$"}}
+}

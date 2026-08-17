@@ -1,0 +1,6 @@
+{
+  "$schema":"https://json-schema.org/draft/2020-12/schema","$id":"deck-visual-system-validation-report.schema.json","title":"P3.2 Visual System Validation Report","type":"object","additionalProperties":false,
+  "required":["schema_version","artifact_type","report_id","deck_id","candidate_sha256","status","issues","validated_at_utc"],
+  "properties":{"schema_version":{"const":"1.0"},"artifact_type":{"const":"deck_visual_system_validation_report"},"report_id":{"type":"string","minLength":1},"deck_id":{"type":"string","minLength":1},"candidate_sha256":{"$ref":"#/$defs/hash"},"status":{"enum":["pass","correctable","blocking"]},"issues":{"type":"array","items":{"$ref":"#/$defs/issue"}},"validated_at_utc":{"type":"string","format":"date-time","pattern":"Z$"}},
+  "$defs":{"hash":{"type":"string","pattern":"^[a-f0-9]{64}$"},"issue":{"type":"object","additionalProperties":false,"required":["issue_id","classification","code","path","message","correctable"],"properties":{"issue_id":{"type":"string","minLength":1},"classification":{"enum":["correctable_contract_error","blocking_authority_error"]},"code":{"type":"string","minLength":1},"path":{"type":"string","minLength":1},"message":{"type":"string","minLength":1},"correctable":{"type":"boolean"}}}}
+}
