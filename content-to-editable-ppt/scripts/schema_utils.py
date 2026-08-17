@@ -62,6 +62,13 @@ SCHEMA_FILES = {
     "simple_icon_drawing": "simple-icon-drawing.schema.json",
     "raster_icon_handoff": "raster-icon-handoff.schema.json",
     "raster_handoff_pending": "raster-handoff-pending.schema.json",
+    "p3_icon_asset_authority_index": "p3-icon-asset-authority-index.schema.json",
+    "deck_visual_system_candidate": "deck-visual-system-candidate.schema.json",
+    "deck_visual_system": "deck-visual-system.schema.json",
+    "deck_visual_system_validation_report": "deck-visual-system-validation-report.schema.json",
+    "deck_visual_system_correction_record": "deck-visual-system-correction-record.schema.json",
+    "visual_system_state": "visual-system-state.schema.json",
+    "deck_visual_system_host_call_record": "deck-visual-system-host-call-record.schema.json",
 }
 
 SUPPORTED_SCHEMA_VERSIONS = {
@@ -98,6 +105,13 @@ SUPPORTED_SCHEMA_VERSIONS = {
     "simple_icon_drawing": {"1.0"},
     "raster_icon_handoff": {"1.0"},
     "raster_handoff_pending": {"1.0"},
+    "p3_icon_asset_authority_index": {"1.0"},
+    "deck_visual_system_candidate": {"1.0"},
+    "deck_visual_system": {"1.0"},
+    "deck_visual_system_validation_report": {"1.0"},
+    "deck_visual_system_correction_record": {"1.0"},
+    "visual_system_state": {"1.0"},
+    "deck_visual_system_host_call_record": {"1.0"},
     "asset_manifest": {"1.3", "1.4"},
 }
 

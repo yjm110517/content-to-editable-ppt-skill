@@ -1,0 +1,15 @@
+{
+  "$schema":"https://json-schema.org/draft/2020-12/schema","$id":"p3-icon-asset-authority-index.schema.json","title":"P3 Icon Asset Authority Index","type":"object","additionalProperties":false,
+  "required":["schema_version","canonicalization_version","artifact_type","scope","deck_id","p2_manifest_sha256","entries"],
+  "properties":{
+    "schema_version":{"const":"1.0"},"canonicalization_version":{"const":"p1-rfc8785-nfc-1"},"artifact_type":{"const":"p3_icon_asset_authority_index"},"scope":{"const":"icon"},"deck_id":{"type":"string","minLength":1},"p2_manifest_sha256":{"$ref":"#/$defs/hash"},
+    "entries":{"type":"array","uniqueItems":true,"items":{"$ref":"#/$defs/entry"}}
+  },
+  "$defs":{
+    "hash":{"type":"string","pattern":"^[a-f0-9]{64}$"},"path":{"type":"string","pattern":"^(?![A-Za-z]:|/|.*(?:^|/)\\.\\.(?:/|$)).+"},
+    "entry":{"oneOf":[
+      {"type":"object","additionalProperties":false,"required":["visual_ref","status","resolution_record_path","resolution_record_sha256","asset_manifest_path","asset_manifest_entry_sha256","sanitized_svg_path","sanitized_svg_sha256"],"properties":{"visual_ref":{"type":"string","minLength":1},"status":{"const":"resolved_svg"},"resolution_record_path":{"$ref":"#/$defs/path"},"resolution_record_sha256":{"$ref":"#/$defs/hash"},"asset_manifest_path":{"$ref":"#/$defs/path"},"asset_manifest_entry_sha256":{"$ref":"#/$defs/hash"},"sanitized_svg_path":{"$ref":"#/$defs/path"},"sanitized_svg_sha256":{"$ref":"#/$defs/hash"}}},
+      {"type":"object","additionalProperties":false,"required":["visual_ref","status","handoff_path","handoff_sha256"],"properties":{"visual_ref":{"type":"string","minLength":1},"status":{"const":"raster_handoff_pending"},"handoff_path":{"$ref":"#/$defs/path"},"handoff_sha256":{"$ref":"#/$defs/hash"}}}
+    ]}
+  }
+}
