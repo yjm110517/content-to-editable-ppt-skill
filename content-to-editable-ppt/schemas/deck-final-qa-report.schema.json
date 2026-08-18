@@ -1,0 +1,136 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "deck-final-qa-report.schema.json",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schema_version",
+    "artifact_type",
+    "deck_id",
+    "status",
+    "blocking_issues",
+    "content_drift",
+    "chart_drift",
+    "asset_drift",
+    "checks",
+    "issues",
+    "exception_pages"
+  ],
+  "properties": {
+    "schema_version": {
+      "const": "1.0"
+    },
+    "artifact_type": {
+      "const": "deck_final_qa_report"
+    },
+    "deck_id": {
+      "type": "string",
+      "minLength": 1
+    },
+    "status": {
+      "enum": [
+        "pass",
+        "fail"
+      ]
+    },
+    "blocking_issues": {
+      "type": "integer",
+      "minimum": 0
+    },
+    "content_drift": {
+      "type": "integer",
+      "minimum": 0
+    },
+    "chart_drift": {
+      "type": "integer",
+      "minimum": 0
+    },
+    "asset_drift": {
+      "type": "integer",
+      "minimum": 0
+    },
+    "checks": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "group",
+          "status",
+          "detail"
+        ],
+        "properties": {
+          "group": {
+            "type": "string",
+            "minLength": 1
+          },
+          "status": {
+            "enum": [
+              "pass",
+              "fail"
+            ]
+          },
+          "detail": {
+            "type": "string"
+          }
+        }
+      }
+    },
+    "issues": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "issue_id",
+          "severity",
+          "slide_ids",
+          "code",
+          "message"
+        ],
+        "properties": {
+          "issue_id": {
+            "type": "string",
+            "pattern": "^P5-[A-Z0-9]{12}$"
+          },
+          "severity": {
+            "enum": [
+              "critical",
+              "major",
+              "minor",
+              "suggestion"
+            ]
+          },
+          "slide_ids": {
+            "type": "array",
+            "items": {
+              "type": "string",
+              "minLength": 1
+            }
+          },
+          "code": {
+            "type": "string",
+            "minLength": 1
+          },
+          "message": {
+            "type": "string",
+            "minLength": 1
+          }
+        }
+      }
+    },
+    "exception_pages": {
+      "type": "array",
+      "items": {
+        "type": "string",
+        "minLength": 1
+      }
+    }
+  },
+  "$defs": {
+    "hash": {
+      "type": "string",
+      "pattern": "^[a-f0-9]{64}$"
+    }
+  }
+}
