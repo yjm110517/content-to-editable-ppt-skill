@@ -14,6 +14,7 @@ from reconstruction_authority import (
     load_reconstruction_authority,
 )
 from reconstruction_state import initial_deck_state, transition
+from reconstruction_spec import compile_reconstruction_spec, validate_reconstruction_spec
 from schema_utils import ContractError, error, load_json, validate_schema
 
 
@@ -59,6 +60,18 @@ def build_parser() -> argparse.ArgumentParser:
     seed.add_argument("--chart-spec", action="append", help="VISUAL_REF=chart-spec.json")
     seed.add_argument("--output", type=Path, required=True)
 
+    compile_spec = commands.add_parser("compile-spec")
+    compile_spec.add_argument("--seed-view", type=Path, required=True)
+    compile_spec.add_argument("--order", type=int, required=True)
+    compile_spec.add_argument("--order-sensitive", action="store_true")
+    compile_spec.add_argument("--order-binding", action="append", help="NAME=VALUE")
+    compile_spec.add_argument("--output", type=Path, required=True)
+
+    validate_spec = commands.add_parser("validate-spec")
+    validate_spec.add_argument("--spec", type=Path, required=True)
+    validate_spec.add_argument("--seed-view", type=Path, required=True)
+    validate_spec.add_argument("--report", type=Path, required=True)
+
     verify = commands.add_parser("verify-authority")
     _base_authority(verify)
     return parser
@@ -89,6 +102,19 @@ def run(args: argparse.Namespace) -> dict:
         view = build_seed_view(page=page, approved_content=load_json(args.approved_content), visual_system=load_json(args.visual_system), text_footprints=load_json(args.text_footprints), asset_manifest=load_json(args.asset_manifest), chart_specs=charts)
         atomic_write_json(args.output, view)
         return {"seed_view": str(args.output.resolve()), "seed_view_sha256": canonical_sha256(view), "seed_count": len(view["seeds"])}
+    if args.command == "compile-spec":
+        raw_context = _pairs(args.order_binding, "--order-binding")
+        context: dict[str, object] = {}
+        for key, value in raw_context.items():
+            text = str(value)
+            context[key] = int(text) if key in {"slide_ordinal", "section_ordinal", "total_slide_count"} else None if text == "null" else text
+        spec = compile_reconstruction_spec(load_json(args.seed_view), order=args.order, order_sensitive=args.order_sensitive, order_bindings=list(context), order_context=context)
+        atomic_write_json(args.output, spec)
+        return {"spec": str(args.output.resolve()), "spec_sha256": canonical_sha256(spec), "page_input_sha256": spec["page_input_sha256"]}
+    if args.command == "validate-spec":
+        report = validate_reconstruction_spec(load_json(args.spec), load_json(args.seed_view))
+        atomic_write_json(args.report, report)
+        return {"report": str(args.report.resolve()), "status": report["status"], "issue_count": len(report["issues"])}
     if args.command == "verify-authority":
         bundle = _load_bundle(args)
         return {"deck_id": bundle["deck_id"], "approved_manifest_sha256": bundle["manifest_sha256"], "slide_ids": [item["slide_id"] for item in bundle["pages"]]}
