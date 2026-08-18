@@ -63,3 +63,19 @@ def transition(document: dict[str, Any], next_state: str, *, artifact_updates: d
     if artifact_updates:
         result["current_artifacts"].update(artifact_updates)
     return result
+
+
+def record_technical_retry(page_state: dict[str, Any]) -> dict[str, Any]:
+    if page_state.get("artifact_type") != "reconstruction_page_state" or page_state["technical_retry_count"] >= 2:
+        raise ContractError([error("$.technical_retry_count", "technical retry budget exhausted", "technical_retry_exhausted")])
+    result = deepcopy(page_state); result["technical_retry_count"] += 1
+    result["history"].append({"event": "technical_retry", "retry": result["technical_retry_count"], "spec_unchanged": True, "previous_sha256": canonical_sha256(page_state)})
+    return result
+
+
+def record_targeted_patch(page_state: dict[str, Any]) -> dict[str, Any]:
+    if page_state.get("artifact_type") != "reconstruction_page_state" or page_state["targeted_patch_count"] >= 2:
+        raise ContractError([error("$.targeted_patch_count", "targeted patch budget exhausted", "targeted_patch_exhausted")])
+    result = deepcopy(page_state); result["targeted_patch_count"] += 1; result["planner_calls"] += 1; result["iteration"] += 1
+    result["history"].append({"event": "targeted_patch", "patch": result["targeted_patch_count"], "previous_sha256": canonical_sha256(page_state)})
+    return result
