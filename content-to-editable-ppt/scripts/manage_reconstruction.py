@@ -18,6 +18,7 @@ from reconstruction_authority import (
 from reconstruction_state import initial_deck_state, transition
 from reconstruction_spec import compile_reconstruction_spec, validate_reconstruction_spec
 from reconstruction_qa import compare_visual_fidelity, inspect_reconstruction_page
+from reconstruction_workflow import apply_targeted_patch, compare_assembly, select_smoke_set
 from schema_utils import ContractError, error, load_json, validate_schema
 
 
@@ -88,6 +89,18 @@ def build_parser() -> argparse.ArgumentParser:
     compare = commands.add_parser("compare-preview")
     compare.add_argument("--deck-id", required=True); compare.add_argument("--slide-id", required=True); compare.add_argument("--approved-preview", type=Path, required=True); compare.add_argument("--candidate-render", type=Path, required=True); compare.add_argument("--output", type=Path, required=True)
 
+    smoke = commands.add_parser("select-smoke-set")
+    smoke.add_argument("--spec", type=Path, action="append", required=True); smoke.add_argument("--high-risk-slide-id", action="append"); smoke.add_argument("--output", type=Path, required=True)
+
+    patch = commands.add_parser("apply-targeted-patch")
+    patch.add_argument("--spec", type=Path, required=True); patch.add_argument("--seed-view", type=Path, required=True); patch.add_argument("--validation-report", type=Path, required=True); patch.add_argument("--patch", type=Path, required=True); patch.add_argument("--output", type=Path, required=True)
+
+    assemble = commands.add_parser("assemble-candidate-deck")
+    assemble.add_argument("--manifest", type=Path, required=True); assemble.add_argument("--reconstruction-root", type=Path, required=True); assemble.add_argument("--asset-manifest", type=Path, required=True); assemble.add_argument("--evidence-root", type=Path, required=True); assemble.add_argument("--output", type=Path, required=True); assemble.add_argument("--report", type=Path, required=True); assemble.add_argument("--node", default=os.environ.get("IVT_NODE", "node"))
+
+    assembly = commands.add_parser("compare-assembly")
+    assembly.add_argument("--manifest", type=Path, required=True); assembly.add_argument("--candidate-deck", type=Path, required=True); assembly.add_argument("--candidate-render-report", type=Path, required=True); assembly.add_argument("--reconstruction-root", type=Path, required=True); assembly.add_argument("--candidate-render-root", type=Path, required=True); assembly.add_argument("--output", type=Path, required=True)
+
     verify = commands.add_parser("verify-authority")
     _base_authority(verify)
     return parser
@@ -152,6 +165,23 @@ def run(args: argparse.Namespace) -> dict:
         report = compare_visual_fidelity(deck_id=args.deck_id, slide_id=args.slide_id, approved_preview=args.approved_preview, candidate_render=args.candidate_render)
         atomic_write_json(args.output, report)
         return {"fidelity_report": str(args.output.resolve()), "classification": report["classification"]}
+    if args.command == "select-smoke-set":
+        result = select_smoke_set([load_json(path) for path in args.spec], args.high_risk_slide_id)
+        atomic_write_json(args.output, result)
+        return {"smoke_set": str(args.output.resolve()), "slide_ids": result["slide_ids"], "uncovered_classes": result["uncovered_classes"]}
+    if args.command == "apply-targeted-patch":
+        result = apply_targeted_patch(load_json(args.spec), load_json(args.seed_view), load_json(args.validation_report), load_json(args.patch))
+        atomic_write_json(args.output, result)
+        return {"spec": str(args.output.resolve()), "spec_sha256": canonical_sha256(result)}
+    if args.command == "assemble-candidate-deck":
+        command = [args.node, str(Path(__file__).with_name("build_reconstruction_deck.mjs")), "--manifest", str(args.manifest), "--reconstruction-root", str(args.reconstruction_root), "--asset-manifest", str(args.asset_manifest), "--evidence-root", str(args.evidence_root), "--output", str(args.output), "--report", str(args.report), "--python", sys.executable]
+        completed = subprocess.run(command, capture_output=True, text=True, encoding="utf-8", errors="replace")
+        if completed.returncode: raise ContractError([error("$.assemble_candidate_deck", completed.stdout.strip() or completed.stderr.strip(), "candidate_deck_build_failed")])
+        return {"candidate_deck": str(args.output.resolve()), "report": str(args.report.resolve())}
+    if args.command == "compare-assembly":
+        result = compare_assembly(manifest_path=args.manifest, candidate_deck_path=args.candidate_deck, candidate_render_report_path=args.candidate_render_report, reconstruction_root=args.reconstruction_root, candidate_render_root=args.candidate_render_root)
+        atomic_write_json(args.output, result)
+        return {"report": str(args.output.resolve()), "status": result["status"], "post_assembly_slide_drift": result["post_assembly_slide_drift"]}
     if args.command == "verify-authority":
         bundle = _load_bundle(args)
         return {"deck_id": bundle["deck_id"], "approved_manifest_sha256": bundle["manifest_sha256"], "slide_ids": [item["slide_id"] for item in bundle["pages"]]}
