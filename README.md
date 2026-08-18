@@ -4,7 +4,7 @@
 
 ## 当前状态
 
-本仓库已完成 P0 Baseline Freeze、P0.5 Runtime Hardening、P1 Host Content Planning、P2 Markdown Wireframe、P3.1 Asset Resolution 和 P3.2 Deck Visual System / Prompt Contract。P3.2 只证明 Authority、Text Footprint、图层责任和 Prompt 确定性，视觉质量仍为 `not_evaluated`。P3.3 Style Anchor 与正式页面视觉设计尚未实现，多页 PPT 生成仍不可用。
+本仓库已完成 P0 Baseline Freeze、P0.5 Runtime Hardening、P1 Host Content Planning、P2 Markdown Wireframe、P3.1 Asset Resolution、P3.2 Visual System / Prompt Contract 和 P3.3 Approved Design Preview。D03 已具有真实生图、Reconstruction Compatibility、Microsoft PowerPoint Render 和用户确认的三页视觉证据。P4 可编辑多页重建尚未实现。
 
 当前可执行流程为“材料 → 待确认大纲 → 冻结页面文字 → Markdown 文字线稿”和“参考图片 → 可编辑单页 PPT”。以下能力尚未实现，不能视为当前承诺：
 
@@ -143,6 +143,10 @@ P3.1 Tabler Core 使用固定的 Tabler Outline 3.46.0、不可变 Resolution Re
 
 P3.2 将跨页规则分为 Hard Constraints 与 Soft Design Guidance，使用实际字体文件编译 Text Footprint，并确定性生成逐页 Prompt、图层责任、缓存身份和代表性 Style Anchor Request。[P3.2 Contract / Prompt Gate](reports/p3/p3-visual-system-prompt-contract-gate.json) 明确记录 `visual_quality_status = not_evaluated`；它不生成或批准任何设计图片。
 
+## P3.3 Approved Design Preview
+
+P3.3 使用 Reconstruction Ownership 和 Compatibility Gate，确保用户确认前每个重要视觉都具有明确的 P4 实现方式。Final Preview 由 Microsoft PowerPoint 排版正式文字、Shape、Chart 和 SVG；用户批准的是 PowerPoint Render，而不是 Raw Generated Layer。[P3.3 Gate](reports/p3/p3-approved-design-preview-gate.json) 将真实 Manual Acceptance Evidence 与零调用 Automated Replay 分开记录。
+
 ## 目标视觉链路
 
 ```text
@@ -161,7 +165,7 @@ P1 Approved Content
 
 ## 下一阶段
 
-下一步实施 [P3 视觉设计与受约束重建计划](docs/plans/p3/visual-design-and-constrained-reconstruction-plan.md) 中的 P3.3 Style Anchor、Generated Visual Layer 和 Deterministic Composition。当前不能宣称视觉质量、Approved Design Preview、完整多页 PowerPoint、Deck Assembly 或最终多页审核已经完成。
+下一步实施 [P3 视觉设计与受约束重建计划](docs/plans/p3/visual-design-and-constrained-reconstruction-plan.md) 中的 P4 Constrained Reconstruction。当前不能宣称完整可编辑多页 PowerPoint、Deck Assembly 或最终多页审核已经完成。
 
 ## 开发验证
 

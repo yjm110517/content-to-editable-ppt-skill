@@ -8,8 +8,8 @@
 P3.1 Tabler Core                COMPLETE
 P3.1 Production Fallback       COMPLETE
 P3.2 Visual System / Prompt    COMPLETE (VISUAL QUALITY NOT EVALUATED)
-P3.3 Design Preview            READY
-P4 Reconstruction              BLOCKED BY P3.3 APPROVAL
+P3.3 Design Preview            COMPLETE (D03 LIVE EVIDENCE)
+P4 Reconstruction              READY
 P5 Deck Delivery               BLOCKED BY P4
 ```
 
