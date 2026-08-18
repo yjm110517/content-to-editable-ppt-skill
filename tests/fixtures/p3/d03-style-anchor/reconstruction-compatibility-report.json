@@ -1,0 +1,17 @@
+{
+  "schema_version": "1.0",
+  "artifact_type": "reconstruction_compatibility_report",
+  "deck_id": "D03",
+  "slide_id": "S03",
+  "element_map_sha256": "a61f25368d6d279c14866142bb6904cc38c3a917122cc0d9b64ac3a37177eca1",
+  "status": "pass",
+  "native_shape_count": 1,
+  "native_text_count": 2,
+  "native_chart_count": 0,
+  "sanitized_svg_count": 0,
+  "reusable_raster_count": 1,
+  "generated_foreground_count": 0,
+  "decorative_approximation_count": 2,
+  "unclassified_major_visual_count": 0,
+  "blocking_issues": []
+}

@@ -80,6 +80,11 @@ SCHEMA_FILES = {
     "design_preview_state": "design-preview-state.schema.json",
     "powerpoint_chart_spec": "powerpoint-chart-spec.schema.json",
     "preview_powerpoint_build_report": "preview-powerpoint-build-report.schema.json",
+    "image_generation_call_record": "image-generation-call-record.schema.json",
+    "final_design_preview_record": "final-design-preview-record.schema.json",
+    "style_anchor_feedback": "style-anchor-feedback.schema.json",
+    "style_anchor_record": "style-anchor-record.schema.json",
+    "style_anchor_reference_record": "style-anchor-reference-record.schema.json",
 }
 
 SUPPORTED_SCHEMA_VERSIONS = {
@@ -134,6 +139,11 @@ SUPPORTED_SCHEMA_VERSIONS = {
     "design_preview_state": {"1.0"},
     "powerpoint_chart_spec": {"1.0"},
     "preview_powerpoint_build_report": {"1.0"},
+    "image_generation_call_record": {"1.0"},
+    "final_design_preview_record": {"1.0"},
+    "style_anchor_feedback": {"1.0"},
+    "style_anchor_record": {"1.0"},
+    "style_anchor_reference_record": {"1.0"},
     "asset_manifest": {"1.3", "1.4"},
 }
 

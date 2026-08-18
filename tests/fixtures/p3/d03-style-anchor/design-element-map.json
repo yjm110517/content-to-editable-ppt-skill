@@ -1,0 +1,112 @@
+{
+  "schema_version": "1.0",
+  "artifact_type": "design_element_map",
+  "deck_id": "D03",
+  "slide_id": "S03",
+  "generated_layer_sha256": "661eb988d5bddc417acf05fbe04d806581cccc985d2e5b77edd349174baf266d",
+  "prompt_package_sha256": "5a7537e2b813469be3e40f11c10715d9298bb4d414d4cf5873522479dce2a249",
+  "elements": [
+    {
+      "element_id": "GEN-S03-BG01",
+      "source_ref": null,
+      "element_owner": "generated_visual_layer",
+      "reconstruction_class": "generated_background",
+      "editable_required": false,
+      "fidelity_priority": "major",
+      "p4_strategy": "rebuild_background_from_style_tokens",
+      "normalized_bbox": {"x": 0, "y": 0, "w": 10000, "h": 10000},
+      "z_index": 0,
+      "relationship_refs": []
+    },
+    {
+      "element_id": "GEN-S03-CARD01",
+      "source_ref": null,
+      "element_owner": "generated_visual_layer",
+      "reconstruction_class": "native_shape",
+      "editable_required": true,
+      "fidelity_priority": "major",
+      "p4_strategy": "rebuild_from_element_map",
+      "normalized_bbox": {"x": 4970, "y": 2380, "w": 4540, "h": 5400},
+      "z_index": 5,
+      "shape_kind": "rounded_rect",
+      "fill": "surface",
+      "border": "primary-soft",
+      "corner_radius": 350,
+      "opacity": 1000,
+      "shadow_class": "soft",
+      "relationship_refs": ["EL-S03-TITLE", "EL-S03-C01"]
+    },
+    {
+      "element_id": "EL-S03-TITLE",
+      "source_ref": "S03-TITLE",
+      "element_owner": "deterministic_compositor",
+      "reconstruction_class": "native_text",
+      "editable_required": true,
+      "fidelity_priority": "critical",
+      "p4_strategy": "reuse_authority_text_spec",
+      "normalized_bbox": {"x": 5350, "y": 3150, "w": 3600, "h": 1300},
+      "z_index": 20,
+      "relationship_refs": ["GEN-S03-CARD01"]
+    },
+    {
+      "element_id": "EL-S03-C01",
+      "source_ref": "S03-C01",
+      "element_owner": "deterministic_compositor",
+      "reconstruction_class": "native_text",
+      "editable_required": true,
+      "fidelity_priority": "critical",
+      "p4_strategy": "reuse_authority_text_spec",
+      "normalized_bbox": {"x": 5350, "y": 4900, "w": 3600, "h": 1500},
+      "z_index": 20,
+      "relationship_refs": ["GEN-S03-CARD01"]
+    },
+    {
+      "element_id": "EL-S03-V01",
+      "source_ref": "S03-V01",
+      "element_owner": "generated_visual_layer",
+      "reconstruction_class": "reusable_raster",
+      "editable_required": false,
+      "fidelity_priority": "major",
+      "p4_strategy": "extract_from_raw_layer",
+      "normalized_bbox": {"x": 300, "y": 2200, "w": 4600, "h": 4900},
+      "z_index": 10,
+      "relationship_refs": ["EL-S03-C01"]
+    },
+    {
+      "element_id": "GEN-S03-DECOR-TOP",
+      "source_ref": null,
+      "element_owner": "generated_visual_layer",
+      "reconstruction_class": "decorative_approximation",
+      "editable_required": false,
+      "fidelity_priority": "minor",
+      "p4_strategy": "approximate_from_style_tokens",
+      "normalized_bbox": {"x": 6100, "y": 0, "w": 3900, "h": 2400},
+      "z_index": 2,
+      "relationship_refs": []
+    },
+    {
+      "element_id": "GEN-S03-DECOR-BOTTOM",
+      "source_ref": null,
+      "element_owner": "generated_visual_layer",
+      "reconstruction_class": "decorative_approximation",
+      "editable_required": false,
+      "fidelity_priority": "minor",
+      "p4_strategy": "approximate_from_style_tokens",
+      "normalized_bbox": {"x": 0, "y": 7550, "w": 3900, "h": 2450},
+      "z_index": 2,
+      "relationship_refs": []
+    }
+  ],
+  "forbidden_generated_content": {
+    "text_like_marks": false,
+    "logo_like_marks": false,
+    "unauthorized_labels": false,
+    "duplicate_resolved_icons": false,
+    "duplicate_chart_content": false,
+    "unclassified_major_visual_count": 0
+  },
+  "full_raw_layer_reuse_allowed": false,
+  "host_map_pass_count": 1,
+  "map_correction_count": 0,
+  "status": "submitted"
+}
