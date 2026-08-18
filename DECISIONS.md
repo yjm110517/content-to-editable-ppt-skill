@@ -1088,6 +1088,49 @@ Two-icon Composition 和 Programmatic SVG 不再属于正式生产回退链。
 
 ---
 
+## ADR-040 — P5 Final Delivery 必须完成 Deck Consistency Review
+
+**Status:** Accepted
+
+**Decision**
+
+P5 Final Delivery 必须完成一次 Deck Consistency Review。Reviewer Initial + 2 Technical Retries 全部耗尽后进入 `review_incomplete`，`review_incomplete` 在 P5 永远 Blocking，不允许降级交付。
+
+**Why**
+
+P5 交付的是整套 Deck，跨页一致性是最终交付质量的一部分。早期单页 Runtime 为应对 Reviewer 技术失败提供的降级交付策略只适用于单页场景，不能延伸到正式 Deck Delivery；技术故障应被记录并重试，而不是跳过最终审核。
+
+**Consequences**
+
+- P5 Final Delivery 有意覆盖早期 Reviewer Technical Failure 可降级交付策略；
+- `review_incomplete` 在 P5 永远 Blocking；
+- 旧降级策略继续适用于既有单页 Runtime，不被全局删除；
+- Deck Consistency Review 使用现有 Visual Reviewer 完成一次 Logical Pass，不新增 Deck Reviewer Agent。
+
+---
+
+## ADR-041 — P5 继承 P4 Fidelity，并在冻结 Packaging Runtime 内保证包字节确定
+
+**Status:** Accepted
+
+**Decision**
+
+P5 继承 P4 Reconstruction Fidelity，不重新运行 Approved Preview Fidelity Comparator；继承关系通过 P4 报告 Hash 绑定。P5 Packaging 在冻结的 Packaging Runtime Lock 内保证包字节确定性。
+
+**Why**
+
+P4 已完成逐页重建与 Post-Assembly 对比，P5 的职责是证明"这就是 P4 通过的那一份、保存不会坏、整套风格一致、交付过程中没有被改动"，重复单页 Fidelity 评分既浪费又可能用新阈值重新解释已批准的视觉权威。ZIP 字节确定性依赖 Python/zlib/压缩参数/时间戳/顺序/权限等完整指纹，必须整体冻结才能声称可复现。
+
+**Consequences**
+
+- P5 只保存 P4 Fidelity 继承关系与对应 P4 Report Hash，不重新计算单页 Fidelity 严重度；
+- 确定性承诺限定为：相同输入 + 相同 Packaging Runtime Lock → ZIP 字节/SHA-256 一致；
+- Packaging 是纯函数，只消费已冻结 Artifact，不产生新业务字段（禁止时间戳、随机 UUID、临时目录、用户名、绝对路径）；
+- 正式交付 Hash 闭包采用两层规则：Provenance 记录另外 6 个交付文件 Hash，Provenance 自身 Hash 由 P5 State/Gate 记录（Provenance 不包含自身 Hash，避免自引用循环）；
+- Packaging Runtime Fingerprint 不一致时停止，不得用不同 zlib/Python 静默生成同名交付包。
+
+---
+
 # 决策变更规则
 
 如果后续需要修改 `Accepted` ADR，应遵循：

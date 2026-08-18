@@ -116,8 +116,14 @@ def _workbook_signature(path: Path) -> list[dict[str, Any]]:
 
 
 def _media_signature(path: Path) -> list[str]:
+    """Media content signatures (sha256 of each media part). PowerPoint SaveAs may rename
+    media parts (image-1-1.png -> image1.png); content identity is what matters."""
+    signatures: list[str] = []
     with zipfile.ZipFile(path) as archive:
-        return sorted(name for name in archive.namelist() if name.startswith("ppt/media/"))
+        for name in sorted(archive.namelist()):
+            if name.startswith("ppt/media/") and not name.endswith("/"):
+                signatures.append(hashlib.sha256(archive.read(name)).hexdigest())
+    return sorted(signatures)
 
 
 def _structural_snapshot(path: Path, manifest_slides: list[dict[str, Any]]) -> dict[str, Any]:
@@ -227,7 +233,8 @@ def run_roundtrip(*, deck_id: str, candidate_pptx: Path, p4_manifest: dict[str, 
         structural = {
             "slide_count_same": original_snapshot.get("valid") and saved_snapshot.get("valid"),
             "slide_order_same": original_snapshot.get("valid") and saved_snapshot.get("valid") and [item["object_names"] for item in original_snapshot["slides"]] == [item["object_names"] for item in saved_snapshot["slides"]],
-            "slide_size_same": original_size == saved_size,
+            # PowerPoint SaveAs normalizes EMU rounding (12191695 -> 12192000); tolerate <= 1000 EMU
+            "slide_size_same": abs(original_size[0] - saved_size[0]) <= 1000 and abs(original_size[1] - saved_size[1]) <= 1000,
         }
         canonical_text_same = [item["text"] for item in original_snapshot["slides"]] == [item["text"] for item in saved_snapshot["slides"]]
         element_counts_same = [len(item["object_names"]) for item in original_snapshot["slides"]] == [len(item["object_names"]) for item in saved_snapshot["slides"]]

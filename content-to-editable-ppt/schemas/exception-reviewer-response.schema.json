@@ -1,0 +1,25 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "exception-reviewer-response.schema.json",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["reviewer_recommendation", "issues"],
+  "properties": {
+    "reviewer_recommendation": { "enum": ["pass", "revise", "fail"] },
+    "issues": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["issue_id", "severity", "slide_ids", "code", "message"],
+        "properties": {
+          "issue_id": { "type": "string", "pattern": "^P5-[A-Z0-9]{12}$" },
+          "severity": { "enum": ["critical", "major", "minor", "suggestion"] },
+          "slide_ids": { "type": "array", "minItems": 1, "items": { "type": "string", "minLength": 1 } },
+          "code": { "type": "string", "minLength": 1 },
+          "message": { "type": "string", "minLength": 1 }
+        }
+      }
+    }
+  }
+}

@@ -95,6 +95,39 @@ def build_parser() -> argparse.ArgumentParser:
     roundtrip.add_argument("--height-px", type=int, required=True)
     roundtrip.add_argument("--timeout-seconds", type=int, default=240)
 
+    exception_prepare = commands.add_parser("prepare-exception-review")
+    exception_prepare.add_argument("--state", type=Path, required=True)
+    exception_prepare.add_argument("--qa-report", type=Path, required=True)
+    exception_prepare.add_argument("--output", type=Path, required=True)
+
+    exception_record = commands.add_parser("record-exception-review")
+    exception_record.add_argument("--state", type=Path, required=True)
+    exception_record.add_argument("--evidence", type=Path, required=True)
+    exception_record.add_argument("--response", type=Path, required=True)
+    exception_record.add_argument("--output", type=Path, required=True)
+
+    deck_prepare = commands.add_parser("prepare-deck-review")
+    deck_prepare.add_argument("--state", type=Path, required=True)
+    deck_prepare.add_argument("--contact-sheets", type=Path, required=True)
+    deck_prepare.add_argument("--visual-system", type=Path, required=True)
+    deck_prepare.add_argument("--qa-report", type=Path, required=True)
+    deck_prepare.add_argument("--roundtrip-report", type=Path, required=True)
+    deck_prepare.add_argument("--fidelity-inheritance", type=Path, required=True)
+    deck_prepare.add_argument("--exception-review-hash", action="append")
+    deck_prepare.add_argument("--output", type=Path, required=True)
+
+    deck_record = commands.add_parser("record-deck-review")
+    deck_record.add_argument("--state", type=Path, required=True)
+    deck_record.add_argument("--evidence", type=Path, required=True)
+    deck_record.add_argument("--response", type=Path, required=True)
+    deck_record.add_argument("--call-record", type=Path)
+    deck_record.add_argument("--output", type=Path, required=True)
+
+    evaluate = commands.add_parser("evaluate")
+    evaluate.add_argument("--state", type=Path, required=True)
+    evaluate.add_argument("--deck-consistency-report", type=Path, required=True)
+    evaluate.add_argument("--output", type=Path, required=True)
+
     warning = commands.add_parser("record-warning-response")
     warning.add_argument("--state", type=Path, required=True)
     warning.add_argument("--qa-report", type=Path, required=True)
@@ -209,6 +242,99 @@ def run(args: argparse.Namespace) -> dict:
         updated = transition(state, "roundtrip_check", artifact_updates={"powerpoint_roundtrip_report_sha256": canonical_sha256(report)})
         _save_state(args.state, updated)
         return {"roundtrip_report": str(args.output.resolve()), "status": "pass"}
+    if args.command == "prepare-exception-review":
+        state = _load_state(args.state)
+        qa_report = load_json(args.qa_report)
+        validate_schema("deck_final_qa_report", qa_report, SCHEMA_DIR)
+        from exception_review_evidence import build_exception_batches
+        evidence = build_exception_batches(deck_id=state["deck_id"], exception_pages=qa_report["exception_pages"], issues=qa_report["issues"], budget=state["budgets"])
+        write_once_p5_artifact(args.output, evidence)
+        return {"evidence": str(args.output.resolve()), "batches": len(evidence["batches"]), "bound_issue_ids": evidence["bound_issue_ids"]}
+    if args.command == "record-exception-review":
+        state = _load_state(args.state)
+        if state["state"] == "roundtrip_check":
+            state = transition(state, "exception_review_routing")
+        evidence = load_json(args.evidence)
+        validate_schema("exception_review_evidence", evidence, SCHEMA_DIR)
+        response = load_json(args.response)
+        if response:
+            validate_schema("exception_reviewer_response", response, SCHEMA_DIR)
+        bound = evidence["bound_issue_ids"]
+        record = {
+            "schema_version": "1.0",
+            "artifact_type": "exception_review_record",
+            "deck_id": state["deck_id"],
+            "bound_issue_ids": bound,
+            "batch_slide_ids": evidence["batch_slide_ids"],
+            "reviewer_recommendation": response.get("reviewer_recommendation") if response else None,
+            "issue_count": len(response.get("issues", [])) if response else 0,
+        }
+        write_once_p5_artifact(args.output, record)
+        updated = state
+        if bound:
+            updated = transition(state, "deck_consistency_review", artifact_updates={"exception_review_record_sha256": canonical_sha256(record)})
+        elif response:
+            raise ContractError([error("$.response", "a reviewer response without bound QA issues is unexpected", "unexpected_reviewer_call")])
+        _save_state(args.state, updated)
+        return {"record": str(args.output.resolve()), "bound_issue_ids": bound}
+    if args.command == "prepare-deck-review":
+        state = _load_state(args.state)
+        from deck_consistency_review import prepare_deck_review_evidence
+        contact_sheets = load_json(args.contact_sheets)
+        evidence = prepare_deck_review_evidence(
+            deck_id=state["deck_id"],
+            contact_sheets=contact_sheets,
+            visual_system_summary=load_json(args.visual_system),
+            qa_report=load_json(args.qa_report),
+            roundtrip_report=load_json(args.roundtrip_report),
+            fidelity_inheritance=load_json(args.fidelity_inheritance),
+            exception_review_hashes=args.exception_review_hash or [],
+        )
+        write_once_p5_artifact(args.output, evidence)
+        return {"evidence": str(args.output.resolve()), "inputs": list(evidence.keys())}
+    if args.command == "record-deck-review":
+        state = _load_state(args.state)
+        from deck_consistency_review import compile_consistency_report
+        evidence = load_json(args.evidence)
+        response = load_json(args.response)
+        call_record = load_json(args.call_record) if args.call_record is not None else None
+        report = compile_consistency_report(deck_id=state["deck_id"], evidence=evidence, reviewer_response=response, call_record=call_record)
+        write_once_p5_artifact(args.output, report)
+        updated = transition(state, "deck_consistency_review", artifact_updates={"deck_consistency_report_sha256": canonical_sha256(report), "review_mode": "live" if call_record is not None else "deterministic_fixture"})
+        updated = transition(updated, "live_review_pending")
+        _save_state(args.state, updated)
+        return {"report": str(args.output.resolve()), "recommendation": report["reviewer_recommendation"], "does_not_satisfy_adr_040": report["does_not_satisfy_adr_040"], "state": "live_review_pending"}
+    if args.command == "evaluate":
+        state = _load_state(args.state)
+        if state["state"] != "live_review_pending":
+            raise ContractError([error("$.state", "evaluate requires live_review_pending", "invalid_state")])
+        report = load_json(args.deck_consistency_report)
+        validate_schema("deck_consistency_report", report, SCHEMA_DIR)
+        if report.get("does_not_satisfy_adr_040"):
+            raise ContractError([error("$.deck_consistency_report", "frozen replay does not satisfy ADR-040; a live Deck Consistency Review is required before policy evaluation", "live_deck_review_required")])
+        from delivery_policy import evaluate_delivery_policy
+        severities = [issue["severity"] for issue in report["issues"]]
+        review_incomplete = 1 if report["reviewer_recommendation"] == "fail" else 0
+        policy = evaluate_delivery_policy(
+            severity_counts={"critical": severities.count("critical"), "major": severities.count("major"), "minor": severities.count("minor"), "suggestion": severities.count("suggestion")},
+            review_incomplete=review_incomplete,
+            unexpected_reviewer_calls=state["counters"]["unexpected_reviewer_calls"],
+        )
+        summary = {
+            "schema_version": "1.0",
+            "artifact_type": "delivery_policy_evaluation",
+            "deck_id": state["deck_id"],
+            "severity_counts": policy["severity_counts"],
+            "review_incomplete": policy["review_incomplete"],
+            "unexpected_reviewer_calls": policy["unexpected_reviewer_calls"],
+            "policy_status": policy["policy_status"],
+            "upstream_revision": report.get("structured_upstream_revision"),
+        }
+        updated = transition(state, "evaluating_delivery_policy")
+        updated = transition(updated, policy["decision_state"])
+        write_once_p5_artifact(args.output, summary)
+        _save_state(args.state, updated)
+        return {"evaluation": str(args.output.resolve()), "policy_status": summary["policy_status"]}
     if args.command == "record-warning-response":
         state = _load_state(args.state)
         qa_report = load_json(args.qa_report)

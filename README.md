@@ -4,16 +4,23 @@
 
 ## 当前状态
 
-本仓库已完成 P0 Baseline Freeze、P0.5 Runtime Hardening、P1 Host Content Planning、P2 Markdown Wireframe、P3.1 Asset Resolution、P3.2 Visual System / Prompt Contract、P3.3 Approved Design Preview 和 P4 Constrained Reconstruction。D03 已从真实用户批准的三页视觉证据重建出原生 Text/Shape/Asset 多页候选 Deck，并通过 Microsoft PowerPoint 组装前后逐页 Render Drift Gate。P5 最终 Deck 审核、打包和交付尚未实现。
+本仓库已完成 P0 Baseline Freeze、P0.5 Runtime Hardening、P1 Host Content Planning、P2 Markdown Wireframe、P3.1 Asset Resolution、P3.2 Visual System / Prompt Contract、P3.3 Approved Design Preview、P4 Constrained Reconstruction 和 P5 Deterministic Hardening。P5 确定性部分（Authority Compatibility View、Roundtrip 真实比较、安全 QA、Package Candidate、Reviewer Harness 接口）已通过，D03 的确定性链以 live_review_pending 状态停止。
 
-当前可执行流程已经延伸到“材料 → 确认内容 → Markdown 文字线稿 → Approved Design Preview → 不可交付的可编辑多页候选 PPT”，同时继续支持“参考图片 → 可编辑单页 PPT”。以下能力尚未实现，不能视为当前承诺：
+当前状态（不得对外宣称正式完成）：
 
-- P5 最终 Deck Consistency Review；
-- 正式交付包、交付决策和发布门槛；
-- 完整引用和来源管理；
-- 将 P4 候选 Deck 直接视为可交付成品。
+- P5 Deterministic Implementation = COMPLETE
+- P5 Package Candidate = VERIFIED（delivery-package-candidate/，delivery_forbidden = true）
+- P5 Live Deck Review = PENDING（ADR-040 要求一次真实 Deck Consistency Review）
+- P5 Formal Delivery = NOT CREATED
+- P5 Formally Complete = false；v1 End-to-End = false
 
-最终产品目标是先生成高质量图片版页面并由用户确认，再以 Approved Design Preview 为视觉权威、以 P1 内容为文字权威，高保真重建可编辑 PowerPoint。P4 已完成这条链路的候选重建部分；P5 仍需完成最终跨页审核和交付。
+当前可执行流程已经延伸到“材料 → 确认内容 → Markdown 文字线稿 → Approved Design Preview → 可编辑多页候选 PPT → P5 确定性验收 → 等待真实 Deck Review”，同时继续支持“参考图片 → 可编辑单页 PPT”。以下能力尚未实现，不能视为当前承诺：
+
+- 正式交付包、交付决策和发布门槛（仅在真实 Deck Review 后由 --consume-live-review 触发）；
+- 三套真实 Deck Field Validation（Release / Field Validation）；
+- 完整引用和来源管理。
+
+最终产品目标是先生成高质量图片版页面并由用户确认，再以 Approved Design Preview 为视觉权威、以 P1 内容为文字权威，高保真重建可编辑 PowerPoint，最后由 P5 在真实 Deck Consistency Review 完成后不可变交付。
 
 ## 计划中的调用接口
 
