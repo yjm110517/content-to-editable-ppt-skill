@@ -3,7 +3,7 @@
   "$id": "visual-reconstruction-spec.schema.json",
   "type": "object",
   "additionalProperties": false,
-  "required": ["schema_version", "artifact_type", "deck_id", "slide_id", "order", "order_sensitive", "order_bindings", "approved_preview_sha256", "element_map_sha256", "reconstruction_seed_view_sha256", "content_authority_sha256", "asset_manifest_sha256", "page_input_sha256", "elements", "status"],
+  "required": ["schema_version", "artifact_type", "deck_id", "slide_id", "order", "order_sensitive", "order_bindings", "order_context", "approved_preview_sha256", "element_map_sha256", "reconstruction_seed_view_sha256", "content_authority_sha256", "asset_manifest_sha256", "page_input_sha256", "elements", "status"],
   "properties": {
     "schema_version": {"const": "1.0"},
     "artifact_type": {"const": "visual_reconstruction_spec"},
@@ -12,6 +12,7 @@
     "order": {"type": "integer", "minimum": 1},
     "order_sensitive": {"type": "boolean"},
     "order_bindings": {"type": "array", "uniqueItems": true, "items": {"enum": ["slide_ordinal", "section_ordinal", "progress_fraction", "total_slide_count", "previous_slide_id", "next_slide_id"]}},
+    "order_context": {"type": "object", "additionalProperties": false, "properties": {"slide_ordinal": {"type": "integer", "minimum": 1}, "section_ordinal": {"type": "integer", "minimum": 1}, "progress_fraction": {"type": "string", "pattern": "^[0-9]+/[0-9]+$"}, "total_slide_count": {"type": "integer", "minimum": 1}, "previous_slide_id": {"type": ["string", "null"]}, "next_slide_id": {"type": ["string", "null"]}}},
     "approved_preview_sha256": {"$ref": "#/$defs/hash"},
     "element_map_sha256": {"$ref": "#/$defs/hash"},
     "reconstruction_seed_view_sha256": {"$ref": "#/$defs/hash"},
