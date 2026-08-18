@@ -24,6 +24,7 @@ def page_input_identity(seed_view: dict[str, Any], *, order_sensitive: bool, ord
     identity: dict[str, Any] = {
         "deck_id": seed_view["deck_id"],
         "slide_id": seed_view["slide_id"],
+        "output_ratio": seed_view["output_ratio"],
         "approved_preview_sha256": seed_view["approved_preview_sha256"],
         "element_map_sha256": seed_view["element_map_sha256"],
         "reconstruction_seed_view_sha256": canonical_sha256(seed_view),
@@ -62,7 +63,7 @@ def compile_reconstruction_spec(
         raise ContractError(failures)
     elements = [{"element_id": item["element_id"], "source_ref": item.get("source_ref"), "reconstruction_class": item["reconstruction_class"], "p4_strategy": item["p4_strategy"], "fidelity_priority": item["fidelity_priority"], "normalized_bbox": deepcopy(item["normalized_bbox"]), "z_index": item["z_index"], "implementation": deepcopy(item["implementation"])} for item in sorted(seed_view["seeds"], key=lambda seed: (seed["z_index"], seed["element_id"]))]
     identity = page_input_identity(seed_view, order_sensitive=order_sensitive, order_bindings=bindings, order_context=context)
-    spec = {"schema_version":"1.0","artifact_type":"visual_reconstruction_spec","deck_id":seed_view["deck_id"],"slide_id":seed_view["slide_id"],"order":order,"order_sensitive":order_sensitive,"order_bindings":bindings,"order_context":context,"approved_preview_sha256":seed_view["approved_preview_sha256"],"element_map_sha256":seed_view["element_map_sha256"],"reconstruction_seed_view_sha256":canonical_sha256(seed_view),"content_authority_sha256":seed_view["content_authority_sha256"],"asset_manifest_sha256":seed_view["asset_manifest_sha256"],"page_input_sha256":canonical_sha256(identity),"elements":elements,"status":"validated"}
+    spec = {"schema_version":"1.0","artifact_type":"visual_reconstruction_spec","deck_id":seed_view["deck_id"],"slide_id":seed_view["slide_id"],"output_ratio":seed_view["output_ratio"],"order":order,"order_sensitive":order_sensitive,"order_bindings":bindings,"order_context":context,"approved_preview_sha256":seed_view["approved_preview_sha256"],"element_map_sha256":seed_view["element_map_sha256"],"reconstruction_seed_view_sha256":canonical_sha256(seed_view),"content_authority_sha256":seed_view["content_authority_sha256"],"asset_manifest_sha256":seed_view["asset_manifest_sha256"],"page_input_sha256":canonical_sha256(identity),"elements":elements,"status":"validated"}
     validate_schema("visual_reconstruction_spec", spec, SCHEMA_DIR)
     report = validate_reconstruction_spec(spec, seed_view)
     if report["status"] != "pass":
@@ -77,6 +78,7 @@ def validate_reconstruction_spec(spec: dict[str, Any], seed_view: dict[str, Any]
     slide_id = spec["slide_id"]
     for path, left, right in (
         ("$.deck_id", spec["deck_id"], seed_view["deck_id"]), ("$.slide_id", slide_id, seed_view["slide_id"]),
+        ("$.output_ratio", spec["output_ratio"], seed_view["output_ratio"]),
         ("$.approved_preview_sha256", spec["approved_preview_sha256"], seed_view["approved_preview_sha256"]),
         ("$.element_map_sha256", spec["element_map_sha256"], seed_view["element_map_sha256"]),
         ("$.reconstruction_seed_view_sha256", spec["reconstruction_seed_view_sha256"], canonical_sha256(seed_view)),

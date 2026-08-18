@@ -254,7 +254,7 @@ def build_seed_view(
         seeds.append(seed)
     if failures:
         raise ContractError(failures)
-    result = {"schema_version": "1.0", "artifact_type": "reconstruction_seed_view", "deck_id": deck_id, "slide_id": slide_id, "approved_preview_sha256": page["preview_record"]["final_preview_sha256"], "element_map_sha256": canonical_sha256(page["element_map"]), "compatibility_report_sha256": canonical_sha256(page["compatibility"]), "content_authority_sha256": canonical_sha256(approved_content), "asset_manifest_sha256": canonical_sha256(asset_manifest), "visual_system_sha256": canonical_sha256(visual_system), "text_footprint_manifest_sha256": canonical_sha256(text_footprints), "seeds": seeds, "status": "complete"}
+    result = {"schema_version": "1.0", "artifact_type": "reconstruction_seed_view", "deck_id": deck_id, "slide_id": slide_id, "output_ratio": visual_system["hard_constraints"]["output_ratio"], "approved_preview_sha256": page["preview_record"]["final_preview_sha256"], "element_map_sha256": canonical_sha256(page["element_map"]), "compatibility_report_sha256": canonical_sha256(page["compatibility"]), "content_authority_sha256": canonical_sha256(approved_content), "asset_manifest_sha256": canonical_sha256(asset_manifest), "visual_system_sha256": canonical_sha256(visual_system), "text_footprint_manifest_sha256": canonical_sha256(text_footprints), "seeds": seeds, "status": "complete"}
     validate_schema("reconstruction_seed_view", result, SCHEMA_DIR)
     return result
 
