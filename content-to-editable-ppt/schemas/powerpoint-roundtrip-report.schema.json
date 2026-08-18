@@ -1,0 +1,120 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "powerpoint-roundtrip-report.schema.json",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schema_version",
+    "artifact_type",
+    "deck_id",
+    "roundtrip_copy_sha256",
+    "structural_comparison",
+    "canonical_text_same",
+    "element_counts_same",
+    "chart_data_same",
+    "relationship_safety",
+    "external_relationships",
+    "macro_ole",
+    "slides",
+    "status"
+  ],
+  "properties": {
+    "schema_version": {
+      "const": "1.0"
+    },
+    "artifact_type": {
+      "const": "powerpoint_roundtrip_report"
+    },
+    "deck_id": {
+      "type": "string",
+      "minLength": 1
+    },
+    "roundtrip_copy_sha256": {
+      "$ref": "#/$defs/hash"
+    },
+    "structural_comparison": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "slide_count_same",
+        "slide_order_same",
+        "slide_size_same"
+      ],
+      "properties": {
+        "slide_count_same": {
+          "type": "boolean"
+        },
+        "slide_order_same": {
+          "type": "boolean"
+        },
+        "slide_size_same": {
+          "type": "boolean"
+        }
+      }
+    },
+    "canonical_text_same": {
+      "type": "boolean"
+    },
+    "element_counts_same": {
+      "type": "boolean"
+    },
+    "chart_data_same": {
+      "type": "boolean"
+    },
+    "relationship_safety": {
+      "enum": [
+        "safe",
+        "unsafe"
+      ]
+    },
+    "external_relationships": {
+      "type": "integer",
+      "minimum": 0
+    },
+    "macro_ole": {
+      "type": "integer",
+      "minimum": 0
+    },
+    "slides": {
+      "type": "array",
+      "minItems": 1,
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "order",
+          "decoded_rgb_same",
+          "original_decoded_rgb_sha256",
+          "roundtrip_decoded_rgb_sha256"
+        ],
+        "properties": {
+          "order": {
+            "type": "integer",
+            "minimum": 1
+          },
+          "decoded_rgb_same": {
+            "type": "boolean"
+          },
+          "original_decoded_rgb_sha256": {
+            "$ref": "#/$defs/hash"
+          },
+          "roundtrip_decoded_rgb_sha256": {
+            "$ref": "#/$defs/hash"
+          }
+        }
+      }
+    },
+    "status": {
+      "enum": [
+        "pass",
+        "fail"
+      ]
+    }
+  },
+  "$defs": {
+    "hash": {
+      "type": "string",
+      "pattern": "^[a-f0-9]{64}$"
+    }
+  }
+}

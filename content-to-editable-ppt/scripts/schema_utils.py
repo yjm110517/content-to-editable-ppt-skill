@@ -102,6 +102,11 @@ SCHEMA_FILES = {
     "reconstruction_manifest": "reconstruction-manifest.schema.json",
     "candidate_deck_report": "candidate-deck-report.schema.json",
     "post_assembly_drift_report": "post-assembly-drift-report.schema.json",
+    "p5_final_render_manifest": "p5-final-render-manifest.schema.json",
+    "deck_final_qa_report": "deck-final-qa-report.schema.json",
+    "powerpoint_roundtrip_report": "powerpoint-roundtrip-report.schema.json",
+    "deck_delivery_state": "deck-delivery-state.schema.json",
+    "exception_review_evidence": "exception-review-evidence.schema.json",
 }
 
 SUPPORTED_SCHEMA_VERSIONS = {
@@ -178,6 +183,11 @@ SUPPORTED_SCHEMA_VERSIONS = {
     "reconstruction_manifest": {"1.0"},
     "candidate_deck_report": {"1.0"},
     "post_assembly_drift_report": {"1.0"},
+    "p5_final_render_manifest": {"1.0"},
+    "deck_final_qa_report": {"1.0"},
+    "powerpoint_roundtrip_report": {"1.0"},
+    "deck_delivery_state": {"1.0"},
+    "exception_review_evidence": {"1.0"},
     "asset_manifest": {"1.3", "1.4"},
 }
 
