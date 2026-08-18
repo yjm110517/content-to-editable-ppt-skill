@@ -2,6 +2,8 @@ from __future__ import annotations
 
 import argparse
 import json
+import os
+import subprocess
 import sys
 from pathlib import Path
 
@@ -15,6 +17,7 @@ from reconstruction_authority import (
 )
 from reconstruction_state import initial_deck_state, transition
 from reconstruction_spec import compile_reconstruction_spec, validate_reconstruction_spec
+from reconstruction_qa import compare_visual_fidelity, inspect_reconstruction_page
 from schema_utils import ContractError, error, load_json, validate_schema
 
 
@@ -72,6 +75,19 @@ def build_parser() -> argparse.ArgumentParser:
     validate_spec.add_argument("--seed-view", type=Path, required=True)
     validate_spec.add_argument("--report", type=Path, required=True)
 
+    build_page = commands.add_parser("build-page")
+    build_page.add_argument("--spec", type=Path, required=True); build_page.add_argument("--asset-manifest", type=Path, required=True); build_page.add_argument("--evidence-root", type=Path, required=True)
+    build_page.add_argument("--output", type=Path, required=True); build_page.add_argument("--report", type=Path, required=True); build_page.add_argument("--node", default=os.environ.get("IVT_NODE", "node"))
+
+    render_page = commands.add_parser("render-page")
+    render_page.add_argument("--input", type=Path, required=True); render_page.add_argument("--output-dir", type=Path, required=True); render_page.add_argument("--report", type=Path, required=True); render_page.add_argument("--width-px", type=int, required=True); render_page.add_argument("--height-px", type=int, required=True)
+
+    verify_page = commands.add_parser("verify-page")
+    verify_page.add_argument("--spec", type=Path, required=True); verify_page.add_argument("--pptx", type=Path, required=True); verify_page.add_argument("--build-report", type=Path, required=True); verify_page.add_argument("--output", type=Path, required=True)
+
+    compare = commands.add_parser("compare-preview")
+    compare.add_argument("--deck-id", required=True); compare.add_argument("--slide-id", required=True); compare.add_argument("--approved-preview", type=Path, required=True); compare.add_argument("--candidate-render", type=Path, required=True); compare.add_argument("--output", type=Path, required=True)
+
     verify = commands.add_parser("verify-authority")
     _base_authority(verify)
     return parser
@@ -115,6 +131,27 @@ def run(args: argparse.Namespace) -> dict:
         report = validate_reconstruction_spec(load_json(args.spec), load_json(args.seed_view))
         atomic_write_json(args.report, report)
         return {"report": str(args.report.resolve()), "status": report["status"], "issue_count": len(report["issues"])}
+    if args.command == "build-page":
+        command = [args.node, str(Path(__file__).with_name("build_reconstruction_page.mjs")), "--spec", str(args.spec), "--asset-manifest", str(args.asset_manifest), "--evidence-root", str(args.evidence_root), "--output", str(args.output), "--report", str(args.report), "--python", sys.executable]
+        completed = subprocess.run(command, capture_output=True, text=True, encoding="utf-8", errors="replace")
+        if completed.returncode:
+            raise ContractError([error("$.build_page", completed.stdout.strip() or completed.stderr.strip(), "page_build_failed")])
+        return {"pptx": str(args.output.resolve()), "report": str(args.report.resolve())}
+    if args.command == "render-page":
+        command = [sys.executable, str(Path(__file__).with_name("render_reconstruction_deck.py")), "--input", str(args.input), "--output-dir", str(args.output_dir), "--report", str(args.report), "--width-px", str(args.width_px), "--height-px", str(args.height_px)]
+        completed = subprocess.run(command, capture_output=True, text=True, encoding="utf-8", errors="replace")
+        if completed.returncode:
+            raise ContractError([error("$.render_page", completed.stdout.strip() or completed.stderr.strip(), "powerpoint_render_failed")])
+        return {"render_dir": str(args.output_dir.resolve()), "report": str(args.report.resolve())}
+    if args.command == "verify-page":
+        report = inspect_reconstruction_page(pptx_path=args.pptx, spec_path=args.spec, build_report_path=args.build_report)
+        atomic_write_json(args.output, report)
+        if report["status"] != "pass": raise ContractError(report["blocking_issues"])
+        return {"qa_report": str(args.output.resolve()), "status": "pass"}
+    if args.command == "compare-preview":
+        report = compare_visual_fidelity(deck_id=args.deck_id, slide_id=args.slide_id, approved_preview=args.approved_preview, candidate_render=args.candidate_render)
+        atomic_write_json(args.output, report)
+        return {"fidelity_report": str(args.output.resolve()), "classification": report["classification"]}
     if args.command == "verify-authority":
         bundle = _load_bundle(args)
         return {"deck_id": bundle["deck_id"], "approved_manifest_sha256": bundle["manifest_sha256"], "slide_ids": [item["slide_id"] for item in bundle["pages"]]}
