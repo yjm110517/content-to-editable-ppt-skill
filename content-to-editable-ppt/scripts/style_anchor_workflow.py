@@ -1,0 +1,55 @@
+from __future__ import annotations
+import argparse,hashlib,json,os
+from pathlib import Path
+from PIL import Image
+from canonical_artifact import canonical_sha256
+from schema_utils import ContractError,error,load_json,validate_schema
+SCHEMA_DIR=Path(__file__).resolve().parents[1]/"schemas"
+def sha(path:Path)->str:return hashlib.sha256(path.read_bytes()).hexdigest()
+def write_once(path:Path,value:dict):
+    if path.exists():raise ContractError([error(str(path),"immutable artifact exists","overwrite_forbidden")])
+    path.parent.mkdir(parents=True,exist_ok=True);tmp=path.with_suffix(path.suffix+".tmp");tmp.write_text(json.dumps(value,ensure_ascii=False,indent=2)+"\n",encoding="utf-8");os.replace(tmp,path)
+def prepare(args):
+    package=load_json(args.prompt_package);anchor=load_json(args.anchor_request);lock=load_json(args.runtime_lock);validate_schema("deck_prompt_package",package,SCHEMA_DIR);validate_schema("style_anchor_request",anchor,SCHEMA_DIR);validate_schema("generation_runtime_lock",lock,SCHEMA_DIR)
+    if anchor["deck_prompt_package_sha256"]!=canonical_sha256(package) or anchor["deck_id"]!=lock["deck_id"]:raise ContractError([error("$","Anchor generation authority mismatch","authority_hash_mismatch")])
+    slide=next(item for item in package["slides"] if item["slide_id"]==anchor["slide_id"]);prompt="Use case: productivity-visual\nAsset type: 16:9 presentation generated visual layer\nPrimary request: create a polished visual-only slide layer with intentional blank regions for later native PowerPoint text and assets.\nConstraints: no readable text, numbers, labels, logos, watermarks, or copied icons; preserve asymmetry, strong hierarchy, generous whitespace, and the specified visual relationship.\n\n"+slide["prompt"]+"\n\nAvoid: "+package["negative_prompt"]
+    args.output_dir.mkdir(parents=True,exist_ok=True);prompt_path=args.output_dir/"prompt.txt";manifest_path=args.output_dir/"call_manifest.json"
+    if prompt_path.exists() or manifest_path.exists():raise ContractError([error(str(args.output_dir),"generation package exists","overwrite_forbidden")])
+    prompt_path.write_text(prompt,encoding="utf-8",newline="\n");manifest={"deck_id":package["deck_id"],"slide_id":slide["slide_id"],"revision":1,"prompt_sha256":hashlib.sha256(prompt.encode()).hexdigest(),"runtime_lock_sha256":canonical_sha256(lock),"generation_kind":"initial","technical_retry_count":0};write_once(manifest_path,manifest);return {"prompt":str(prompt_path),"manifest":str(manifest_path)}
+def consume(args):
+    manifest=load_json(args.call_manifest);record=load_json(args.call_record);validate_schema("image_generation_call_record",record,SCHEMA_DIR)
+    if any(record[key]!=manifest[key] for key in ("deck_id","slide_id","revision","prompt_sha256","runtime_lock_sha256","generation_kind","technical_retry_count")):raise ContractError([error("$.call_record","Image call does not bind prepared package","authority_hash_mismatch")])
+    with Image.open(args.raw_layer) as source:
+        source_width,source_height=source.size;image=source.convert("RGB")
+    expected=(1600,900) if image.width/image.height>1.5 else (1200,900);ratio=image.width/image.height;target_ratio=expected[0]/expected[1]
+    if abs(ratio-target_ratio)>0.02:raise ContractError([error("$.raw_layer","Generated layer aspect ratio mismatch","image_dimensions")])
+    normalization="none"
+    if image.size!=expected:image=image.resize(expected,Image.Resampling.LANCZOS);normalization="lanczos_resize"
+    args.normalized_layer.parent.mkdir(parents=True,exist_ok=True);image.save(args.normalized_layer,format="PNG",compress_level=9)
+    result={"schema_version":"1.0","artifact_type":"generated_visual_layer_record","deck_id":record["deck_id"],"slide_id":record["slide_id"],"revision":record["revision"],"prompt_sha256":record["prompt_sha256"],"runtime_lock_sha256":record["runtime_lock_sha256"],"source_image_sha256":sha(args.raw_layer),"source_width_px":source_width,"source_height_px":source_height,"image_path":args.normalized_layer.name,"image_sha256":sha(args.normalized_layer),"width_px":expected[0],"height_px":expected[1],"normalization":normalization,"generation_kind":record["generation_kind"],"technical_retry_count":record["technical_retry_count"],"status":"consumed"};validate_schema("generated_visual_layer_record",result,SCHEMA_DIR);write_once(args.output,result);return {"generated_layer_sha256":result["image_sha256"]}
+def record_preview(args):
+    layer=load_json(args.generated_layer_record);mapping=load_json(args.element_map);compat=load_json(args.compatibility_report);build=load_json(args.preview_build_report);validate_schema("generated_visual_layer_record",layer,SCHEMA_DIR);validate_schema("design_element_map",mapping,SCHEMA_DIR);validate_schema("reconstruction_compatibility_report",compat,SCHEMA_DIR);validate_schema("preview_powerpoint_build_report",build,SCHEMA_DIR)
+    if compat["status"]!="pass" or layer["image_sha256"]!=mapping["generated_layer_sha256"]:raise ContractError([error("$","Final Preview inputs are incompatible","authority_hash_mismatch")])
+    result={"schema_version":"1.0","artifact_type":"final_design_preview_record","deck_id":layer["deck_id"],"slide_id":layer["slide_id"],"revision":layer["revision"],"generated_layer_sha256":layer["image_sha256"],"element_map_sha256":canonical_sha256(mapping),"compatibility_report_sha256":canonical_sha256(compat),"preview_build_report_sha256":canonical_sha256(build),"powerpoint_render_sha256":sha(args.powerpoint_render),"final_preview_path":args.powerpoint_render.name,"final_preview_sha256":sha(args.powerpoint_render),"generated_layer_direct_approval":False,"status":"ready_for_confirmation"};validate_schema("final_design_preview_record",result,SCHEMA_DIR);write_once(args.output,result);return {"final_preview_sha256":result["final_preview_sha256"]}
+def approve(args):
+    preview=load_json(args.final_preview_record);feedback=load_json(args.feedback);package=load_json(args.prompt_package);lock=load_json(args.runtime_lock);mapping=load_json(args.element_map);validate_schema("final_design_preview_record",preview,SCHEMA_DIR);validate_schema("style_anchor_feedback",feedback,SCHEMA_DIR)
+    if feedback["decision"]!="accepted" or feedback["change_scope"]!="none" or feedback["final_preview_sha256"]!=preview["final_preview_sha256"]:raise ContractError([error("$.feedback","Anchor is not explicitly accepted","confirmation_required")])
+    result={"schema_version":"1.0","artifact_type":"style_anchor_record","deck_id":preview["deck_id"],"slide_id":preview["slide_id"],"revision":preview["revision"],"final_preview_sha256":preview["final_preview_sha256"],"generated_layer_sha256":preview["generated_layer_sha256"],"element_map_sha256":canonical_sha256(mapping),"deck_visual_system_sha256":package["deck_visual_system_sha256"],"deck_prompt_package_sha256":canonical_sha256(package),"runtime_lock_sha256":canonical_sha256(lock),"feedback_sha256":canonical_sha256(feedback),"status":"approved"};validate_schema("style_anchor_record",result,SCHEMA_DIR);write_once(args.output,result);return {"style_anchor_sha256":canonical_sha256(result)}
+def reference(args):
+    anchor=load_json(args.style_anchor_record);mapping=load_json(args.element_map);validate_schema("style_anchor_record",anchor,SCHEMA_DIR);validate_schema("design_element_map",mapping,SCHEMA_DIR);final=Image.open(args.final_preview).convert("RGB");raw=Image.open(args.raw_layer).convert("RGB");masked=[]
+    for item in mapping["elements"]:
+        if item["reconstruction_class"] not in {"native_text","native_chart","sanitized_svg"}:continue
+        box=item["normalized_bbox"];coords=(box["x"]*final.width//10000,box["y"]*final.height//10000,(box["x"]+box["w"])*final.width//10000,(box["y"]+box["h"])*final.height//10000);final.paste(raw.crop(coords),coords);masked.append(item["element_id"])
+    args.output_image.parent.mkdir(parents=True,exist_ok=True);final.save(args.output_image,format="PNG",compress_level=9);result={"schema_version":"1.0","artifact_type":"style_anchor_reference_record","deck_id":anchor["deck_id"],"slide_id":anchor["slide_id"],"style_anchor_sha256":canonical_sha256(anchor),"approved_preview_sha256":anchor["final_preview_sha256"],"raw_layer_sha256":sha(args.raw_layer),"element_map_sha256":canonical_sha256(mapping),"reference_path":args.output_image.name,"reference_sha256":sha(args.output_image),"masked_element_ids":masked,"formal_text_remaining":False,"status":"ready"};validate_schema("style_anchor_reference_record",result,SCHEMA_DIR);write_once(args.output_record,result);return {"reference_sha256":result["reference_sha256"]}
+def parser():
+    p=argparse.ArgumentParser();s=p.add_subparsers(dest="action",required=True)
+    a=s.add_parser("prepare-generation");a.add_argument("--prompt-package",type=Path,required=True);a.add_argument("--anchor-request",type=Path,required=True);a.add_argument("--runtime-lock",type=Path,required=True);a.add_argument("--output-dir",type=Path,required=True)
+    a=s.add_parser("consume-generation");a.add_argument("--call-manifest",type=Path,required=True);a.add_argument("--call-record",type=Path,required=True);a.add_argument("--raw-layer",type=Path,required=True);a.add_argument("--normalized-layer",type=Path,required=True);a.add_argument("--output",type=Path,required=True)
+    a=s.add_parser("record-final-preview");a.add_argument("--generated-layer-record",type=Path,required=True);a.add_argument("--element-map",type=Path,required=True);a.add_argument("--compatibility-report",type=Path,required=True);a.add_argument("--preview-build-report",type=Path,required=True);a.add_argument("--powerpoint-render",type=Path,required=True);a.add_argument("--output",type=Path,required=True)
+    a=s.add_parser("approve-anchor");a.add_argument("--final-preview-record",type=Path,required=True);a.add_argument("--feedback",type=Path,required=True);a.add_argument("--prompt-package",type=Path,required=True);a.add_argument("--runtime-lock",type=Path,required=True);a.add_argument("--element-map",type=Path,required=True);a.add_argument("--output",type=Path,required=True)
+    a=s.add_parser("build-style-reference");a.add_argument("--style-anchor-record",type=Path,required=True);a.add_argument("--element-map",type=Path,required=True);a.add_argument("--final-preview",type=Path,required=True);a.add_argument("--raw-layer",type=Path,required=True);a.add_argument("--output-image",type=Path,required=True);a.add_argument("--output-record",type=Path,required=True);return p
+def main():
+    args=parser().parse_args()
+    try:result={"prepare-generation":prepare,"consume-generation":consume,"record-final-preview":record_preview,"approve-anchor":approve,"build-style-reference":reference}[args.action](args);print(json.dumps({"status":"ok",**result},ensure_ascii=False));return 0
+    except Exception as exc:print(json.dumps({"status":"error","errors":getattr(exc,"errors",[{"path":"$","code":"style_anchor_error","message":str(exc)}])},ensure_ascii=False));return 4
+if __name__=="__main__":raise SystemExit(main())

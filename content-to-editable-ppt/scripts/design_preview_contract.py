@@ -1,6 +1,9 @@
 from __future__ import annotations
 
 import copy
+import argparse
+import json
+import os
 from pathlib import Path
 from typing import Any
 
@@ -58,3 +61,13 @@ def transition(state:dict[str,Any],target:str,evidence:str|None=None)->dict[str,
     allowed={"p3_2_complete":{"validating_design_inputs"},"validating_design_inputs":{"anchor_generation_ready","p1_revision_required"},"anchor_generation_ready":{"anchor_generated"},"anchor_generated":{"anchor_mapping"},"anchor_mapping":{"reconstruction_compatibility_check"},"reconstruction_compatibility_check":{"reconstruction_incompatible","anchor_preview_building"},"anchor_preview_building":{"awaiting_anchor_confirmation"},"awaiting_anchor_confirmation":{"anchor_revision_requested","anchor_approved","p3_2_revision_required","p1_revision_required"},"anchor_approved":{"style_reference_ready"},"style_reference_ready":{"batch_generation_ready"},"batch_generation_ready":{"generating_pages"},"generating_pages":{"mapping_pages"},"mapping_pages":{"compatibility_checking_pages"},"compatibility_checking_pages":{"building_preview_powerpoints","reconstruction_incompatible"},"building_preview_powerpoints":{"contact_sheet_ready"},"contact_sheet_ready":{"awaiting_deck_confirmation"},"awaiting_deck_confirmation":{"page_revision_requested","p3_2_revision_required","p1_revision_required","design_previews_approved"},"design_previews_approved":{"promoting_extracted_assets"},"promoting_extracted_assets":{"p3_3_complete"}}
     if target not in allowed.get(state["state"],set()):raise ValueError(f"forbidden transition {state['state']} -> {target}")
     result=copy.deepcopy(state);result["history"].append({"from":state["state"],"to":target,"evidence":evidence});result["state"]=target;return result
+
+def main()->int:
+    p=argparse.ArgumentParser();p.add_argument("--element-map",type=Path,required=True);p.add_argument("--prompt-package",type=Path,required=True);p.add_argument("--provisional-asset",type=Path,action="append",default=[]);p.add_argument("--output",type=Path,required=True);args=p.parse_args()
+    try:
+        from schema_utils import load_json
+        report=validate_element_map(load_json(args.element_map),load_json(args.prompt_package),[load_json(path) for path in args.provisional_asset]);args.output.parent.mkdir(parents=True,exist_ok=True)
+        if args.output.exists():raise ContractError([error(str(args.output),"output exists","overwrite_forbidden")])
+        temp=args.output.with_suffix(args.output.suffix+".tmp");temp.write_text(json.dumps(report,ensure_ascii=False,indent=2)+"\n",encoding="utf-8");os.replace(temp,args.output);print(json.dumps({"status":"ok","compatibility":report["status"],"report":str(args.output)},ensure_ascii=False));return 0 if report["status"]=="pass" else 4
+    except Exception as exc:print(json.dumps({"status":"error","errors":getattr(exc,"errors",[{"path":"$","code":"compatibility_error","message":str(exc)}])},ensure_ascii=False));return 4
+if __name__=="__main__":raise SystemExit(main())
