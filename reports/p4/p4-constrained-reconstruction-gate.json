@@ -1,0 +1,116 @@
+{
+  "schema_version": "1.0",
+  "phase": "P4-constrained-reconstruction",
+  "status": "pass",
+  "blocking_issues": 0,
+  "content_drift": 0,
+  "chart_drift": 0,
+  "asset_drift": 0,
+  "seed_completeness_percent": 100,
+  "native_required_editability_percent": 100,
+  "full_slide_raster_substitution": 0,
+  "missing_elements": 0,
+  "unsafe_relationships": 0,
+  "post_assembly_slide_drift": 0,
+  "unexpected_assembly_mutation": 0,
+  "technical_retry_limit": "pass",
+  "targeted_patch_limit": "pass",
+  "unexpected_page_rebuild": 0,
+  "cases": [
+    {
+      "case_id": "D03",
+      "status": "pass",
+      "slides": 3,
+      "smoke_slide_ids": [
+        "S03"
+      ],
+      "seed_completeness_percent": 100,
+      "native_required_editability_percent": 100,
+      "full_slide_raster_substitution": 0,
+      "raw_generated_layer_objects": 0,
+      "reconstruction_fidelity": [
+        {
+          "slide_id": "S01",
+          "classification": "pass",
+          "metrics": {
+            "rgb_mean_absolute_error_milli": 51,
+            "edge_difference_milli": 17,
+            "region_difference_milli": 169
+          }
+        },
+        {
+          "slide_id": "S02",
+          "classification": "pass",
+          "metrics": {
+            "rgb_mean_absolute_error_milli": 48,
+            "edge_difference_milli": 15,
+            "region_difference_milli": 151
+          }
+        },
+        {
+          "slide_id": "S03",
+          "classification": "pass",
+          "metrics": {
+            "rgb_mean_absolute_error_milli": 65,
+            "edge_difference_milli": 22,
+            "region_difference_milli": 183
+          }
+        }
+      ],
+      "post_assembly_slide_drift": 0,
+      "unexpected_assembly_mutation": 0,
+      "candidate_deck_sha256": "c50d82fd37b2b41880b0eb162e1ad68cd9865ae0e325de37abaa6a206158f81e",
+      "initial_planner_calls": 0,
+      "targeted_patch_planner_calls": 0,
+      "reviewer_calls": 0,
+      "image_generation_calls": 0,
+      "powerpoint_render_operations": 4
+    },
+    {
+      "case_id": "D05",
+      "slides": 5,
+      "evidence": "deterministic_fixture",
+      "required_classes": [
+        "native_text",
+        "native_shape",
+        "native_chart",
+        "sanitized_svg"
+      ],
+      "order_sensitive": false,
+      "status": "pass",
+      "planner_calls": 0,
+      "reviewer_calls": 0,
+      "image_generation_calls": 0,
+      "live_visual_quality": "not_evaluated"
+    },
+    {
+      "case_id": "D08",
+      "slides": 8,
+      "evidence": "deterministic_fixture",
+      "required_classes": [
+        "native_text",
+        "native_shape"
+      ],
+      "connector_required": true,
+      "order_sensitive": true,
+      "cache_resume_required": true,
+      "status": "pass",
+      "planner_calls": 0,
+      "reviewer_calls": 0,
+      "image_generation_calls": 0,
+      "live_visual_quality": "not_evaluated"
+    }
+  ],
+  "d03_candidate_deck_slides": 3,
+  "p0_p3_3_regression": 0,
+  "p0_baseline_unchanged": true,
+  "review_run": {
+    "host_calls": 0,
+    "initial_planner_calls": 0,
+    "targeted_patch_planner_calls": 0,
+    "reviewer_calls": 0,
+    "image_generation_calls": 0,
+    "powerpoint_render_operations": 4
+  },
+  "delivery_forbidden": true
+}

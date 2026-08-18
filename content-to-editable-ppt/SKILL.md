@@ -1,13 +1,13 @@
 ---
 name: content-to-editable-ppt
-description: Plan and freeze presentation content, generate Markdown wireframes, compile a Deck Visual System, produce reconstruction-compatible Approved Design Previews, or rebuild a reference image with the reusable PowerPoint runtime. Use for P1–P3.3 content-to-deck preparation, repository development, and image-to-editable single-slide reconstruction. Final editable multi-page reconstruction and delivery remain future stages.
+description: Plan and freeze presentation content, generate Markdown wireframes, compile a Deck Visual System, approve design previews, or reconstruct them as an editable multi-page PowerPoint candidate. Use for P1–P4 content-to-deck preparation and reconstruction, repository development, and image-to-editable single-slide reconstruction. Final Deck review, packaging, and delivery remain a P5 stage.
 ---
 
 # Content to Editable PPT
 
 ## Development status
 
-The Skill has two independent entry paths. P1 routes readable user materials into a confirmed Outline and deterministically frozen per-slide content; P2 then generates model-authored Markdown Wireframes. The inherited executable Runtime rebuilds reference images as editable single slides. Final visual design, Deck orchestration, assembly, charts, citations, and presentation-wide review are not yet complete.
+The Skill has two independent entry paths. The Content-to-PPT path now executes P1 through P4: confirmed content, Markdown Wireframes, resolved assets, approved design previews, and a non-deliverable editable multi-page reconstruction candidate. The inherited Runtime also rebuilds reference images as editable single slides. P5 final Deck review, packaging, and delivery are not yet complete.
 
 ## Route content planning
 
@@ -44,7 +44,11 @@ After P3.1 icon decisions close, read [references/visual-system-and-prompts.md](
 
 Read [references/approved-design-preview.md](references/approved-design-preview.md). Generate one Style Anchor, classify every important visual with a Reconstruction Class and P4 Strategy, pass the Compatibility Gate, then build the user-visible Final Preview through Microsoft PowerPoint. Require explicit approval before generating the remaining pages. Reuse the Sanitized Style Reference, generate each remaining page once, and approve the final Contact Sheet. Never approve a Raw Generated Layer directly or infer missing Chart data.
 
-Stop the Content-to-PPT route after P3.3. P4 constrained editable reconstruction, Deck assembly, and final multi-page review are not yet executable through the production route.
+## Reconstruct P4 editable candidate Deck
+
+After P3.3 reaches `p3_3_complete`, read [references/constrained-reconstruction.md](references/constrained-reconstruction.md). Require complete Reconstruction Seeds, compile page Specs deterministically with zero Initial Planner calls, pass the bounded reconstruction-class Smoke Set, build and render every page with the shared P3.3/P4 PowerPoint builders, and compare each result with its Approved Design Preview. Assemble `reconstruction-candidate.pptx`, render every assembled slide again, and require Post-Assembly Slide Drift to remain zero. Never insert the Raw Generated Layer, replace a page with a full-slide raster, guess missing Seeds from pixels, or change content, assets, Reconstruction Class, or P4 Strategy. Targeted Patches are issue-bound and limited to two per page.
+
+Stop after the verified P4 candidate. It is `delivery_forbidden=true`; P5 final Deck consistency review, packaging, and delivery are not yet executable through the production route.
 
 ## Core requirements
 
@@ -108,7 +112,7 @@ Never describe a structural QA pass as final completion. `run_pipeline.py` retur
 
 ## Follow the execution contract
 
-Read [references/task-routing.md](references/task-routing.md), [references/content-planning.md](references/content-planning.md), and [references/outline-contract.md](references/outline-contract.md) for P1 tasks. After P1 completes, follow [references/wireframe-planning.md](references/wireframe-planning.md) for P2. Do not load reconstruction references until the route actually enters the single-slide Runtime.
+Read [references/task-routing.md](references/task-routing.md), [references/content-planning.md](references/content-planning.md), and [references/outline-contract.md](references/outline-contract.md) for P1 tasks. After P1 completes, follow [references/wireframe-planning.md](references/wireframe-planning.md) for P2. Load [references/constrained-reconstruction.md](references/constrained-reconstruction.md) only after current P3.3 approval evidence exists.
 
 Read [references/agent-orchestration.md](references/agent-orchestration.md) before invoking or implementing a deterministic command. Follow its path, output, logging, and exit-code rules.
 

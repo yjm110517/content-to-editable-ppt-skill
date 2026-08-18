@@ -101,6 +101,9 @@ def build_parser() -> argparse.ArgumentParser:
     assembly = commands.add_parser("compare-assembly")
     assembly.add_argument("--manifest", type=Path, required=True); assembly.add_argument("--candidate-deck", type=Path, required=True); assembly.add_argument("--candidate-render-report", type=Path, required=True); assembly.add_argument("--reconstruction-root", type=Path, required=True); assembly.add_argument("--candidate-render-root", type=Path, required=True); assembly.add_argument("--output", type=Path, required=True)
 
+    final_verify = commands.add_parser("verify")
+    final_verify.add_argument("--state", type=Path, required=True); final_verify.add_argument("--manifest", type=Path, required=True); final_verify.add_argument("--candidate-deck", type=Path, required=True); final_verify.add_argument("--candidate-report", type=Path, required=True); final_verify.add_argument("--assembly-report", type=Path, required=True)
+
     verify = commands.add_parser("verify-authority")
     _base_authority(verify)
     return parser
@@ -182,6 +185,19 @@ def run(args: argparse.Namespace) -> dict:
         result = compare_assembly(manifest_path=args.manifest, candidate_deck_path=args.candidate_deck, candidate_render_report_path=args.candidate_render_report, reconstruction_root=args.reconstruction_root, candidate_render_root=args.candidate_render_root)
         atomic_write_json(args.output, result)
         return {"report": str(args.output.resolve()), "status": result["status"], "post_assembly_slide_drift": result["post_assembly_slide_drift"]}
+    if args.command == "verify":
+        import hashlib
+        state, manifest, candidate, assembly = load_json(args.state), load_json(args.manifest), load_json(args.candidate_report), load_json(args.assembly_report)
+        validate_schema("reconstruction_deck_state", state, SCHEMA_DIR); validate_schema("reconstruction_manifest", manifest, SCHEMA_DIR); validate_schema("candidate_deck_report", candidate, SCHEMA_DIR); validate_schema("post_assembly_drift_report", assembly, SCHEMA_DIR)
+        failures = []
+        if state["state"] != "p4_complete": failures.append(error("$.state", "P4 state is not complete", "invalid_state"))
+        if state["deck_id"] != manifest["deck_id"] or candidate["deck_id"] != manifest["deck_id"] or assembly["deck_id"] != manifest["deck_id"]: failures.append(error("$.deck_id", "P4 artifact deck mismatch", "authority_deck_mismatch"))
+        if state["current_artifacts"].get("reconstruction_manifest_sha256") != canonical_sha256(manifest): failures.append(error("$.manifest", "state does not bind current manifest", "authority_hash_mismatch"))
+        candidate_hash = hashlib.sha256(args.candidate_deck.read_bytes()).hexdigest()
+        if candidate_hash != candidate["candidate_pptx_sha256"] or candidate_hash != assembly["candidate_deck_sha256"]: failures.append(error("$.candidate_deck", "candidate deck hash mismatch", "authority_hash_mismatch"))
+        if assembly["status"] != "pass" or assembly["post_assembly_slide_drift"] or assembly["unexpected_assembly_mutation"]: failures.append(error("$.assembly_report", "post-assembly drift gate failed", "assembly_mutation"))
+        if failures: raise ContractError(failures)
+        return {"deck_id": manifest["deck_id"], "state": "p4_complete", "candidate_deck_sha256": candidate_hash, "delivery_forbidden": candidate["delivery_forbidden"]}
     if args.command == "verify-authority":
         bundle = _load_bundle(args)
         return {"deck_id": bundle["deck_id"], "approved_manifest_sha256": bundle["manifest_sha256"], "slide_ids": [item["slide_id"] for item in bundle["pages"]]}

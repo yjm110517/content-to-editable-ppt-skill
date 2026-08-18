@@ -71,7 +71,9 @@ fidelity_priority
 approved_preview_sha256
 ```
 
-Layout Planner 只恢复几何、层级、构图和样式，不重新解释文字、事实、视觉语义或资产选择。全量 Deck 前先选一个复杂页执行 Reconstruction Smoke。
+P3.3 必须为每个 Critical/Major 元素冻结足够的 Reconstruction Seed。Seed 完整时由确定性 Projector 建立 Spec，Initial Planner Calls = 0；Seed 不完整时返回 P3.3，不允许从 Preview 像素猜测。Layout Planner 只在异常页生成绑定 Validation Issue 的 Targeted Patch，最多两次。
+
+P3.3 Preview 与 P4 Page/Deck 必须调用同一组 PowerPoint Builder。全量 Deck 前按 Reconstruction Class Coverage 选择 1 页、必要时最多 2 页执行 Smoke。组装 Candidate Deck 后必须重新渲染全部页面，并验证最后通过的单页 Render 与组装后 Slide Render 完全一致。
 
 ## F09 审核与交付
 

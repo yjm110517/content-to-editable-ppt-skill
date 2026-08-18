@@ -41,8 +41,13 @@
 - 正式文字为原生文本，基础结构为原生 Shape，图表为可编辑结构；
 - 标准图标使用已批准 Sanitized SVG；复杂视觉使用独立位图；
 - Full-slide Raster Substitution = 0；
-- 全量 Deck 前一个高风险页面 Reconstruction Smoke 通过；
+- 全量 Deck 前按 Reconstruction Class Coverage 选择 1 页、必要时最多 2 页的 Smoke Set；
 - 页面缓存、Resume、局部失效和 Technical Retry 上限正确。
+- Candidate Deck 组装后重新 PowerPoint Render 全部页面；
+- 最后通过的单页 Render 与 Candidate Deck Slide Render 完全一致；
+- `Post-Assembly Slide Drift = 0`、`Unexpected Assembly Mutation = 0`；
+- D03 使用真实 Approved Preview 完成三页重建，D05/D08 覆盖 Chart/SVG/Card、Connector 和 Order-sensitive Cache；
+- Gate 报告见 [`reports/p4/p4-constrained-reconstruction-gate.json`](../../../reports/p4/p4-constrained-reconstruction-gate.json)。
 
 ## P5 Final Gate
 

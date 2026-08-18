@@ -47,7 +47,8 @@ export function specToLayout(spec) {
       if (item.implementation.background_strategy === "approved_background_raster") elements.push(imageElement(item, dimensions));
       else elements.push({ id: item.element_id, type: "shape", ...position(item, dimensions), editable: true, shape: "rect", fill: { color: item.implementation.fill_color }, line: { color: item.implementation.fill_color, width_pt: 0 } });
     } else if (kind === "decorative_approximation") {
-      elements.push({ id: item.element_id, type: "shape", ...position(item, dimensions), editable: true, shape: "ellipse", fill: { color: item.implementation.fill_color, transparency: Math.max(0, 100 - Math.round((item.implementation.opacity_milli ?? 180) / 10)) }, line: { color: item.implementation.fill_color, width_pt: 0 } });
+      if (item.implementation.approximation_kind === "corner_arc") elements.push({ id: item.element_id, type: "line", ...position(item, dimensions), editable: true, geometry: "arc", line: { color: item.implementation.fill_color, transparency: Math.max(0, 100 - Math.round((item.implementation.opacity_milli ?? 850) / 10)), width_pt: 12 } });
+      else elements.push({ id: item.element_id, type: "shape", ...position(item, dimensions), editable: true, shape: "ellipse", fill: { color: item.implementation.fill_color, transparency: Math.max(0, 100 - Math.round((item.implementation.opacity_milli ?? 180) / 10)) }, line: { color: item.implementation.fill_color, transparency: 100, width_pt: 0 } });
     } else throw new BuildError("unsupported reconstruction class", { category: "unsupported_element", target: kind });
   }
   return { schema_version: "p4-internal-1", slide: { width_in: dimensions.width_in, height_in: dimensions.height_in, background: "#FFFFFF" }, styles: {}, elements, metadata: { topic: spec.deck_id, iteration: 1 }, source: { width_px: dimensions.width_px, height_px: dimensions.height_px } };

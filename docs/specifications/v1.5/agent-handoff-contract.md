@@ -18,7 +18,9 @@ Prompt Compiler、Asset Resolver、Compositor、Extractor 和 Cache 均不得隐
 
 ## Layout Planner
 
-Layout Planner 在 P4 只根据 Approved Design Preview 和已冻结的 Authority 生成或修补 Visual Reconstruction Spec。不得重新总结文字、替换资产、改变视觉语义或自由重新设计页面。
+P4 的初始 Visual Reconstruction Spec 由完整 Reconstruction Seed 确定性投影，Initial Planner Calls = 0。Seed 不完整时返回 P3.3，Layout Planner 不得根据 Preview 像素补齐实现方式。
+
+Layout Planner 只在确定性 QA 产生可修复 Validation Issue 后生成局部 Targeted Patch。不得重新总结文字、替换资产、改变视觉语义、Reconstruction Class、P4 Strategy 或自由重新设计页面。
 
 技术失败不得触发新的 Planner。局部问题优先 Targeted Patch，最多两轮视觉修订的既有上限继续有效。
 

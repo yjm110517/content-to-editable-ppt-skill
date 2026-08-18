@@ -17,7 +17,8 @@
 | Deck Prompt Package | 生图模板、负面约束和参数 | Immutable revision |
 | Style Anchor Record | 用户确认的风格锚点 | Immutable revision |
 | Design Preview Record | 用户确认的逐页视觉目标 | Immutable revision |
-| Visual Reconstruction Spec | Preview 元素到 PPT 对象的映射 | Immutable iteration |
+| Reconstruction Seed/View | P3.3 元素到 P4 实现方式、几何和样式起点的确定性投影视图 | Immutable iteration |
+| Visual Reconstruction Spec | 完整 Seed 到 PPT 对象的确定性映射；Targeted Patch 只允许局部参数变化 | Immutable iteration |
 | Extracted Visual Asset Record | 从 Approved Preview 提取的独立位图 | Write once |
 | Deck Consistency Report | 跨页视觉审核证据 | Append-only evidence |
 
@@ -52,3 +53,5 @@ Design Preview Source SVG Hash
 ## 重建与交付
 
 Visual Reconstruction Spec 必须绑定当前 Approved Preview Hash，且每个元素只能引用已批准 Content Ref、Visual Ref、Style Ref 和 Asset Ref。Final PPT 不是新的文字、结构、资产或视觉 Authority；其 Render 只能作为对比和交付证据。
+
+Critical/Major 元素缺少完整 Reconstruction Seed 时必须返回 P3.3；P4 Planner 不得通过读取 Preview 像素补齐 Seed。P3.3 Preview 与 P4 Candidate 必须使用同一 Shared Builder。P4 Candidate Deck 在组装后重新渲染全部页面，并绑定 `Post-Assembly Slide Drift = 0` 的报告；该 Candidate 始终 `delivery_forbidden=true`，直到 P5 产生正式交付决策。
