@@ -9,8 +9,8 @@ P3.1 Tabler Core                COMPLETE
 P3.1 Production Fallback       COMPLETE
 P3.2 Visual System / Prompt    COMPLETE (VISUAL QUALITY NOT EVALUATED)
 P3.3 Design Preview            COMPLETE (D03 LIVE EVIDENCE)
-P4 Reconstruction              READY
-P5 Deck Delivery               BLOCKED BY P4
+P4 Reconstruction              COMPLETE (D03 LIVE RECONSTRUCTION)
+P5 Deck Delivery               READY
 ```
 
 ## 实施顺序
@@ -35,15 +35,15 @@ P5 Deck Delivery               BLOCKED BY P4
 
 只处理 Raster Handoff Pending。输入必须是当前 Approved Design Preview；裁切目标小型视觉元素并尽量输出透明 PNG。包含正式文字、分辨率不足、背景严重融合、遮挡或无法分离时失败。
 
-### 5. Constrained Reconstruction
+### 5. Constrained Reconstruction — COMPLETE
 
-建立 Visual Reconstruction Spec，将 Preview 元素映射为原生文本、Shape、Chart/Table、Sanitized SVG 或独立 PNG/JPEG。先选择最复杂页面完成 PowerPoint Reconstruction Smoke，再有限并行处理其余页面。
+建立 Reconstruction Seed/View 和 Visual Reconstruction Spec，将 Preview 元素映射为原生文本、Shape、Chart/Table、Sanitized SVG 或独立 PNG/JPEG。按 Reconstruction Class Coverage 选择 1–2 页 PowerPoint Smoke，再处理其余页面。
 
-Layout Planner 只恢复几何、层级、构图和样式。技术失败使用原输入重试，局部视觉差异使用 Targeted Patch；不得重新解释内容或替换资产。
+Seed 完整页面 Initial Planner Calls 为 0。技术失败使用原输入重试，局部视觉差异使用最多两次 Issue-bound Targeted Patch；不得重新解释内容、替换资产或改变 Reconstruction Class/P4 Strategy。P3.3 Preview 与 P4 Candidate 使用同一 Shared Builder。
 
-### 6. Deck Assembly 与最终 Gate
+### 6. Deck Assembly 与最终 Gate — P5 READY
 
-对所有页面执行确定性 QA，只把异常页交给 Visual Reviewer，并对 Contact Sheet 执行一次 Deck Consistency Review。最终 PowerPoint Render 与每页 Approved Design Preview 比较，Critical 和 Major 必须为 0。
+P4 已生成 `delivery_forbidden=true` 的多页 Candidate Deck，并在组装后重新通过 PowerPoint 渲染全部页面，保证最后通过的单页 Render 与 Candidate Deck Slide Render 完全一致。P5 继续对异常页和整套 Deck 执行最终一致性审核、打包和交付决策。
 
 ## 性能策略
 

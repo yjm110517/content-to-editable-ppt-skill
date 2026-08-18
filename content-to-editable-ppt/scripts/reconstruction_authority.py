@@ -210,7 +210,7 @@ def build_seed_view(
             if hashlib.sha256(authority["text"].encode("utf-8")).hexdigest() != footprint["text_sha256"]:
                 failures.append(error(f"$.elements[{index}].source_ref", "text footprint does not bind current authority text", "authority_hash_mismatch"))
                 continue
-            implementation = {"content_ref": source_ref, "text": authority["text"], "text_sha256": footprint["text_sha256"], "font_family": font["family"], "fallback_family": font["fallback_family"], "font_size_pt": font["size_pt"], "minimum_font_size_pt": font["minimum_size_pt"], "weight": font["weight"], "alignment": "left", "vertical_alignment": "top", "margin_milli": 0, "line_spacing_milli": font["line_height_milli"], "wrap_policy": "powerpoint_wrap", "max_lines": footprint["max_lines"], "color": palette["text_primary"]}
+            implementation = {"content_ref": source_ref, "text": authority["text"], "text_sha256": footprint["text_sha256"], "font_family": font["family"], "fallback_family": font["fallback_family"], "font_size_pt": font["size_pt"], "minimum_font_size_pt": font["minimum_size_pt"], "weight": font["weight"], "alignment": "left", "vertical_alignment": "top", "margin_milli": 0, "line_spacing_milli": font["line_height_milli"], "wrap_policy": "powerpoint_wrap", "max_lines": footprint["max_lines"], "color": palette["text_primary"] if authority["role"] == "title" else palette["text_secondary"]}
         elif kind == "native_shape":
             required = ["shape_kind", "fill", "border", "corner_radius", "opacity", "shadow_class"]
             missing = [field for field in required if field not in item]
@@ -244,7 +244,8 @@ def build_seed_view(
                 failures.append(error(f"$.elements[{index}].p4_strategy", "background strategy is not frozen", "reconstruction_seed_incomplete"))
                 continue
         elif kind == "decorative_approximation":
-            implementation = {"approximation_kind": "soft_blob", "fill_color": palette["primary"], "accent_color": palette["accent"], "opacity_milli": 180}
+            placement = "top" if "TOP" in item["element_id"].upper() else "bottom" if "BOTTOM" in item["element_id"].upper() else "ambient"
+            implementation = {"approximation_kind": "corner_arc" if placement != "ambient" else "soft_blob", "fill_color": palette["accent"] if placement == "top" else palette["primary"], "accent_color": palette["accent"], "opacity_milli": 850, "placement_hint": placement}
         else:
             failures.append(error(f"$.elements[{index}].reconstruction_class", "unsupported reconstruction seed class", "reconstruction_seed_incomplete"))
             continue

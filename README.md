@@ -4,17 +4,16 @@
 
 ## 当前状态
 
-本仓库已完成 P0 Baseline Freeze、P0.5 Runtime Hardening、P1 Host Content Planning、P2 Markdown Wireframe、P3.1 Asset Resolution、P3.2 Visual System / Prompt Contract 和 P3.3 Approved Design Preview。D03 已具有真实生图、Reconstruction Compatibility、Microsoft PowerPoint Render 和用户确认的三页视觉证据。P4 可编辑多页重建尚未实现。
+本仓库已完成 P0 Baseline Freeze、P0.5 Runtime Hardening、P1 Host Content Planning、P2 Markdown Wireframe、P3.1 Asset Resolution、P3.2 Visual System / Prompt Contract、P3.3 Approved Design Preview 和 P4 Constrained Reconstruction。D03 已从真实用户批准的三页视觉证据重建出原生 Text/Shape/Asset 多页候选 Deck，并通过 Microsoft PowerPoint 组装前后逐页 Render Drift Gate。P5 最终 Deck 审核、打包和交付尚未实现。
 
-当前可执行流程为“材料 → 待确认大纲 → 冻结页面文字 → Markdown 文字线稿”和“参考图片 → 可编辑单页 PPT”。以下能力尚未实现，不能视为当前承诺：
+当前可执行流程已经延伸到“材料 → 确认内容 → Markdown 文字线稿 → Approved Design Preview → 不可交付的可编辑多页候选 PPT”，同时继续支持“参考图片 → 可编辑单页 PPT”。以下能力尚未实现，不能视为当前承诺：
 
-- 最终页面视觉设计和设计图片生成；
-- 从冻结页面内容自动生成完整多页 PPT；
-- 跨页主题、字体和版式一致性；
-- 图表、引用和来源管理；
-- 面向完整演示文稿的多页视觉审核。
+- P5 最终 Deck Consistency Review；
+- 正式交付包、交付决策和发布门槛；
+- 完整引用和来源管理；
+- 将 P4 候选 Deck 直接视为可交付成品。
 
-最终产品目标是先生成高质量图片版页面并由用户确认，再以 Approved Design Preview 为视觉权威、以 P1 内容为文字权威，高保真重建可编辑 PowerPoint。当前代码尚未完成这条多页链路。
+最终产品目标是先生成高质量图片版页面并由用户确认，再以 Approved Design Preview 为视觉权威、以 P1 内容为文字权威，高保真重建可编辑 PowerPoint。P4 已完成这条链路的候选重建部分；P5 仍需完成最终跨页审核和交付。
 
 ## 计划中的调用接口
 
@@ -25,7 +24,7 @@ $content-to-editable-ppt
 content-to-editable-ppt/
 ```
 
-该调用名可以用于 P1 内容规划和继承的单页重建 Runtime，但不应对外宣称已经支持完整的内容到多页 PPT 工作流。
+该调用名可以用于 P1–P4 内容到多页候选 Deck 工作流和继承的单页重建 Runtime；在 P5 完成前不得对外宣称候选 Deck 已通过最终审核或可正式交付。
 
 ## 当前仓库结构
 
@@ -147,6 +146,12 @@ P3.2 将跨页规则分为 Hard Constraints 与 Soft Design Guidance，使用实
 
 P3.3 使用 Reconstruction Ownership 和 Compatibility Gate，确保用户确认前每个重要视觉都具有明确的 P4 实现方式。Final Preview 由 Microsoft PowerPoint 排版正式文字、Shape、Chart 和 SVG；用户批准的是 PowerPoint Render，而不是 Raw Generated Layer。[P3.3 Gate](reports/p3/p3-approved-design-preview-gate.json) 将真实 Manual Acceptance Evidence 与零调用 Automated Replay 分开记录。
 
+## P4 Constrained Reconstruction
+
+P4 将完整 Reconstruction Seed 确定性投影为可编辑页面 Spec。P3.3 Preview 与 P4 Page/Deck 共用同一套 Text、Shape、Line、Image、Chart 和 Text Layout Builder；Seed 不完整时返回 P3.3，不允许 Planner 看图猜实现方式。
+
+[P4 Gate](reports/p4/p4-constrained-reconstruction-gate.json) 使用 D03 三页真实 Approved Preview 和 Approved Extracted Assets 完成 Page Build、PowerPoint Render、Fidelity Check、多页 Candidate Assembly 和 Post-Assembly Render Drift 检查。D05/D08 分别覆盖 Native Chart/Sanitized SVG/Card 与 Connector/Order-sensitive Cache。P4 输出 `reconstruction-candidate.pptx`，但继续标记 `delivery_forbidden=true`。
+
 ## 目标视觉链路
 
 ```text
@@ -165,7 +170,7 @@ P1 Approved Content
 
 ## 下一阶段
 
-下一步实施 [P3 视觉设计与受约束重建计划](docs/plans/p3/visual-design-and-constrained-reconstruction-plan.md) 中的 P4 Constrained Reconstruction。当前不能宣称完整可编辑多页 PowerPoint、Deck Assembly 或最终多页审核已经完成。
+下一步实施 P5 Deck Consistency Review、Packaging 和 Delivery。P4 候选 Deck 已完成可编辑重建和组装后漂移验证，但在 P5 Gate 通过前仍不能正式交付。
 
 ## 开发验证
 

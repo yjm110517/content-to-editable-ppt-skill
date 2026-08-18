@@ -12,12 +12,11 @@ P3.1 Tabler Core                COMPLETE
 P3.1 Production Fallback       COMPLETE
 P3.2 Visual System / Prompt    COMPLETE (VISUAL QUALITY NOT EVALUATED)
 P3.3 Design Preview            COMPLETE (D03 LIVE EVIDENCE)
-P4 Reconstruction             READY
-P4 Reconstruction              BLOCKED BY P3.3 APPROVAL
-P5 Deck Delivery               BLOCKED BY P4
+P4 Reconstruction              COMPLETE (D03 LIVE RECONSTRUCTION)
+P5 Deck Delivery               READY
 ```
 
-历史 P3.1 Gate 证明 Existing、Composition、Programmatic 和 Raster Handoff 的工程能力，但新的正式生产链只接受准确匹配的 Tabler SVG，或在没有准确匹配时进入 `Raster Handoff Pending`。在生产路由和 Gate 完成隔离前，不得把 P3.1 Production Fallback 标记为完成。
+历史 P3.1 Gate 证明 Existing、Composition、Programmatic 和 Raster Handoff 的工程能力，但新的正式生产链只接受准确匹配的 Tabler SVG，或在没有准确匹配时进入 `Raster Handoff Pending`。正式 Production Fallback、P3.2、P3.3 和 P4 Gate 均已完成；P5 仍待实施。
 
 ## 最终产品链路
 
@@ -31,7 +30,8 @@ P1 Approved Slide Content
 → P3.3 Approved Design Previews
 → P4 Visual Reconstruction Specs
 → Editable Per-slide PPT
-→ Deck Assembly + Final Render Comparison
+→ P4 Candidate Deck + Post-Assembly Render Comparison
+→ P5 Final Deck Review + Delivery
 ```
 
 项目先获得高质量、用户认可的图片版设计，再以文字、结构、资产和确认设计图为约束重建可编辑 PowerPoint。Design Preview 不是普通参考图，而是确认后的视觉权威；P1 仍是唯一正式文字权威。
@@ -113,3 +113,5 @@ Production Fallback Cutover
 ```
 
 详细实施边界见 [P3 视觉设计与受约束重建计划](../../plans/p3/visual-design-and-constrained-reconstruction-plan.md)。
+
+P4 的冻结实现与 Gate 见 [P4 Constrained Reconstruction 执行计划](../../plans/p4/p4-constrained-reconstruction-execution-plan.md)。
