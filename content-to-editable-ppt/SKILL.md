@@ -1,6 +1,6 @@
 ---
 name: content-to-editable-ppt
-description: Plan and freeze presentation content, generate Markdown wireframes, compile a deterministic Deck Visual System and design Prompt Package, or rebuild a reference image with the reusable PowerPoint runtime. Use for P1 content planning, P2 text wireframes, P3.1 icon resolution, P3.2 prompt preparation, repository development, and image-to-editable single-slide reconstruction. Final design-image generation and complete multi-page PPT delivery remain future stages.
+description: Plan and freeze presentation content, generate Markdown wireframes, compile a Deck Visual System, produce reconstruction-compatible Approved Design Previews, or rebuild a reference image with the reusable PowerPoint runtime. Use for P1–P3.3 content-to-deck preparation, repository development, and image-to-editable single-slide reconstruction. Final editable multi-page reconstruction and delivery remain future stages.
 ---
 
 # Content to Editable PPT
@@ -40,7 +40,11 @@ After an accepted P2 1.1 Manifest, read [references/icon-asset-resolution.md](re
 
 After P3.1 icon decisions close, read [references/visual-system-and-prompts.md](references/visual-system-and-prompts.md). Run one Host Deck Visual System pass, keep Hard Constraints separate from Soft Design Guidance, and allow at most one issue-bound Contract Correction. Compile actual-font Text Footprints, layer ownership, page prompts, cache keys, the representative Style Anchor Request, and the Contract/Prompt Gate deterministically. Do not generate an image or claim visual quality was evaluated.
 
-Stop the Content-to-PPT route after P3.2. P3.3 Style Anchor generation, deterministic composition, Approved Design Preview, extraction, constrained reconstruction, Deck assembly, and multi-page visual review are specified but not yet executable. Do not improvise them with the inherited single-slide Runtime.
+## Produce P3.3 Approved Design Previews
+
+Read [references/approved-design-preview.md](references/approved-design-preview.md). Generate one Style Anchor, classify every important visual with a Reconstruction Class and P4 Strategy, pass the Compatibility Gate, then build the user-visible Final Preview through Microsoft PowerPoint. Require explicit approval before generating the remaining pages. Reuse the Sanitized Style Reference, generate each remaining page once, and approve the final Contact Sheet. Never approve a Raw Generated Layer directly or infer missing Chart data.
+
+Stop the Content-to-PPT route after P3.3. P4 constrained editable reconstruction, Deck assembly, and final multi-page review are not yet executable through the production route.
 
 ## Core requirements
 
