@@ -1,0 +1,30 @@
+{
+  "schema_version": "1.0",
+  "artifact_type": "approved_design_preview_manifest",
+  "deck_id": "D03",
+  "style_anchor_sha256": "623b3894595ec57a2ae170fb058fb1662305969bffb4f38090cc00a9505c3823",
+  "previews": [
+    {
+      "slide_id": "S01",
+      "order": 1,
+      "revision": 1,
+      "final_preview_record_sha256": "06ca1c42772dfe34ad69af8ea744b45edf44ae6b334db8988e0ad6ba6a583d39",
+      "final_preview_sha256": "b7d6e0b78a4596104d3eee1824e237b275707afc705023bd9c464413a5837b31"
+    },
+    {
+      "slide_id": "S02",
+      "order": 2,
+      "revision": 1,
+      "final_preview_record_sha256": "6b5af606d8e0beaa424dc94c303dd0fafd6af3b784f5daefd46b39d9f40f8f62",
+      "final_preview_sha256": "d5c3df51f6da9641eb870b22d7a2aa753e728d84802d4f520ffc2ef7dc9be911"
+    },
+    {
+      "slide_id": "S03",
+      "order": 3,
+      "revision": 1,
+      "final_preview_record_sha256": "3e5c018817e695c39bc179da43bcbc9aca7191e138da4c598969f8b04fabce90",
+      "final_preview_sha256": "d007d0684d2d5882cfdadff5a2c0870bbe0b535cd6a7cb8628d6f98f92b22e02"
+    }
+  ],
+  "status": "ready_for_confirmation"
+}

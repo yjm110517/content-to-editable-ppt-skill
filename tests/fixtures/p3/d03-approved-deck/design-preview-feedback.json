@@ -1,0 +1,10 @@
+{
+  "schema_version": "1.0",
+  "artifact_type": "design_preview_feedback",
+  "deck_id": "D03",
+  "preview_manifest_sha256": "1fb66e09e2ba18e6dd4270b9933fe435ba53a16dd823730b6a495c8645824fc9",
+  "decision": "accepted",
+  "change_scope": "none",
+  "affected_slide_ids": [],
+  "user_message_sha256": "36f33adaf0942634a8ece1eec4a6f30d44dec73e1ef8704b29d983a57f2e09ae"
+}

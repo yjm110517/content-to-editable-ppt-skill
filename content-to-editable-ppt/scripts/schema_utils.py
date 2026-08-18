@@ -85,6 +85,10 @@ SCHEMA_FILES = {
     "style_anchor_feedback": "style-anchor-feedback.schema.json",
     "style_anchor_record": "style-anchor-record.schema.json",
     "style_anchor_reference_record": "style-anchor-reference-record.schema.json",
+    "design_preview_feedback": "design-preview-feedback.schema.json",
+    "approved_design_preview_manifest": "approved-design-preview-manifest.schema.json",
+    "contact_sheet_record": "contact-sheet-record.schema.json",
+    "extracted_visual_asset_record": "extracted-visual-asset-record.schema.json",
 }
 
 SUPPORTED_SCHEMA_VERSIONS = {
@@ -144,6 +148,10 @@ SUPPORTED_SCHEMA_VERSIONS = {
     "style_anchor_feedback": {"1.0"},
     "style_anchor_record": {"1.0"},
     "style_anchor_reference_record": {"1.0"},
+    "design_preview_feedback": {"1.0"},
+    "approved_design_preview_manifest": {"1.0"},
+    "contact_sheet_record": {"1.0"},
+    "extracted_visual_asset_record": {"1.0"},
     "asset_manifest": {"1.3", "1.4"},
 }
 
