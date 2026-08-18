@@ -72,6 +72,12 @@ SCHEMA_FILES = {
     "text_footprint_manifest": "text-footprint-manifest.schema.json",
     "deck_prompt_package": "deck-prompt-package.schema.json",
     "style_anchor_request": "style-anchor-request.schema.json",
+    "generation_runtime_lock": "generation-runtime-lock.schema.json",
+    "generated_visual_layer_record": "generated-visual-layer-record.schema.json",
+    "design_element_map": "design-element-map.schema.json",
+    "provisional_visual_asset_record": "provisional-visual-asset-record.schema.json",
+    "reconstruction_compatibility_report": "reconstruction-compatibility-report.schema.json",
+    "design_preview_state": "design-preview-state.schema.json",
 }
 
 SUPPORTED_SCHEMA_VERSIONS = {
@@ -118,6 +124,12 @@ SUPPORTED_SCHEMA_VERSIONS = {
     "text_footprint_manifest": {"1.0"},
     "deck_prompt_package": {"1.0"},
     "style_anchor_request": {"1.0"},
+    "generation_runtime_lock": {"1.0"},
+    "generated_visual_layer_record": {"1.0"},
+    "design_element_map": {"1.0"},
+    "provisional_visual_asset_record": {"1.0"},
+    "reconstruction_compatibility_report": {"1.0"},
+    "design_preview_state": {"1.0"},
     "asset_manifest": {"1.3", "1.4"},
 }
 
