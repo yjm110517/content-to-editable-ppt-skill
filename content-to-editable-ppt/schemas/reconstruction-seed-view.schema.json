@@ -1,0 +1,23 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "reconstruction-seed-view.schema.json",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["schema_version", "artifact_type", "deck_id", "slide_id", "approved_preview_sha256", "element_map_sha256", "compatibility_report_sha256", "content_authority_sha256", "asset_manifest_sha256", "visual_system_sha256", "text_footprint_manifest_sha256", "seeds", "status"],
+  "properties": {
+    "schema_version": {"const": "1.0"},
+    "artifact_type": {"const": "reconstruction_seed_view"},
+    "deck_id": {"type": "string", "minLength": 1},
+    "slide_id": {"type": "string", "minLength": 1},
+    "approved_preview_sha256": {"$ref": "#/$defs/hash"},
+    "element_map_sha256": {"$ref": "#/$defs/hash"},
+    "compatibility_report_sha256": {"$ref": "#/$defs/hash"},
+    "content_authority_sha256": {"$ref": "#/$defs/hash"},
+    "asset_manifest_sha256": {"$ref": "#/$defs/hash"},
+    "visual_system_sha256": {"$ref": "#/$defs/hash"},
+    "text_footprint_manifest_sha256": {"$ref": "#/$defs/hash"},
+    "seeds": {"type": "array", "minItems": 1, "items": {"$ref": "reconstruction-seed.schema.json"}},
+    "status": {"const": "complete"}
+  },
+  "$defs": {"hash": {"type": "string", "pattern": "^[a-f0-9]{64}$"}}
+}

@@ -1,0 +1,8 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema", "$id": "reconstruction-build-report.schema.json", "type": "object", "additionalProperties": false,
+  "required": ["schema_version", "artifact_type", "deck_id", "slide_id", "spec_sha256", "output_pptx_sha256", "expected_element_count", "built_element_count", "native_text_count", "native_shape_count", "native_chart_count", "sanitized_svg_count", "raster_count", "full_slide_raster_substitution", "status"],
+  "properties": {
+    "schema_version": {"const": "1.0"}, "artifact_type": {"const": "reconstruction_build_report"}, "deck_id": {"type": "string", "minLength": 1}, "slide_id": {"type": "string", "minLength": 1}, "spec_sha256": {"$ref": "#/$defs/hash"}, "output_pptx_sha256": {"$ref": "#/$defs/hash"},
+    "expected_element_count": {"type": "integer", "minimum": 0}, "built_element_count": {"type": "integer", "minimum": 0}, "native_text_count": {"type": "integer", "minimum": 0}, "native_shape_count": {"type": "integer", "minimum": 0}, "native_chart_count": {"type": "integer", "minimum": 0}, "sanitized_svg_count": {"type": "integer", "minimum": 0}, "raster_count": {"type": "integer", "minimum": 0}, "full_slide_raster_substitution": {"const": false}, "status": {"const": "built"}
+  }, "$defs": {"hash": {"type": "string", "pattern": "^[a-f0-9]{64}$"}}
+}
