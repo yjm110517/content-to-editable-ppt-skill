@@ -1,0 +1,24 @@
+from __future__ import annotations
+import copy,unittest,sys
+from pathlib import Path
+ROOT=Path(__file__).resolve().parents[2];sys.path.insert(0,str(ROOT/"content-to-editable-ppt"/"scripts"))
+from canonical_artifact import canonical_sha256
+from design_preview_contract import initial_state,require_compatible,transition,validate_element_map
+
+H="a"*64
+def package():
+    return {"schema_version":"1.0","artifact_type":"deck_prompt_package","deck_id":"D01","deck_visual_system_sha256":H,"text_footprint_manifest_sha256":H,"deck_request_sha256":H,"approved_outline_sha256":H,"slide_content_manifest_sha256":H,"p2_manifest_sha256":H,"p3_icon_asset_index_sha256":H,"generation_policy":{"provider_policy":"runtime_default","model_policy":"runtime_default","initial_generation_limit":1,"technical_retry_limit":2},"shared_prompt":"shared","negative_prompt":"negative","style_anchor_slide_id":"S01","high_risk_slide_ids":[],"slides":[{"slide_id":"S01","order":1,"role":"content","template_family":"content","prompt_input_sha256":H,"prompt_sha256":H,"prompt":"prompt","element_intents":[{"source_ref":"S01-TITLE","element_owner":"deterministic_compositor","render_policy":"formal_text_overlay","footprint_ref":"S01:S01-TITLE","future_element_map_id":"EL-S01-TITLE"}],"reused":False}],"status":"compiled"}
+def element_map():
+    return {"schema_version":"1.0","artifact_type":"design_element_map","deck_id":"D01","slide_id":"S01","generated_layer_sha256":H,"prompt_package_sha256":canonical_sha256(package()),"elements":[{"element_id":"EL-S01-TITLE","source_ref":"S01-TITLE","element_owner":"deterministic_compositor","reconstruction_class":"native_text","editable_required":True,"fidelity_priority":"critical","p4_strategy":"reuse_authority_text_spec","normalized_bbox":{"x":500,"y":500,"w":4000,"h":1000},"z_index":20,"relationship_refs":[]},{"element_id":"GEN-S01-CARD01","source_ref":None,"element_owner":"generated_visual_layer","reconstruction_class":"native_shape","editable_required":True,"fidelity_priority":"major","p4_strategy":"rebuild_from_element_map","normalized_bbox":{"x":400,"y":1800,"w":4500,"h":3000},"z_index":5,"shape_kind":"rounded_rect","fill":"surface","border":"primary","corner_radius":300,"opacity":1000,"shadow_class":"soft","relationship_refs":[]}],"forbidden_generated_content":{"text_like_marks":False,"logo_like_marks":False,"unauthorized_labels":False,"duplicate_resolved_icons":False,"duplicate_chart_content":False,"unclassified_major_visual_count":0},"full_raw_layer_reuse_allowed":False,"host_map_pass_count":1,"map_correction_count":0,"status":"submitted"}
+class DesignPreviewContractTests(unittest.TestCase):
+    def test_native_shape_and_text_are_compatible(self):self.assertEqual(require_compatible(element_map(),package())["status"],"pass")
+    def test_missing_shape_geometry_blocks(self):
+        value=element_map();del value["elements"][1]["shape_kind"];self.assertIn("native_shape_incomplete",{item["code"] for item in validate_element_map(value,package())["blocking_issues"]})
+    def test_forbidden_content_and_raw_reuse_block(self):
+        value=element_map();value["forbidden_generated_content"]["text_like_marks"]=True;value["full_raw_layer_reuse_allowed"]=True;codes={item["code"] for item in validate_element_map(value,package())["blocking_issues"]};self.assertIn("forbidden_generated_content",codes);self.assertIn("raw_layer_reuse_forbidden",codes)
+    def test_raster_requires_provisional_asset(self):
+        value=element_map();value["elements"].append({"element_id":"GEN-S01-ILL01","source_ref":"S01-V01","element_owner":"generated_visual_layer","reconstruction_class":"reusable_raster","editable_required":False,"fidelity_priority":"major","p4_strategy":"extract_from_raw_layer","normalized_bbox":{"x":5500,"y":1800,"w":3000,"h":4000},"z_index":10,"relationship_refs":[]});self.assertIn("raster_not_separable",{item["code"] for item in validate_element_map(value,package())["blocking_issues"]})
+        provisional={"schema_version":"1.0","artifact_type":"provisional_visual_asset_record","deck_id":"D01","slide_id":"S01","element_id":"GEN-S01-ILL01","visual_ref":"S01-V01","generated_layer_sha256":H,"crop_bbox":{"x":5500,"y":1800,"w":3000,"h":4000},"asset_path":"assets/ill.png","asset_sha256":H,"background_separation":"transparent","extraction_quality":"pass","status":"provisional"};self.assertEqual(validate_element_map(value,package(),[provisional])["status"],"pass")
+    def test_state_stops_on_incompatibility(self):
+        state=initial_state("D01");state=transition(state,"validating_design_inputs");state=transition(state,"anchor_generation_ready");state=transition(state,"anchor_generated");state=transition(state,"anchor_mapping");state=transition(state,"reconstruction_compatibility_check");state=transition(state,"reconstruction_incompatible");self.assertEqual(state["state"],"reconstruction_incompatible")
+if __name__=="__main__":unittest.main()
