@@ -33,7 +33,7 @@
         "required": ["element_id", "type", "object_names", "object_count"],
         "properties": {
           "element_id": {"type": "string"},
-          "type": {"enum": ["text", "shape", "line", "image"]},
+          "type": {"enum": ["text", "shape", "line", "image", "chart"]},
           "object_names": {"type": "array", "minItems": 1, "items": {"type": "string", "pattern": "^ivt:"}, "uniqueItems": true},
           "object_count": {"type": "integer", "minimum": 1}
         }

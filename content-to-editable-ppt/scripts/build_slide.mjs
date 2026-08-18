@@ -159,6 +159,30 @@ function buildLine(pptx, slide, element) {
   slide.addShape(shapeType, { ...basePosition(element, `ivt:${element.id}`), fill: { color: "FFFFFF", transparency: 100 }, line: lineOptions(element.line) });
 }
 
+function buildChart(pptx, slide, element) {
+  const chartType = element.chart_type === "donut" ? pptx.ChartType.doughnut : element.chart_type === "line" ? pptx.ChartType.line : pptx.ChartType.bar;
+  const scale = element.value_scale;
+  const data = element.series.map((series) => ({ name: series.name, labels: element.categories, values: series.values.map((value) => value / scale) }));
+  const colors = element.color_tokens?.map((value) => value.toUpperCase());
+  slide.addChart(chartType, data, {
+    ...basePosition(element, `ivt:${element.id}`),
+    catAxisLabelFontFace: "Microsoft YaHei",
+    valAxisLabelFontFace: "Microsoft YaHei",
+    showLegend: element.show_legend ?? true,
+    showValue: element.show_value ?? false,
+    showTitle: false,
+    showCatName: false,
+    showSerName: false,
+    showPercent: false,
+    showCategoryName: false,
+    showBorder: false,
+    chartColors: colors,
+    valGridLine: { color: "D9D9D9", width: 1 },
+    valAxisLabelFormatCode: element.number_format ?? "General",
+    ...(element.chart_type === "vertical_bar" ? { barDir: "col" } : element.chart_type === "horizontal_bar" ? { barDir: "bar" } : {}),
+  });
+}
+
 export async function verifyResolvedAsset(asset) {
   try {
     const fileStat = await stat(asset.path);
@@ -283,6 +307,7 @@ export async function buildPresentation(args) {
       buildLine(pptx, slide, element);
       connections.push({ element_id: element.id, from_id: element.from_id ?? null, to_id: element.to_id ?? null });
     } else if (element.type === "image") await buildImage(slide, element, assets, usedAssets);
+    else if (element.type === "chart") buildChart(pptx, slide, element);
     else throw new BuildError("unsupported element type", { category: "unsupported_element", target: element.type });
     elementMap.push({ element_id: element.id, type: element.type, object_names: [`ivt:${element.id}`], object_count: 1 });
   }

@@ -50,7 +50,8 @@
           {"$ref": "#/$defs/textElement"},
           {"$ref": "#/$defs/shapeElement"},
           {"$ref": "#/$defs/lineElement"},
-          {"$ref": "#/$defs/imageElement"}
+          {"$ref": "#/$defs/imageElement"},
+          {"$ref": "#/$defs/chartElement"}
         ]
       }
     }
@@ -223,7 +224,7 @@
       "type": "object",
       "properties": {
         "id": {"type": "string", "pattern": "^[A-Za-z0-9][A-Za-z0-9._-]*$"},
-        "type": {"enum": ["text", "shape", "line", "image"]},
+        "type": {"enum": ["text", "shape", "line", "image", "chart"]},
         "x": {"type": "number", "minimum": 0},
         "y": {"type": "number", "minimum": 0},
         "w": {"type": "number", "minimum": 0},
@@ -305,6 +306,28 @@
               "else": {"not": {"required": ["curve"]}}
             }
           ]
+        }
+      ],
+      "unevaluatedProperties": false
+    },
+    "chartElement": {
+      "allOf": [
+        {"$ref": "#/$defs/baseProperties"},
+        {
+          "type": "object",
+          "required": ["chart_type", "categories", "series", "value_scale"],
+          "properties": {
+            "type": {"const": "chart"},
+            "editable": {"const": true},
+            "chart_type": {"enum": ["vertical_bar", "horizontal_bar", "line", "donut"]},
+            "categories": {"type": "array", "minItems": 1, "items": {"type": "string"}},
+            "series": {"type": "array", "minItems": 1, "items": {"type": "object", "additionalProperties": false, "required": ["name", "values"], "properties": {"name": {"type": "string"}, "values": {"type": "array", "minItems": 1, "items": {"type": "integer"}}}}},
+            "value_scale": {"type": "integer", "minimum": 1},
+            "show_legend": {"type": "boolean"},
+            "show_value": {"type": "boolean"},
+            "number_format": {"type": "string"},
+            "color_tokens": {"type": "array", "items": {"type": "string", "pattern": "^[A-Fa-f0-9]{6}$"}}
+          }
         }
       ],
       "unevaluatedProperties": false

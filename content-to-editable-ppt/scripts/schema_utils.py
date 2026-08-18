@@ -78,6 +78,8 @@ SCHEMA_FILES = {
     "provisional_visual_asset_record": "provisional-visual-asset-record.schema.json",
     "reconstruction_compatibility_report": "reconstruction-compatibility-report.schema.json",
     "design_preview_state": "design-preview-state.schema.json",
+    "powerpoint_chart_spec": "powerpoint-chart-spec.schema.json",
+    "preview_powerpoint_build_report": "preview-powerpoint-build-report.schema.json",
 }
 
 SUPPORTED_SCHEMA_VERSIONS = {
@@ -130,6 +132,8 @@ SUPPORTED_SCHEMA_VERSIONS = {
     "provisional_visual_asset_record": {"1.0"},
     "reconstruction_compatibility_report": {"1.0"},
     "design_preview_state": {"1.0"},
+    "powerpoint_chart_spec": {"1.0"},
+    "preview_powerpoint_build_report": {"1.0"},
     "asset_manifest": {"1.3", "1.4"},
 }
 
