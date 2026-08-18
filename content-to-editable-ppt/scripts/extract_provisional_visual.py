@@ -7,7 +7,7 @@ from schema_utils import ContractError,error,load_json,validate_schema
 SCHEMA_DIR=Path(__file__).resolve().parents[1]/"schemas"
 def sha(path:Path)->str:return hashlib.sha256(path.read_bytes()).hexdigest()
 def main()->int:
-    p=argparse.ArgumentParser();p.add_argument("--raw-layer",type=Path,required=True);p.add_argument("--element-map",type=Path,required=True);p.add_argument("--element-id",required=True);p.add_argument("--output",type=Path,required=True);p.add_argument("--record",type=Path,required=True);args=p.parse_args()
+    p=argparse.ArgumentParser();p.add_argument("--raw-layer",type=Path,required=True);p.add_argument("--element-map",type=Path,required=True);p.add_argument("--element-id",required=True);p.add_argument("--allow-clean-local-background",action="store_true");p.add_argument("--output",type=Path,required=True);p.add_argument("--record",type=Path,required=True);args=p.parse_args()
     try:
         if args.output.exists() or args.record.exists():raise ContractError([error("$.output","output exists","overwrite_forbidden")])
         element_map=load_json(args.element_map);validate_schema("design_element_map",element_map,SCHEMA_DIR);items=[item for item in element_map["elements"] if item["element_id"]==args.element_id]
@@ -21,7 +21,7 @@ def main()->int:
                 for x in range(crop.width):
                     r,g,b,a=pixels[x,y];distance=max(abs(r-base[0]),abs(g-base[1]),abs(b-base[2]));alpha=0 if distance<=18 else min(255,(distance-18)*8);pixels[x,y]=(r,g,b,min(a,alpha));changed+=alpha==0
             if changed>crop.width*crop.height//20:separation="transparent"
-        if crop.width<64 or crop.height<64 or separation!="transparent":raise ContractError([error("$.crop_bbox","visual is not safely separable","foreground_extraction_failed")])
+        if crop.width<64 or crop.height<64 or (separation!="transparent" and not args.allow_clean_local_background):raise ContractError([error("$.crop_bbox","visual is not safely separable","foreground_extraction_failed")])
         args.output.parent.mkdir(parents=True,exist_ok=True);crop.save(args.output,format="PNG",compress_level=9)
         record={"schema_version":"1.0","artifact_type":"provisional_visual_asset_record","deck_id":element_map["deck_id"],"slide_id":element_map["slide_id"],"element_id":args.element_id,"visual_ref":items[0]["source_ref"],"generated_layer_sha256":sha(args.raw_layer),"crop_bbox":box,"asset_path":args.output.name,"asset_sha256":sha(args.output),"background_separation":separation,"extraction_quality":"pass","status":"provisional"};validate_schema("provisional_visual_asset_record",record,SCHEMA_DIR);temp=args.record.with_suffix(args.record.suffix+".tmp");temp.write_text(json.dumps(record,ensure_ascii=False,indent=2)+"\n",encoding="utf-8");os.replace(temp,args.record);print(json.dumps({"status":"ok","record":str(args.record)},ensure_ascii=False));return 0
     except Exception as exc:
