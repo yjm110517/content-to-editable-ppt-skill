@@ -1,0 +1,20 @@
+{
+  "schema_version": "1.0",
+  "artifact_type": "provisional_visual_asset_record",
+  "deck_id": "D03",
+  "slide_id": "S01",
+  "element_id": "EL-S01-V01",
+  "visual_ref": "S01-V01",
+  "generated_layer_sha256": "7eefbf032623a6ac5f98f2d30a85344ab61260a51a08110874e81743478eaa22",
+  "crop_bbox": {
+    "x": 1900,
+    "y": 1300,
+    "w": 6500,
+    "h": 6500
+  },
+  "asset_path": "provisional-S01-V01.png",
+  "asset_sha256": "16c2667c52946633edabce991d5ac70c7d1bded1efd97ce4ecff3990a1743b3f",
+  "background_separation": "clean_local_background",
+  "extraction_quality": "pass",
+  "status": "provisional"
+}

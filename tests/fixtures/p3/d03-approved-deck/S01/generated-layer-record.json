@@ -1,0 +1,20 @@
+{
+  "schema_version": "1.0",
+  "artifact_type": "generated_visual_layer_record",
+  "deck_id": "D03",
+  "slide_id": "S01",
+  "revision": 1,
+  "prompt_sha256": "aed57083ec2d1fe86de9b3edef297ac29cdd6f8cbdfb39b2469b7e7b17e2c36d",
+  "runtime_lock_sha256": "8dc86f392d732d26b894c6f03bfbc1e45d7e70f0ea9df07ee69158857d8937a8",
+  "source_image_sha256": "ef03a4f578d88b7c6dd51f181e4b1290d4f9c5d747311ac2c61826c1442268e4",
+  "source_width_px": 1672,
+  "source_height_px": 941,
+  "image_path": "raw-generated-layer.png",
+  "image_sha256": "7eefbf032623a6ac5f98f2d30a85344ab61260a51a08110874e81743478eaa22",
+  "width_px": 1600,
+  "height_px": 900,
+  "normalization": "lanczos_resize",
+  "generation_kind": "initial",
+  "technical_retry_count": 0,
+  "status": "consumed"
+}

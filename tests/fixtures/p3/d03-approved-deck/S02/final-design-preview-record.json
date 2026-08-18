@@ -1,0 +1,16 @@
+{
+  "schema_version": "1.0",
+  "artifact_type": "final_design_preview_record",
+  "deck_id": "D03",
+  "slide_id": "S02",
+  "revision": 1,
+  "generated_layer_sha256": "8ea5f40b710fe39a6e0e2dabcac0f1cb6199cd7c14c7c1e8484d4543fa070c1f",
+  "element_map_sha256": "a3c6a4d12c57dfd276484a590b92d0dac7a30dba003a96438ee3ad6685454d98",
+  "compatibility_report_sha256": "ba8eb525633520766d6bd4813f0344d22b65b8c1a6d5835df2f09ccd65152477",
+  "preview_build_report_sha256": "97ac4a8f9aa36ffd2b6a2d25742f153775ed12604ac82a5f11fa1472ad597925",
+  "powerpoint_render_sha256": "d5c3df51f6da9641eb870b22d7a2aa753e728d84802d4f520ffc2ef7dc9be911",
+  "final_preview_path": "final-design-preview.png",
+  "final_preview_sha256": "d5c3df51f6da9641eb870b22d7a2aa753e728d84802d4f520ffc2ef7dc9be911",
+  "generated_layer_direct_approval": false,
+  "status": "ready_for_confirmation"
+}

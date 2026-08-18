@@ -1,0 +1,14 @@
+{
+  "schema_version": "1.0",
+  "artifact_type": "contact_sheet_record",
+  "deck_id": "D03",
+  "preview_manifest_sha256": "1fb66e09e2ba18e6dd4270b9933fe435ba53a16dd823730b6a495c8645824fc9",
+  "contact_sheet_path": "contact-sheet.png",
+  "contact_sheet_sha256": "6b9cb29d73cbd641641bd9c4b99653e6c3dae832bb6098ddaaa5b4fd5fe01f30",
+  "visible_slide_ids": [
+    "S01",
+    "S02",
+    "S03"
+  ],
+  "status": "ready"
+}
