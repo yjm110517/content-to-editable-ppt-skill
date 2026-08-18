@@ -1,0 +1,96 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "delivery-provenance.schema.json",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schema_version",
+    "artifact_type",
+    "deck_id",
+    "p1_to_p4_authority",
+    "final_integrity",
+    "roundtrip",
+    "reviewer",
+    "decision",
+    "runtime_lock",
+    "delivery_files"
+  ],
+  "properties": {
+    "schema_version": { "const": "1.0" },
+    "artifact_type": { "const": "delivery_provenance" },
+    "deck_id": { "type": "string", "minLength": 1 },
+    "p1_to_p4_authority": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "p4_state_sha256",
+        "p4_manifest_sha256",
+        "p4_candidate_report_sha256",
+        "p4_drift_report_sha256",
+        "p4_render_report_sha256",
+        "manifest_compatibility_status"
+      ],
+      "properties": {
+        "p4_state_sha256": { "$ref": "#/$defs/hash" },
+        "p4_manifest_sha256": { "$ref": "#/$defs/hash" },
+        "p4_candidate_report_sha256": { "$ref": "#/$defs/hash" },
+        "p4_drift_report_sha256": { "$ref": "#/$defs/hash" },
+        "p4_render_report_sha256": { "$ref": "#/$defs/hash" },
+        "manifest_compatibility_status": { "const": "closed" }
+      }
+    },
+    "final_integrity": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["p5_final_render_manifest_sha256"],
+      "properties": { "p5_final_render_manifest_sha256": { "$ref": "#/$defs/hash" } }
+    },
+    "roundtrip": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["powerpoint_roundtrip_report_sha256"],
+      "properties": { "powerpoint_roundtrip_report_sha256": { "$ref": "#/$defs/hash" } }
+    },
+    "reviewer": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "exception_reviewer_calls",
+        "deck_reviewer_calls",
+        "unexpected_reviewer_calls",
+        "deck_consistency_report_sha256",
+        "review_mode"
+      ],
+      "properties": {
+        "exception_reviewer_calls": { "type": "integer", "minimum": 0 },
+        "deck_reviewer_calls": { "type": "integer", "minimum": 0 },
+        "unexpected_reviewer_calls": { "type": "integer", "minimum": 0 },
+        "deck_consistency_report_sha256": { "$ref": "#/$defs/hash" },
+        "review_mode": { "enum": ["live", "deterministic_fixture"] }
+      }
+    },
+    "decision": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["deck_delivery_decision_sha256", "status"],
+      "properties": {
+        "deck_delivery_decision_sha256": { "$ref": "#/$defs/hash" },
+        "status": { "enum": ["pass", "pass_with_warnings", "not_deliverable"] }
+      }
+    },
+    "runtime_lock": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["delivery_packaging_runtime_lock_sha256"],
+      "properties": { "delivery_packaging_runtime_lock_sha256": { "$ref": "#/$defs/hash" } }
+    },
+    "delivery_files": {
+      "type": "object",
+      "additionalProperties": false,
+      "minProperties": 6,
+      "maxProperties": 6,
+      "patternProperties": { "^.*\\.(pptx|zip|json)$": { "$ref": "#/$defs/hash" } }
+    }
+  },
+  "$defs": { "hash": { "type": "string", "pattern": "^[a-f0-9]{64}$" } }
+}
