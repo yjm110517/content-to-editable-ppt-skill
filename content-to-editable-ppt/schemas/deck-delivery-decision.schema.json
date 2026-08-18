@@ -1,0 +1,66 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "deck-delivery-decision.schema.json",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schema_version",
+    "artifact_type",
+    "deck_id",
+    "status",
+    "policy_summary",
+    "delivered_pptx_sha256",
+    "references",
+    "p4_candidate_report_sha256",
+    "upstream_revision"
+  ],
+  "properties": {
+    "schema_version": { "const": "1.0" },
+    "artifact_type": { "const": "deck_delivery_decision" },
+    "deck_id": { "type": "string", "minLength": 1 },
+    "status": { "enum": ["pass", "pass_with_warnings", "not_deliverable"] },
+    "policy_summary": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["critical", "major", "minor", "review_incomplete", "unexpected_reviewer_calls"],
+      "properties": {
+        "critical": { "type": "integer", "minimum": 0 },
+        "major": { "type": "integer", "minimum": 0 },
+        "minor": { "type": "integer", "minimum": 0 },
+        "review_incomplete": { "type": "integer", "minimum": 0 },
+        "unexpected_reviewer_calls": { "type": "integer", "minimum": 0 }
+      }
+    },
+    "delivered_pptx_sha256": { "$ref": "#/$defs/hash" },
+    "references": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["qa_report_sha256", "roundtrip_report_sha256", "deck_consistency_report_sha256", "exception_review_hashes"],
+      "properties": {
+        "qa_report_sha256": { "$ref": "#/$defs/hash" },
+        "roundtrip_report_sha256": { "$ref": "#/$defs/hash" },
+        "deck_consistency_report_sha256": { "$ref": "#/$defs/hash" },
+        "exception_review_hashes": { "type": "array", "items": { "$ref": "#/$defs/hash" } }
+      }
+    },
+    "p4_candidate_report_sha256": { "$ref": "#/$defs/hash" },
+    "warning_approval": {
+      "type": ["object", "null"],
+      "properties": {
+        "warning_acceptance_sha256": { "$ref": "#/$defs/hash" },
+        "decision": { "enum": ["accept"] }
+      }
+    },
+    "upstream_revision": {
+      "type": ["object", "null"],
+      "properties": {
+        "responsible_stage": { "type": "string" },
+        "issue_ids": { "type": "array", "items": { "type": "string" } },
+        "affected_slide_ids": { "type": "array", "items": { "type": "string" } },
+        "reason_code": { "type": "string" },
+        "required_revision_scope": { "type": "string" }
+      }
+    }
+  },
+  "$defs": { "hash": { "type": "string", "pattern": "^[a-f0-9]{64}$" } }
+}

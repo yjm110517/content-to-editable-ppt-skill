@@ -107,6 +107,11 @@ SCHEMA_FILES = {
     "powerpoint_roundtrip_report": "powerpoint-roundtrip-report.schema.json",
     "deck_delivery_state": "deck-delivery-state.schema.json",
     "exception_review_evidence": "exception-review-evidence.schema.json",
+    "deck_delivery_decision": "deck-delivery-decision.schema.json",
+    "warning_acceptance": "warning-acceptance.schema.json",
+    "delivery_packaging_runtime_lock": "delivery-packaging-runtime-lock.schema.json",
+    "delivery_provenance": "delivery-provenance.schema.json",
+    "delivery_package_candidate_manifest": "delivery-package-candidate-manifest.schema.json",
 }
 
 SUPPORTED_SCHEMA_VERSIONS = {
@@ -188,6 +193,11 @@ SUPPORTED_SCHEMA_VERSIONS = {
     "powerpoint_roundtrip_report": {"1.0"},
     "deck_delivery_state": {"1.0"},
     "exception_review_evidence": {"1.0"},
+    "deck_delivery_decision": {"1.0"},
+    "warning_acceptance": {"1.0"},
+    "delivery_packaging_runtime_lock": {"1.0"},
+    "delivery_provenance": {"1.0"},
+    "delivery_package_candidate_manifest": {"1.0"},
     "asset_manifest": {"1.3", "1.4"},
 }
 
