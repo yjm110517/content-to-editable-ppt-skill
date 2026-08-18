@@ -1,0 +1,11 @@
+{
+  "schema_version": "1.0",
+  "artifact_type": "style_anchor_feedback",
+  "deck_id": "D03",
+  "slide_id": "S03",
+  "revision": 1,
+  "final_preview_sha256": "d007d0684d2d5882cfdadff5a2c0870bbe0b535cd6a7cb8628d6f98f92b22e02",
+  "decision": "accepted",
+  "change_scope": "none",
+  "user_message_sha256": "36f33adaf0942634a8ece1eec4a6f30d44dec73e1ef8704b29d983a57f2e09ae"
+}

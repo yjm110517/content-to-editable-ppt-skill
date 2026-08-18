@@ -1,0 +1,15 @@
+{
+  "schema_version": "1.0",
+  "artifact_type": "style_anchor_request",
+  "deck_id": "D03",
+  "deck_prompt_package_sha256": "5a7537e2b813469be3e40f11c10715d9298bb4d414d4cf5873522479dce2a249",
+  "deck_visual_system_sha256": "32f57d272c586b7d2a5b9349a54602116c6ac07813a4c6c890adeeb88da75fb7",
+  "slide_id": "S03",
+  "slide_prompt_sha256": "5485be9f26bf2f47ea51dc45e268ca0c8138faeb70cbaf2fb88f8ba4aad1b71b",
+  "selection_basis": "representativeness_first_v1",
+  "high_risk_slide_ids": [
+    "S01",
+    "S02"
+  ],
+  "status": "ready_for_generation"
+}

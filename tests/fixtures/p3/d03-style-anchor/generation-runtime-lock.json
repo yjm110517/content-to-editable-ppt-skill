@@ -1,0 +1,14 @@
+{
+  "schema_version": "1.0",
+  "artifact_type": "generation_runtime_lock",
+  "deck_id": "D03",
+  "backend": "image_gen.imagegen",
+  "provider_policy": "runtime_default",
+  "model_policy": "runtime_default",
+  "model_identity_status": "not_exposed",
+  "model_id": null,
+  "model_version": null,
+  "runtime_fingerprint": "4f17b08c8845171b2ef4acebf67bb5ed9cc614e5622186560f8ae046059b7877",
+  "runtime_scope_id": "p3.3-d03-live-001",
+  "status": "locked"
+}

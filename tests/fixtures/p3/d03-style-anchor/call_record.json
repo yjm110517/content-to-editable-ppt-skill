@@ -1,0 +1,13 @@
+{
+  "schema_version": "1.0",
+  "artifact_type": "image_generation_call_record",
+  "call_id": "p3.3-d03-anchor-initial-001",
+  "deck_id": "D03",
+  "slide_id": "S03",
+  "revision": 1,
+  "prompt_sha256": "89e91986fbf5e34053380af37e57744e01f05b3be84b8db08fd4961562c670a2",
+  "runtime_lock_sha256": "8dc86f392d732d26b894c6f03bfbc1e45d7e70f0ea9df07ee69158857d8937a8",
+  "generation_kind": "initial",
+  "technical_retry_count": 0,
+  "status": "succeeded"
+}
