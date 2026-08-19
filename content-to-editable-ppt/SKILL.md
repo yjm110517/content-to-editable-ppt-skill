@@ -1,13 +1,13 @@
 ---
 name: content-to-editable-ppt
-description: Plan and freeze presentation content, generate Markdown wireframes, compile a Deck Visual System, approve design previews, or reconstruct them as an editable multi-page PowerPoint candidate. Use for P1–P4 content-to-deck preparation and reconstruction, repository development, and image-to-editable single-slide reconstruction. Final Deck review, packaging, and delivery remain a P5 stage.
+description: Plan and freeze presentation content, generate Markdown wireframes, compile a Deck Visual System, approve design previews, reconstruct them as an editable multi-page PowerPoint candidate, and run the P5 deterministic final-integrity gate (authority / roundtrip / security / package candidate). Use for P1–P5 content-to-deck preparation, deterministic P5 verification, repository development, and image-to-editable single-slide reconstruction. A live Deck Consistency Review (ADR-040) is pending; formal delivery is not created until it completes.
 ---
 
 # Content to Editable PPT
 
 ## Development status
 
-The Skill has two independent entry paths. The Content-to-PPT path now executes P1 through P4: confirmed content, Markdown Wireframes, resolved assets, approved design previews, and a non-deliverable editable multi-page reconstruction candidate. The inherited Runtime also rebuilds reference images as editable single slides. P5 final Deck review, packaging, and delivery are not yet complete.
+The Skill has two independent entry paths. The Content-to-PPT path now executes P1 through P5-deterministic: confirmed content, Markdown Wireframes, resolved assets, approved design previews, an editable multi-page reconstruction candidate, and the deterministic P5 gate (final integrity, deck QA, roundtrip, package candidate) which stops in live_review_pending. The inherited Runtime also rebuilds reference images as editable single slides. A live Deck Consistency Review is pending; formal delivery is NOT created until it completes and --consume-live-review passes (ADR-040).
 
 ## Route content planning
 
@@ -125,3 +125,18 @@ Read [references/rendering-and-qa.md](references/rendering-and-qa.md) before aud
 Read [references/visual-review-rubric.md](references/visual-review-rubric.md) before preparing a Reviewer call or evaluating a visual review. Use `agents/planner.yaml` and `agents/visual_reviewer.yaml` as separate fresh-context role contracts; never continue a Planner conversation as the Reviewer.
 
 Read [references/iteration-and-delivery.md](references/iteration-and-delivery.md) before advancing run state, applying a review patch, recording warning acceptance, creating a delivery decision, or packaging accepted output.
+
+## Run the P5 deterministic gate and pending live review
+
+P5 deterministic work uses tools/delivery/p5_delivery_eval.py. It never creates a formal delivery on its own.
+
+1. python tools/delivery/p5_delivery_eval.py --deterministic --rebuild-p4-evidence --work-root <work> --report <work>/p5-gate.json
+   - Runs the D03 deterministic chain (P4 Compatibility View authority, final integrity with real PowerPoint, deck QA, roundtrip, package candidate) and D05/D08 fixtures.
+   - Produces delivery-package-candidate/ only: delivery_forbidden = true, formal_decision_sha256 = null.
+   - Ends in state live_review_pending. Gate report status = pending_live_evidence; formal_delivery_created = false; does_not_satisfy_adr_040 = true.
+2. A live Deck Consistency Review is REQUIRED by ADR-040 before any policy evaluation, decision, or formal packaging. Frozen replays never satisfy it.
+3. python tools/delivery/p5_delivery_eval.py --consume-live-review <evidence-package> --work-root <work> --p4-evidence-root <work>/p4-evidence/D03 --dist-root <dist> --output-name <name> --report <work>/p5-final-gate.json
+   - Validates call_manifest.json, call_record.json (evidence/raw/finalized/role/prompt/schema/ledger hash bindings + fresh context + retries), call-ledger.json, system_prompt.md, three contact sheets, raw_response.json, finalized_response.json.
+   - Only then: evaluate -> create-decision -> lock-packaging-runtime -> formal package (7 files) -> verify (two-layer hash closure) -> delivered.
+
+Deterministic state must stop at live_review_pending with Decision = absent and Formal Dist = absent. Packaging is a pure function: same inputs + same runtime lock -> identical ZIP bytes; a packaging runtime fingerprint mismatch stops delivery. The delivered PPTX is byte-identical to the P4 candidate deck.

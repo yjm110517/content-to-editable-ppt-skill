@@ -7,11 +7,13 @@
     "schema_version",
     "artifact_type",
     "deck_id",
-    "roundtrip_copy_sha256",
+    "original_candidate_sha256",
     "structural_comparison",
     "canonical_text_same",
     "element_counts_same",
     "chart_data_same",
+    "workbook_data_same",
+    "media_same",
     "relationship_safety",
     "external_relationships",
     "macro_ole",
@@ -29,7 +31,7 @@
       "type": "string",
       "minLength": 1
     },
-    "roundtrip_copy_sha256": {
+    "original_candidate_sha256": {
       "$ref": "#/$defs/hash"
     },
     "structural_comparison": {
@@ -59,6 +61,12 @@
       "type": "boolean"
     },
     "chart_data_same": {
+      "type": "boolean"
+    },
+    "workbook_data_same": {
+      "type": "boolean"
+    },
+    "media_same": {
       "type": "boolean"
     },
     "relationship_safety": {

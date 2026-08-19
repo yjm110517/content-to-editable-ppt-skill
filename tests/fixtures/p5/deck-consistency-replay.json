@@ -1,0 +1,20 @@
+{
+  "schema_version": "1.0",
+  "artifact_type": "deck_consistency_reviewer_response",
+  "deck_id": "D03",
+  "reviewer_recommendation": "pass",
+  "issues": [],
+  "mandatory_checks": {
+    "typography_consistent": true,
+    "palette_consistent": true,
+    "background_consistent": true,
+    "card_language_consistent": true,
+    "density_spacing_consistent": true,
+    "visual_treatment_consistent": true,
+    "navigation_consistent": true,
+    "section_hierarchy_consistent": true,
+    "same_deck_identity": true,
+    "no_reopened_p4_fidelity": true
+  },
+  "structured_upstream_revision": null
+}

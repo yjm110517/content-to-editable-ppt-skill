@@ -15,7 +15,7 @@ if sys_path not in sys.path:
     sys.path.insert(0, sys_path)
 
 from p5_atomic import p5_canonical_bytes, write_once_p5_artifact  # noqa: E402
-from packaging_runtime import build_package_candidate, file_sha256, lock_packaging_runtime, package_formal_delivery, verify_delivery  # noqa: E402
+from packaging_runtime import build_package_candidate, file_sha256, lock_packaging_runtime, package_formal_delivery, verify_delivery, verify_package_candidate  # noqa: E402
 from schema_utils import ContractError, load_json  # noqa: E402
 
 
@@ -28,7 +28,7 @@ def _fixture(root: Path) -> dict:
     candidate = write("candidate.pptx", b"PK fake pptx bytes")
     qa = write("qa.json", p5_canonical_bytes({"schema_version": "1.0", "artifact_type": "deck_final_qa_report", "deck_id": "D05", "status": "pass", "blocking_issues": 0, "content_drift": 0, "chart_drift": 0, "asset_drift": 0, "checks": [], "issues": [], "exception_pages": []}))
     review = write("review.json", p5_canonical_bytes({"schema_version": "1.0", "artifact_type": "deck_consistency_report", "deck_id": "D05", "reviewer_recommendation": "pass", "issues": [], "mandatory_checks": {"typography_consistent": True, "palette_consistent": True, "background_consistent": True, "card_language_consistent": True, "density_spacing_consistent": True, "visual_treatment_consistent": True, "navigation_consistent": True, "section_hierarchy_consistent": True, "same_deck_identity": True, "no_reopened_p4_fidelity": True}, "structured_upstream_revision": None, "evidence": {"contact_sheets_sha256": [], "exception_review_hashes": []}}))
-    roundtrip = write("roundtrip.json", p5_canonical_bytes({"schema_version": "1.0", "artifact_type": "powerpoint_roundtrip_report", "deck_id": "D05", "roundtrip_copy_sha256": "a" * 64, "structural_comparison": {"slide_count_same": True, "slide_order_same": True, "slide_size_same": True}, "canonical_text_same": True, "element_counts_same": True, "chart_data_same": True, "workbook_data_same": True, "media_same": True, "relationship_safety": "safe", "external_relationships": 0, "macro_ole": 0, "slides": [], "status": "pass"}))
+    roundtrip = write("roundtrip.json", p5_canonical_bytes({"schema_version": "1.0", "artifact_type": "powerpoint_roundtrip_report", "deck_id": "D05", "original_candidate_sha256": "a" * 64, "structural_comparison": {"slide_count_same": True, "slide_order_same": True, "slide_size_same": True}, "canonical_text_same": True, "element_counts_same": True, "chart_data_same": True, "workbook_data_same": True, "media_same": True, "relationship_safety": "safe", "external_relationships": 0, "macro_ole": 0, "slides": [], "status": "pass"}))
     decision = write("decision.json", p5_canonical_bytes({"schema_version": "1.0", "artifact_type": "deck_delivery_decision", "deck_id": "D05", "status": "pass", "policy_summary": {"critical": 0, "major": 0, "minor": 0, "review_incomplete": 0, "unexpected_reviewer_calls": 0}, "delivered_pptx_sha256": file_sha256(candidate), "references": {"qa_report_sha256": json.loads(qa.read_bytes()) and "", "roundtrip_report_sha256": "", "deck_consistency_report_sha256": "", "exception_review_hashes": []}, "p4_candidate_report_sha256": "e" * 64, "warning_approval": None, "upstream_revision": None}))
     render_manifest = write("manifest.json", p5_canonical_bytes({"schema_version": "1.0", "artifact_type": "p5_final_render_manifest", "deck_id": "D05", "renderer": "Microsoft PowerPoint", "renderer_version": "COM 16.0; file 16.0.20228.20190", "width_px": 160, "height_px": 90, "ppt_sha256": file_sha256(candidate), "slides": [], "p4_inheritance": {"p4_candidate_render_report_sha256": "f" * 64, "p4_post_assembly_report_sha256": "g" * 64, "p4_fidelity_inherited": True}, "status": "pass"}))
     asset_manifest = write("asset-manifest.json", p5_canonical_bytes({"assets": [{"path": "icon.svg"}]}))
@@ -97,6 +97,8 @@ class P5PackagingTests(unittest.TestCase):
                 self.assertIn("preview-manifest.json", archive.namelist())
             with zipfile.ZipFile(candidate_dir / "deck_assets.zip") as archive:
                 self.assertIn("asset-manifest.json", archive.namelist())
+            verified = verify_package_candidate(target=candidate_dir, expected_manifest_sha256=result["package_candidate_manifest_sha256"])
+            self.assertEqual(verified["status"], "pass")
 
     def test_candidate_package_is_byte_deterministic(self) -> None:
         with tempfile.TemporaryDirectory() as temporary:

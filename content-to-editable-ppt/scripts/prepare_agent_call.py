@@ -11,6 +11,7 @@ from agent_common import (
     SKILL_DIR,
     canonical_yaml_hash,
     copy_input,
+    ensure_under,
     expected_call_dir,
     load_role,
     normalized_text_bytes,
@@ -41,10 +42,12 @@ def _validate_content_authority(path: Path) -> None:
 def parser() -> argparse.ArgumentParser:
     result = argparse.ArgumentParser(description="Create an isolated Planner or Reviewer call package.")
     result.add_argument("--role", choices=("planner", "reviewer"), required=True)
-    result.add_argument("--mode", choices=("initial", "revision", "review"), required=True)
+    result.add_argument("--mode", choices=("initial", "revision", "review", "exception_batch", "deck_consistency"), required=True)
     result.add_argument("--work-root", type=Path, required=True)
-    result.add_argument("--request", type=Path, required=True)
-    result.add_argument("--source", type=Path, required=True)
+    result.add_argument("--request", type=Path)
+    result.add_argument("--source", type=Path)
+    result.add_argument("--task-id")
+    result.add_argument("--input-root", type=Path)
     result.add_argument("--content-authority", type=Path)
     result.add_argument("--iteration-dir", type=Path)
     result.add_argument("--render", type=Path)
@@ -66,8 +69,19 @@ def parser() -> argparse.ArgumentParser:
     return result
 
 
-def _inputs(args: argparse.Namespace) -> dict[str, Path]:
+def _inputs(args: argparse.Namespace, config: dict | None = None, output_schema: Path | None = None) -> dict[str, Path]:
     schema = args.schema_dir.resolve()
+    if args.role == "reviewer" and args.mode in {"exception_batch", "deck_consistency"}:
+        if args.input_root is None or config is None or output_schema is None:
+            raise AssetError("P5 reviewer modes require --input-root", path="--input-root", code="cli_error", exit_code=2)
+        root = ensure_under(args.input_root.resolve(), args.work_root.resolve())
+        result: dict[str, Path] = {}
+        for name in config["input_profiles"][args.mode]:
+            candidate = schema / name if name.endswith(".schema.json") else root / name
+            result[name] = candidate
+        if output_schema.name not in result:
+            raise AssetError("review profile must include its selected output schema", path=str(output_schema), code="agent_config", exit_code=2)
+        return result
     if args.role == "planner" and args.mode == "initial":
         if args.content_authority is None:
             raise AssetError("Planner initial mode requires --content-authority", path="--content-authority", code="cli_error", exit_code=2)
@@ -117,13 +131,24 @@ def main() -> int:
         if args.model_selection_mode == "explicit" and requested_model is None:
             raise AssetError("explicit calls require --requested-model", path="--requested-model", code="cli_error", exit_code=2)
         work_root = args.work_root.resolve()
-        request_path = args.request.resolve()
-        request = load_contract("request", request_path, args.schema_dir)
-        run_id = args.run_id or request["task_id"]
-        if request_path.parent != work_root:
-            raise AssetError("request must be directly inside work-root", path=str(request_path), code="path_escape")
-        if args.source.resolve() != (work_root / request["source_image"]).resolve():
-            raise AssetError("source does not match request source_image", path=str(args.source), code="input_mismatch")
+        p5_mode = args.role == "reviewer" and args.mode in {"exception_batch", "deck_consistency"}
+        if p5_mode:
+            if not args.task_id or not args.run_id:
+                raise AssetError("P5 reviewer modes require --task-id and --run-id", path="$", code="cli_error", exit_code=2)
+            request = None
+            task_id = args.task_id
+            run_id = args.run_id
+        else:
+            if args.request is None or args.source is None:
+                raise AssetError("legacy Planner/Reviewer modes require --request and --source", path="$", code="cli_error", exit_code=2)
+            request_path = args.request.resolve()
+            request = load_contract("request", request_path, args.schema_dir)
+            task_id = request["task_id"]
+            run_id = args.run_id or task_id
+            if request_path.parent != work_root:
+                raise AssetError("request must be directly inside work-root", path=str(request_path), code="path_escape")
+            if args.source.resolve() != (work_root / request["source_image"]).resolve():
+                raise AssetError("source does not match request source_image", path=str(args.source), code="input_mismatch")
         if args.role == "planner":
             authority = args.content_authority.resolve() if args.content_authority else None
             if authority is None or authority.parent != work_root or authority.name != "source-content.json":
@@ -138,7 +163,7 @@ def main() -> int:
             expected_iteration = work_root / "iterations" / f"{args.iteration:02d}"
             if args.iteration_dir.resolve() != expected_iteration or not expected_iteration.is_dir():
                 raise AssetError("iteration-dir does not match work-root and iteration", path=str(args.iteration_dir), code="iteration_mismatch")
-        if args.role == "reviewer":
+        if args.role == "reviewer" and not p5_mode:
             expected_iteration = work_root / "iterations" / f"{args.iteration:02d}"
             expected_paths = {
                 "render": expected_iteration / "rendered_slide.png", "layout": expected_iteration / "layout.json",
@@ -149,8 +174,8 @@ def main() -> int:
                 if actual_paths[label] is None or actual_paths[label].resolve() != expected_path.resolve():
                     raise AssetError(f"{label} must be the current iteration artifact", path=f"--{label}", code="path_escape")
 
-        config, config_path, prompt_path, output_schema = load_role(args.role, args.schema_dir)
-        inputs = _inputs(args)
+        config, config_path, prompt_path, output_schema = load_role(args.role, args.schema_dir, mode=args.mode)
+        inputs = _inputs(args, config, output_schema)
         if list(inputs) != config["input_profiles"][args.mode]:
             raise AssetError("implementation allowlist differs from role configuration", path=str(config_path), code="agent_config", exit_code=2)
         stage = stage_directory(expected_output)
@@ -164,7 +189,7 @@ def main() -> int:
                 entries.append({"name": name, "filename": name, "sha256": digest})
             schema_hash = next(item["sha256"] for item in entries if item["name"] == output_schema.name)
             manifest = {
-                "schema_version": "1.3", "task_id": request["task_id"], "iteration": args.iteration,
+                "schema_version": "1.3", "task_id": task_id, "iteration": args.iteration,
                 "role": args.role, "mode": args.mode,
                 "model_selection_mode": args.model_selection_mode,
                 "requested_model": requested_model,
@@ -173,6 +198,9 @@ def main() -> int:
                 "role_version": config["role_version"], "parameters": config["parameters"],
                 "config_sha256": canonical_yaml_hash(config_path),
                 "prompt_sha256": sha256_bytes(prompt), "output_schema_sha256": schema_hash,
+                "input_profile": args.mode,
+                "selected_output_schema": output_schema.name,
+                "selected_output_schema_sha256": schema_hash,
                 "inputs": entries,
             }
             atomic_write_json(stage / "call_manifest.json", manifest)

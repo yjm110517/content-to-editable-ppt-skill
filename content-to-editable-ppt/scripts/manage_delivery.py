@@ -15,7 +15,8 @@ from delivery_state import initial_delivery_state, transition
 from final_integrity import verify_final_integrity
 from deck_qa import run_deck_qa
 from p5_atomic import atomic_replace_p5_state, write_once_p5_artifact
-from packaging_runtime import build_package_candidate, lock_packaging_runtime, package_formal_delivery, verify_delivery
+from packaging_runtime import build_package_candidate, lock_packaging_runtime, package_formal_delivery, verify_delivery, verify_package_candidate
+from p5_reviewer_evidence import validate_p5_reviewer_evidence
 from schema_utils import ContractError, error, load_json, validate_schema
 
 SCHEMA_DIR = Path(__file__).resolve().parents[1] / "schemas"
@@ -30,11 +31,6 @@ def _normalize_user_message(raw: bytes) -> str:
 
 def _utc_now_iso() -> str:
     return datetime.now(timezone.utc).isoformat(timespec="seconds").replace("+00:00", "Z")
-
-
-def _write_json(path: Path, document: dict) -> None:
-    path.parent.mkdir(parents=True, exist_ok=True)
-    path.write_text(json.dumps(document, ensure_ascii=False, sort_keys=True, separators=(",", ":")) + "\n", encoding="utf-8", newline="\n")
 
 
 def _load_state(path: Path) -> dict:
@@ -94,6 +90,39 @@ def build_parser() -> argparse.ArgumentParser:
     roundtrip.add_argument("--width-px", type=int, required=True)
     roundtrip.add_argument("--height-px", type=int, required=True)
     roundtrip.add_argument("--timeout-seconds", type=int, default=240)
+
+    exception_prepare = commands.add_parser("prepare-exception-review")
+    exception_prepare.add_argument("--state", type=Path, required=True)
+    exception_prepare.add_argument("--qa-report", type=Path, required=True)
+    exception_prepare.add_argument("--output", type=Path, required=True)
+
+    exception_record = commands.add_parser("record-exception-review")
+    exception_record.add_argument("--state", type=Path, required=True)
+    exception_record.add_argument("--evidence", type=Path, required=True)
+    exception_record.add_argument("--response", type=Path, required=True)
+    exception_record.add_argument("--output", type=Path, required=True)
+
+    deck_prepare = commands.add_parser("prepare-deck-review")
+    deck_prepare.add_argument("--state", type=Path, required=True)
+    deck_prepare.add_argument("--contact-sheets", type=Path, required=True)
+    deck_prepare.add_argument("--visual-system", type=Path, required=True)
+    deck_prepare.add_argument("--qa-report", type=Path, required=True)
+    deck_prepare.add_argument("--roundtrip-report", type=Path, required=True)
+    deck_prepare.add_argument("--fidelity-inheritance", type=Path, required=True)
+    deck_prepare.add_argument("--exception-review-hash", action="append")
+    deck_prepare.add_argument("--output", type=Path, required=True)
+
+    deck_record = commands.add_parser("record-deck-review")
+    deck_record.add_argument("--state", type=Path, required=True)
+    deck_record.add_argument("--evidence", type=Path, required=True)
+    deck_record.add_argument("--response", type=Path)
+    deck_record.add_argument("--evidence-package", type=Path)
+    deck_record.add_argument("--output", type=Path, required=True)
+
+    evaluate = commands.add_parser("evaluate")
+    evaluate.add_argument("--state", type=Path, required=True)
+    evaluate.add_argument("--deck-consistency-report", type=Path, required=True)
+    evaluate.add_argument("--output", type=Path, required=True)
 
     warning = commands.add_parser("record-warning-response")
     warning.add_argument("--state", type=Path, required=True)
@@ -163,7 +192,7 @@ def run(args: argparse.Namespace) -> dict:
         if state_path.exists():
             raise ContractError([error("$.state", "delivery state already exists", "output_conflict")])
         state = initial_delivery_state(bundle["deck_id"], bundle["p4_state_sha256"])
-        state = transition(state, "p5_preflight", artifact_updates={"p4_state_sha256": bundle["p4_state_sha256"], "candidate_deck_sha256": bundle["p4_candidate_pptx_sha256"], "manifest_compatibility": bundle["manifest_compatibility"]})
+        state = transition(state, "p5_preflight", artifact_updates={"p4_state_sha256": bundle["p4_state_sha256"], "p4_manifest_sha256": bundle["p4_manifest_sha256"], "p4_candidate_report_sha256": bundle["p4_candidate_report_sha256"], "p4_drift_report_sha256": bundle["p4_drift_report_sha256"], "p4_render_report_sha256": bundle["p4_render_report_sha256"], "candidate_deck_sha256": bundle["p4_candidate_pptx_sha256"], "manifest_compatibility": bundle["manifest_compatibility"]})
         _save_state(state_path, state)
         return {"state": str(state_path), "deck_id": bundle["deck_id"], "state_name": state["state"], "manifest_compatibility": bundle["manifest_compatibility"]}
     if args.command == "verify-final-integrity":
@@ -179,7 +208,7 @@ def run(args: argparse.Namespace) -> dict:
             height_px=args.height_px,
             timeout_seconds=args.timeout_seconds,
         )
-        _write_json(args.output, manifest)
+        write_once_p5_artifact(args.output, manifest)
         updated = transition(state, "final_integrity_check", artifact_updates={"p5_final_render_manifest_sha256": canonical_sha256(manifest)})
         _save_state(args.state, updated)
         return {"manifest": str(args.output.resolve()), "status": "pass", "p4_fidelity_inherited": True}
@@ -193,7 +222,7 @@ def run(args: argparse.Namespace) -> dict:
             p4_candidate_report=load_json(args.p4_candidate_report),
             p4_drift_report=load_json(args.p4_drift_report),
         )
-        _write_json(args.output, report)
+        write_once_p5_artifact(args.output, report)
         if report["status"] != "pass":
             raise ContractError([error("$.qa_report", "deck final QA failed", "deck_qa_failed")])
         updated = transition(state, "deterministic_deck_qa", artifact_updates={"deck_final_qa_report_sha256": canonical_sha256(report), "exception_pages": report["exception_pages"]})
@@ -209,6 +238,112 @@ def run(args: argparse.Namespace) -> dict:
         updated = transition(state, "roundtrip_check", artifact_updates={"powerpoint_roundtrip_report_sha256": canonical_sha256(report)})
         _save_state(args.state, updated)
         return {"roundtrip_report": str(args.output.resolve()), "status": "pass"}
+    if args.command == "prepare-exception-review":
+        state = _load_state(args.state)
+        qa_report = load_json(args.qa_report)
+        validate_schema("deck_final_qa_report", qa_report, SCHEMA_DIR)
+        from exception_review_evidence import build_exception_batches
+        evidence = build_exception_batches(deck_id=state["deck_id"], exception_pages=qa_report["exception_pages"], issues=qa_report["issues"], budget=state["budgets"])
+        write_once_p5_artifact(args.output, evidence)
+        return {"evidence": str(args.output.resolve()), "batches": len(evidence["batches"]), "bound_issue_ids": evidence["bound_issue_ids"]}
+    if args.command == "record-exception-review":
+        state = _load_state(args.state)
+        if state["state"] == "roundtrip_check":
+            state = transition(state, "exception_review_routing")
+        evidence = load_json(args.evidence)
+        validate_schema("exception_review_evidence", evidence, SCHEMA_DIR)
+        response = load_json(args.response)
+        if response:
+            validate_schema("exception_reviewer_response", response, SCHEMA_DIR)
+        bound = evidence["bound_issue_ids"]
+        record = {
+            "schema_version": "1.0",
+            "artifact_type": "exception_review_record",
+            "deck_id": state["deck_id"],
+            "bound_issue_ids": bound,
+            "batch_slide_ids": evidence["batch_slide_ids"],
+            "reviewer_recommendation": response.get("reviewer_recommendation") if response else None,
+            "issue_count": len(response.get("issues", [])) if response else 0,
+        }
+        write_once_p5_artifact(args.output, record)
+        updated = state
+        if bound:
+            updated = dict(state)
+            updated["current_artifacts"] = dict(state["current_artifacts"])
+            updated["current_artifacts"]["exception_review_record_sha256"] = canonical_sha256(record)
+        elif response:
+            raise ContractError([error("$.response", "a reviewer response without bound QA issues is unexpected", "unexpected_reviewer_call")])
+        _save_state(args.state, updated)
+        return {"record": str(args.output.resolve()), "bound_issue_ids": bound}
+    if args.command == "prepare-deck-review":
+        state = _load_state(args.state)
+        from deck_consistency_review import prepare_deck_review_evidence
+        contact_sheets = load_json(args.contact_sheets)
+        evidence = prepare_deck_review_evidence(
+            deck_id=state["deck_id"],
+            contact_sheets=contact_sheets,
+            visual_system_summary=load_json(args.visual_system),
+            qa_report=load_json(args.qa_report),
+            roundtrip_report=load_json(args.roundtrip_report),
+            fidelity_inheritance=load_json(args.fidelity_inheritance),
+            exception_review_hashes=args.exception_review_hash or [],
+        )
+        write_once_p5_artifact(args.output, evidence)
+        updated = transition(state, "deck_consistency_review_ready", artifact_updates={"deck_review_evidence_sha256": canonical_sha256(evidence)})
+        _save_state(args.state, updated)
+        return {"evidence": str(args.output.resolve()), "inputs": list(evidence.keys()), "state": updated["state"]}
+    if args.command == "record-deck-review":
+        state = _load_state(args.state)
+        from deck_consistency_review import compile_consistency_report
+        evidence = load_json(args.evidence)
+        if args.evidence_package is not None:
+            trusted = validate_p5_reviewer_evidence(args.evidence_package, expected_profile="deck_consistency", require_live=True)
+            response = trusted["response"]
+            call_record = trusted["call_record"]
+        else:
+            if args.response is None:
+                raise ContractError([error("$.response", "fixture review requires --response; live review requires --evidence-package", "cli_error")])
+            response = load_json(args.response)
+            call_record = None
+        report = compile_consistency_report(deck_id=state["deck_id"], evidence=evidence, reviewer_response=response, call_record=call_record)
+        write_once_p5_artifact(args.output, report)
+        if call_record is None:
+            updated = transition(state, "live_review_pending", artifact_updates={"deck_consistency_report_sha256": canonical_sha256(report), "review_mode": "deterministic_fixture"})
+        else:
+            updated = transition(state, "deck_consistency_review_complete", artifact_updates={"deck_consistency_report_sha256": canonical_sha256(report), "review_mode": "live", "p5_reviewer_call_record_sha256": canonical_sha256(call_record)})
+        _save_state(args.state, updated)
+        return {"report": str(args.output.resolve()), "recommendation": report["reviewer_recommendation"], "does_not_satisfy_adr_040": report["does_not_satisfy_adr_040"], "state": updated["state"]}
+    if args.command == "evaluate":
+        state = _load_state(args.state)
+        if state["state"] != "deck_consistency_review_complete":
+            raise ContractError([error("$.state", "evaluate requires a completed trusted Deck Consistency Review", "invalid_state")])
+        report = load_json(args.deck_consistency_report)
+        validate_schema("deck_consistency_report", report, SCHEMA_DIR)
+        if report.get("does_not_satisfy_adr_040"):
+            raise ContractError([error("$.deck_consistency_report", "frozen replay does not satisfy ADR-040; a live Deck Consistency Review is required before policy evaluation", "live_deck_review_required")])
+        from delivery_policy import evaluate_delivery_policy
+        severities = [issue["severity"] for issue in report["issues"]]
+        review_incomplete = 1 if report["reviewer_recommendation"] == "fail" else 0
+        policy = evaluate_delivery_policy(
+            severity_counts={"critical": severities.count("critical"), "major": severities.count("major"), "minor": severities.count("minor"), "suggestion": severities.count("suggestion")},
+            review_incomplete=review_incomplete,
+            unexpected_reviewer_calls=state["counters"]["unexpected_reviewer_calls"],
+        )
+        summary = {
+            "schema_version": "1.0",
+            "artifact_type": "delivery_policy_evaluation",
+            "deck_id": state["deck_id"],
+            "severity_counts": policy["severity_counts"],
+            "review_incomplete": policy["review_incomplete"],
+            "unexpected_reviewer_calls": policy["unexpected_reviewer_calls"],
+            "policy_status": policy["policy_status"],
+            "upstream_revision": report.get("structured_upstream_revision"),
+        }
+        updated = transition(state, "evaluating_delivery_policy")
+        updated = transition(updated, policy["decision_state"])
+        write_once_p5_artifact(args.output, summary)
+        _save_state(args.state, updated)
+        return {"evaluation": str(args.output.resolve()), "policy_status": summary["policy_status"]}
     if args.command == "record-warning-response":
         state = _load_state(args.state)
         qa_report = load_json(args.qa_report)
@@ -349,9 +484,11 @@ def run(args: argparse.Namespace) -> dict:
             )
             updated = dict(state)
             updated["current_artifacts"] = dict(state["current_artifacts"])
-            updated["current_artifacts"]["package_candidate_dir"] = result["candidate_dir"]
+            relative_candidate = Path(result["candidate_dir"]).resolve().relative_to(args.work_root.resolve()).as_posix()
+            updated["current_artifacts"]["package_candidate_path"] = relative_candidate
+            updated["current_artifacts"]["package_candidate_manifest_sha256"] = result["package_candidate_manifest_sha256"]
             _save_state(args.state, updated)
-            return {"candidate_dir": result["candidate_dir"], "delivery_forbidden": True, "formal_delivery_created": False, "package_candidate_hash_closure": "pass", "files": result["files"]}
+            return {"candidate_path": relative_candidate, "package_candidate_manifest_sha256": result["package_candidate_manifest_sha256"], "delivery_forbidden": True, "formal_delivery_created": False, "package_candidate_hash_closure": "pass", "files": result["files"]}
         # formal mode
         if args.deck_consistency_report is None or args.decision is None or args.dist_root is None:
             raise ContractError([error("$.package", "formal mode requires --deck-consistency-report, --decision, and --dist-root", "cli_error")])
@@ -387,6 +524,9 @@ def run(args: argparse.Namespace) -> dict:
                 raise ContractError([error("$.dist_root", "verify of a formal delivery requires --dist-root", "cli_error")])
             verification = verify_delivery(target=args.delivery_dir, provenance_expected_sha256=state["current_artifacts"].get("provenance_sha256", ""), dist_root=args.dist_root)
             return {"deck_id": state["deck_id"], "state": "delivered", "delivery_artifact_hash_closure": verification["delivery_artifact_hash_closure"], "files": verification["files"]}
+        if state["state"] == "live_review_pending" and args.delivery_dir is not None:
+            verification = verify_package_candidate(target=args.delivery_dir, expected_manifest_sha256=state["current_artifacts"].get("package_candidate_manifest_sha256", ""))
+            return {"deck_id": state["deck_id"], "state": state["state"], "package_candidate_hash_closure": verification["status"], "package_candidate_manifest_sha256": verification["manifest_sha256"]}
         return {"deck_id": state["deck_id"], "state": state["state"], "delivery_artifacts": state["current_artifacts"]}
     raise AssertionError(args.command)
 
