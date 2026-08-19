@@ -1,0 +1,116 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "deck-delivery-state.schema.json",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schema_version",
+    "artifact_type",
+    "deck_id",
+    "state",
+    "budgets",
+    "counters",
+    "current_artifacts",
+    "history"
+  ],
+  "properties": {
+    "schema_version": {
+      "const": "1.0"
+    },
+    "artifact_type": {
+      "const": "deck_delivery_state"
+    },
+    "deck_id": {
+      "type": "string",
+      "minLength": 1
+    },
+    "state": {
+      "enum": [
+        "p4_complete",
+        "p5_preflight",
+        "final_integrity_check",
+        "deterministic_deck_qa",
+        "roundtrip_check",
+        "exception_review_routing",
+        "deck_consistency_review",
+        "live_review_pending",
+        "evaluating_delivery_policy",
+        "upstream_revision_required",
+        "awaiting_warning_acceptance",
+        "delivery_approved",
+        "packaging",
+        "delivered",
+        "p4_revalidation_required",
+        "p5_failed"
+      ]
+    },
+    "budgets": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "exception_batch_size",
+        "exception_batch_calls",
+        "reviewer_technical_retries",
+        "deck_consistency_passes"
+      ],
+      "properties": {
+        "exception_batch_size": {
+          "const": 4
+        },
+        "exception_batch_calls": {
+          "const": 2
+        },
+        "reviewer_technical_retries": {
+          "const": 2
+        },
+        "deck_consistency_passes": {
+          "const": 1
+        }
+      }
+    },
+    "counters": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "exception_reviewer_calls",
+        "deck_reviewer_calls",
+        "unexpected_reviewer_calls"
+      ],
+      "properties": {
+        "exception_reviewer_calls": {
+          "type": "integer",
+          "minimum": 0
+        },
+        "deck_reviewer_calls": {
+          "type": "integer",
+          "minimum": 0
+        },
+        "unexpected_reviewer_calls": {
+          "type": "integer",
+          "minimum": 0
+        }
+      }
+    },
+    "current_artifacts": {
+      "type": "object"
+    },
+    "warning_acceptance": {
+      "type": [
+        "object",
+        "null"
+      ]
+    },
+    "history": {
+      "type": "array",
+      "items": {
+        "type": "object"
+      }
+    }
+  },
+  "$defs": {
+    "hash": {
+      "type": "string",
+      "pattern": "^[a-f0-9]{64}$"
+    }
+  }
+}
