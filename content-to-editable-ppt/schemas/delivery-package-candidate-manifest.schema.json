@@ -1,0 +1,31 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "delivery-package-candidate-manifest.schema.json",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schema_version",
+    "artifact_type",
+    "deck_id",
+    "delivery_forbidden",
+    "live_review_status",
+    "formal_decision_sha256",
+    "package_candidate_files"
+  ],
+  "properties": {
+    "schema_version": { "const": "1.0" },
+    "artifact_type": { "const": "delivery_package_candidate" },
+    "deck_id": { "type": "string", "minLength": 1 },
+    "delivery_forbidden": { "const": true },
+    "live_review_status": { "const": "pending" },
+    "formal_decision_sha256": { "type": "null" },
+    "package_candidate_files": {
+      "type": "object",
+      "additionalProperties": false,
+      "minProperties": 5,
+      "maxProperties": 5,
+      "patternProperties": { "^.*\\.(pptx|zip|json)$": { "$ref": "#/$defs/hash" } }
+    }
+  },
+  "$defs": { "hash": { "type": "string", "pattern": "^[a-f0-9]{64}$" } }
+}
