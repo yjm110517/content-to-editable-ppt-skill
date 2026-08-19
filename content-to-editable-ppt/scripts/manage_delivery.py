@@ -15,7 +15,8 @@ from delivery_state import initial_delivery_state, transition
 from final_integrity import verify_final_integrity
 from deck_qa import run_deck_qa
 from p5_atomic import atomic_replace_p5_state, write_once_p5_artifact
-from packaging_runtime import build_package_candidate, lock_packaging_runtime, package_formal_delivery, verify_delivery
+from packaging_runtime import build_package_candidate, lock_packaging_runtime, package_formal_delivery, verify_delivery, verify_package_candidate
+from p5_reviewer_evidence import validate_p5_reviewer_evidence
 from schema_utils import ContractError, error, load_json, validate_schema
 
 SCHEMA_DIR = Path(__file__).resolve().parents[1] / "schemas"
@@ -30,11 +31,6 @@ def _normalize_user_message(raw: bytes) -> str:
 
 def _utc_now_iso() -> str:
     return datetime.now(timezone.utc).isoformat(timespec="seconds").replace("+00:00", "Z")
-
-
-def _write_json(path: Path, document: dict) -> None:
-    path.parent.mkdir(parents=True, exist_ok=True)
-    path.write_text(json.dumps(document, ensure_ascii=False, sort_keys=True, separators=(",", ":")) + "\n", encoding="utf-8", newline="\n")
 
 
 def _load_state(path: Path) -> dict:
@@ -119,8 +115,8 @@ def build_parser() -> argparse.ArgumentParser:
     deck_record = commands.add_parser("record-deck-review")
     deck_record.add_argument("--state", type=Path, required=True)
     deck_record.add_argument("--evidence", type=Path, required=True)
-    deck_record.add_argument("--response", type=Path, required=True)
-    deck_record.add_argument("--call-record", type=Path)
+    deck_record.add_argument("--response", type=Path)
+    deck_record.add_argument("--evidence-package", type=Path)
     deck_record.add_argument("--output", type=Path, required=True)
 
     evaluate = commands.add_parser("evaluate")
@@ -196,7 +192,7 @@ def run(args: argparse.Namespace) -> dict:
         if state_path.exists():
             raise ContractError([error("$.state", "delivery state already exists", "output_conflict")])
         state = initial_delivery_state(bundle["deck_id"], bundle["p4_state_sha256"])
-        state = transition(state, "p5_preflight", artifact_updates={"p4_state_sha256": bundle["p4_state_sha256"], "candidate_deck_sha256": bundle["p4_candidate_pptx_sha256"], "manifest_compatibility": bundle["manifest_compatibility"]})
+        state = transition(state, "p5_preflight", artifact_updates={"p4_state_sha256": bundle["p4_state_sha256"], "p4_manifest_sha256": bundle["p4_manifest_sha256"], "p4_candidate_report_sha256": bundle["p4_candidate_report_sha256"], "p4_drift_report_sha256": bundle["p4_drift_report_sha256"], "p4_render_report_sha256": bundle["p4_render_report_sha256"], "candidate_deck_sha256": bundle["p4_candidate_pptx_sha256"], "manifest_compatibility": bundle["manifest_compatibility"]})
         _save_state(state_path, state)
         return {"state": str(state_path), "deck_id": bundle["deck_id"], "state_name": state["state"], "manifest_compatibility": bundle["manifest_compatibility"]}
     if args.command == "verify-final-integrity":
@@ -212,7 +208,7 @@ def run(args: argparse.Namespace) -> dict:
             height_px=args.height_px,
             timeout_seconds=args.timeout_seconds,
         )
-        _write_json(args.output, manifest)
+        write_once_p5_artifact(args.output, manifest)
         updated = transition(state, "final_integrity_check", artifact_updates={"p5_final_render_manifest_sha256": canonical_sha256(manifest)})
         _save_state(args.state, updated)
         return {"manifest": str(args.output.resolve()), "status": "pass", "p4_fidelity_inherited": True}
@@ -226,7 +222,7 @@ def run(args: argparse.Namespace) -> dict:
             p4_candidate_report=load_json(args.p4_candidate_report),
             p4_drift_report=load_json(args.p4_drift_report),
         )
-        _write_json(args.output, report)
+        write_once_p5_artifact(args.output, report)
         if report["status"] != "pass":
             raise ContractError([error("$.qa_report", "deck final QA failed", "deck_qa_failed")])
         updated = transition(state, "deterministic_deck_qa", artifact_updates={"deck_final_qa_report_sha256": canonical_sha256(report), "exception_pages": report["exception_pages"]})
@@ -272,7 +268,9 @@ def run(args: argparse.Namespace) -> dict:
         write_once_p5_artifact(args.output, record)
         updated = state
         if bound:
-            updated = transition(state, "deck_consistency_review", artifact_updates={"exception_review_record_sha256": canonical_sha256(record)})
+            updated = dict(state)
+            updated["current_artifacts"] = dict(state["current_artifacts"])
+            updated["current_artifacts"]["exception_review_record_sha256"] = canonical_sha256(record)
         elif response:
             raise ContractError([error("$.response", "a reviewer response without bound QA issues is unexpected", "unexpected_reviewer_call")])
         _save_state(args.state, updated)
@@ -291,23 +289,34 @@ def run(args: argparse.Namespace) -> dict:
             exception_review_hashes=args.exception_review_hash or [],
         )
         write_once_p5_artifact(args.output, evidence)
-        return {"evidence": str(args.output.resolve()), "inputs": list(evidence.keys())}
+        updated = transition(state, "deck_consistency_review_ready", artifact_updates={"deck_review_evidence_sha256": canonical_sha256(evidence)})
+        _save_state(args.state, updated)
+        return {"evidence": str(args.output.resolve()), "inputs": list(evidence.keys()), "state": updated["state"]}
     if args.command == "record-deck-review":
         state = _load_state(args.state)
         from deck_consistency_review import compile_consistency_report
         evidence = load_json(args.evidence)
-        response = load_json(args.response)
-        call_record = load_json(args.call_record) if args.call_record is not None else None
+        if args.evidence_package is not None:
+            trusted = validate_p5_reviewer_evidence(args.evidence_package, expected_profile="deck_consistency", require_live=True)
+            response = trusted["response"]
+            call_record = trusted["call_record"]
+        else:
+            if args.response is None:
+                raise ContractError([error("$.response", "fixture review requires --response; live review requires --evidence-package", "cli_error")])
+            response = load_json(args.response)
+            call_record = None
         report = compile_consistency_report(deck_id=state["deck_id"], evidence=evidence, reviewer_response=response, call_record=call_record)
         write_once_p5_artifact(args.output, report)
-        updated = transition(state, "deck_consistency_review", artifact_updates={"deck_consistency_report_sha256": canonical_sha256(report), "review_mode": "live" if call_record is not None else "deterministic_fixture"})
-        updated = transition(updated, "live_review_pending")
+        if call_record is None:
+            updated = transition(state, "live_review_pending", artifact_updates={"deck_consistency_report_sha256": canonical_sha256(report), "review_mode": "deterministic_fixture"})
+        else:
+            updated = transition(state, "deck_consistency_review_complete", artifact_updates={"deck_consistency_report_sha256": canonical_sha256(report), "review_mode": "live", "p5_reviewer_call_record_sha256": canonical_sha256(call_record)})
         _save_state(args.state, updated)
-        return {"report": str(args.output.resolve()), "recommendation": report["reviewer_recommendation"], "does_not_satisfy_adr_040": report["does_not_satisfy_adr_040"], "state": "live_review_pending"}
+        return {"report": str(args.output.resolve()), "recommendation": report["reviewer_recommendation"], "does_not_satisfy_adr_040": report["does_not_satisfy_adr_040"], "state": updated["state"]}
     if args.command == "evaluate":
         state = _load_state(args.state)
-        if state["state"] != "live_review_pending":
-            raise ContractError([error("$.state", "evaluate requires live_review_pending", "invalid_state")])
+        if state["state"] != "deck_consistency_review_complete":
+            raise ContractError([error("$.state", "evaluate requires a completed trusted Deck Consistency Review", "invalid_state")])
         report = load_json(args.deck_consistency_report)
         validate_schema("deck_consistency_report", report, SCHEMA_DIR)
         if report.get("does_not_satisfy_adr_040"):
@@ -475,9 +484,11 @@ def run(args: argparse.Namespace) -> dict:
             )
             updated = dict(state)
             updated["current_artifacts"] = dict(state["current_artifacts"])
-            updated["current_artifacts"]["package_candidate_dir"] = result["candidate_dir"]
+            relative_candidate = Path(result["candidate_dir"]).resolve().relative_to(args.work_root.resolve()).as_posix()
+            updated["current_artifacts"]["package_candidate_path"] = relative_candidate
+            updated["current_artifacts"]["package_candidate_manifest_sha256"] = result["package_candidate_manifest_sha256"]
             _save_state(args.state, updated)
-            return {"candidate_dir": result["candidate_dir"], "delivery_forbidden": True, "formal_delivery_created": False, "package_candidate_hash_closure": "pass", "files": result["files"]}
+            return {"candidate_path": relative_candidate, "package_candidate_manifest_sha256": result["package_candidate_manifest_sha256"], "delivery_forbidden": True, "formal_delivery_created": False, "package_candidate_hash_closure": "pass", "files": result["files"]}
         # formal mode
         if args.deck_consistency_report is None or args.decision is None or args.dist_root is None:
             raise ContractError([error("$.package", "formal mode requires --deck-consistency-report, --decision, and --dist-root", "cli_error")])
@@ -513,6 +524,9 @@ def run(args: argparse.Namespace) -> dict:
                 raise ContractError([error("$.dist_root", "verify of a formal delivery requires --dist-root", "cli_error")])
             verification = verify_delivery(target=args.delivery_dir, provenance_expected_sha256=state["current_artifacts"].get("provenance_sha256", ""), dist_root=args.dist_root)
             return {"deck_id": state["deck_id"], "state": "delivered", "delivery_artifact_hash_closure": verification["delivery_artifact_hash_closure"], "files": verification["files"]}
+        if state["state"] == "live_review_pending" and args.delivery_dir is not None:
+            verification = verify_package_candidate(target=args.delivery_dir, expected_manifest_sha256=state["current_artifacts"].get("package_candidate_manifest_sha256", ""))
+            return {"deck_id": state["deck_id"], "state": state["state"], "package_candidate_hash_closure": verification["status"], "package_candidate_manifest_sha256": verification["manifest_sha256"]}
         return {"deck_id": state["deck_id"], "state": state["state"], "delivery_artifacts": state["current_artifacts"]}
     raise AssertionError(args.command)
 

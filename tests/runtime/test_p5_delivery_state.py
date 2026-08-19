@@ -26,7 +26,7 @@ class P5DeliveryStateTests(unittest.TestCase):
 
     def test_deterministic_chain_to_live_review_pending(self) -> None:
         state = initial_delivery_state("D03", "a" * 64)
-        chain = ["p5_preflight", "final_integrity_check", "deterministic_deck_qa", "roundtrip_check", "exception_review_routing", "deck_consistency_review", "live_review_pending"]
+        chain = ["p5_preflight", "final_integrity_check", "deterministic_deck_qa", "roundtrip_check", "exception_review_routing", "deck_consistency_review_ready", "live_review_pending"]
         for target in chain:
             state = transition(state, target)
         self.assertEqual(state["state"], "live_review_pending")
@@ -38,9 +38,9 @@ class P5DeliveryStateTests(unittest.TestCase):
             transition(state, "delivered")
 
     def test_formal_path_requires_live_review_consumption(self) -> None:
-        # fixture 路径必须停在 live_review_pending；从 live_review_pending 可直接进入 evaluating_delivery_policy
+        # fixture 路径必须停在 live_review_pending；可信 live review 才能进入 complete/evaluation
         state = initial_delivery_state("D03", "a" * 64)
-        for target in ["p5_preflight", "final_integrity_check", "deterministic_deck_qa", "roundtrip_check", "exception_review_routing", "deck_consistency_review", "live_review_pending", "evaluating_delivery_policy", "delivery_approved", "packaging", "delivered"]:
+        for target in ["p5_preflight", "final_integrity_check", "deterministic_deck_qa", "roundtrip_check", "exception_review_routing", "deck_consistency_review_ready", "live_review_pending", "deck_consistency_review_complete", "evaluating_delivery_policy", "delivery_approved", "packaging", "delivered"]:
             state = transition(state, target)
         self.assertEqual(state["state"], "delivered")
 

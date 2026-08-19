@@ -8,7 +8,7 @@
 
 ### D03（真实流程）
 
-- 真实 P4 三页 Candidate（复用 work/p4-final/D03）；
+- 从已提交 P3.3 Evidence 通过 `--rebuild-p4-evidence` 重建真实 P4 三页 Candidate；不得依赖未跟踪的 `work/p4-final/D03`；
 - Final Render Identity 继承 P4；
 - Roundtrip Pass；
 - Issue-routed Exception Calls 在预算内；

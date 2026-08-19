@@ -4,12 +4,18 @@
   "type": "object",
   "additionalProperties": false,
   "required": [
+    "schema_version",
+    "artifact_type",
+    "deck_id",
     "reviewer_recommendation",
     "issues",
     "mandatory_checks",
     "structured_upstream_revision"
   ],
   "properties": {
+    "schema_version": {"const": "1.0"},
+    "artifact_type": {"const": "deck_consistency_reviewer_response"},
+    "deck_id": {"type": "string", "minLength": 1},
     "reviewer_recommendation": { "enum": ["pass", "revise", "fail"] },
     "issues": {
       "type": "array",

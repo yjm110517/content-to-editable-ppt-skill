@@ -105,7 +105,7 @@ def _d05_d08_fixtures() -> list[dict]:
             qa_path = root / "qa.json"
             qa_path.write_bytes(p5_canonical_bytes(qa))
             roundtrip_path = root / "roundtrip.json"
-            roundtrip_path.write_bytes(p5_canonical_bytes({"schema_version": "1.0", "artifact_type": "powerpoint_roundtrip_report", "deck_id": deck_id, "roundtrip_copy_sha256": "a" * 64, "structural_comparison": {"slide_count_same": True, "slide_order_same": True, "slide_size_same": True}, "canonical_text_same": True, "element_counts_same": True, "chart_data_same": True, "workbook_data_same": True, "media_same": True, "relationship_safety": "safe", "external_relationships": 0, "macro_ole": 0, "slides": [], "status": "pass"}))
+            roundtrip_path.write_bytes(p5_canonical_bytes({"schema_version": "1.0", "artifact_type": "powerpoint_roundtrip_report", "deck_id": deck_id, "original_candidate_sha256": candidate_sha, "structural_comparison": {"slide_count_same": True, "slide_order_same": True, "slide_size_same": True}, "canonical_text_same": True, "element_counts_same": True, "chart_data_same": True, "workbook_data_same": True, "media_same": True, "relationship_safety": "safe", "external_relationships": 0, "macro_ole": 0, "slides": [], "status": "pass"}))
             manifest_path = root / "manifest.json"
             manifest_path.write_bytes(p5_canonical_bytes({"schema_version": "1.0", "artifact_type": "p5_final_render_manifest", "deck_id": deck_id, "renderer": "Microsoft PowerPoint", "renderer_version": "COM 16.0; file 16.0.20228.20190", "width_px": 1600, "height_px": 900, "ppt_sha256": candidate_sha, "slides": [], "p4_inheritance": {"p4_candidate_render_report_sha256": "f" * 64, "p4_post_assembly_report_sha256": "g" * 64, "p4_fidelity_inherited": True}, "status": "pass"}))
             asset_manifest_path = root / "asset-manifest.json"
@@ -116,9 +116,8 @@ def _d05_d08_fixtures() -> list[dict]:
     return results
 
 
-def _d03_deterministic(work_root: Path) -> dict:
+def _d03_deterministic(work_root: Path, p4: Path) -> dict:
     """D03 deterministic chain: init / final integrity (real COM) / deck QA / roundtrip / candidate packaging."""
-    p4 = ROOT / "work" / "p4-final" / "D03"
     if not (p4 / "reconstruction-candidate.pptx").is_file():
         return {"case_id": "D03", "status": "not_run", "reason": "P4 candidate missing"}
     gate = work_root / "D03"
@@ -137,40 +136,38 @@ def _d03_deterministic(work_root: Path) -> dict:
         (gate / "exception-response.json").write_text(json.dumps({}), encoding="utf-8")
         _cli("record-exception-review", "--state", str(gate / "state.json"), "--evidence", str(gate / "exception-evidence.json"), "--response", str(gate / "exception-response.json"), "--output", str(gate / "exception-record.json"))
         # prepare deck review evidence (contact sheets + visual system + fidelity inheritance)
-        shutil.copy2(ROOT / "work" / "p3-3-deck" / "contact-sheet.png", gate / "approved-preview-contact-sheet.png")
+        committed_p3 = ROOT / "tests" / "fixtures" / "p3"
+        shutil.copy2(committed_p3 / "d03-approved-deck" / "contact-sheet.png", gate / "approved-preview-contact-sheet.png")
         from contact_sheets import _sheet as _compose_sheet
         renders = [(f"S{index:02d}", p4 / "candidate-render" / f"slide-{index:03d}.png") for index in range(1, 4)]
         _compose_sheet(renders, gate / "final-candidate-contact-sheet.png", "Final Candidate")
         _compose_sheet([("approved", gate / "approved-preview-contact-sheet.png")] + renders, gate / "approved-vs-final-comparison-sheet.png", "Approved vs Final")
-        contact_sheets = {"schema_version": "1.0", "artifact_type": "contact_sheet_set", "deck_id": "D03", "approved_preview_contact_sheet": {"path": "approved-preview-contact-sheet.png", "sha256": _sha256(gate / "approved-preview-contact-sheet.png"), "slides": 3}, "final_candidate_contact_sheet": {"path": "final-candidate-contact-sheet.png", "sha256": "0" * 64, "slides": 3}, "approved_vs_final_comparison_sheet": {"path": "approved-vs-final-comparison-sheet.png", "sha256": "0" * 64, "slides": 6}}
+        contact_sheets = {"schema_version": "1.0", "artifact_type": "contact_sheet_set", "deck_id": "D03", "approved_preview_contact_sheet": {"path": "approved-preview-contact-sheet.png", "sha256": _sha256(gate / "approved-preview-contact-sheet.png"), "slides": 3}, "final_candidate_contact_sheet": {"path": "final-candidate-contact-sheet.png", "sha256": _sha256(gate / "final-candidate-contact-sheet.png"), "slides": 3}, "approved_vs_final_comparison_sheet": {"path": "approved-vs-final-comparison-sheet.png", "sha256": _sha256(gate / "approved-vs-final-comparison-sheet.png"), "slides": 6}}
         (gate / "contact-sheets.json").write_text(json.dumps(contact_sheets), encoding="utf-8")
         (gate / "visual-system.json").write_text(json.dumps({"palette": ["#111111"]}), encoding="utf-8")
         manifest = json.loads((gate / "final-render-manifest.json").read_text(encoding="utf-8"))
         (gate / "fidelity-inheritance.json").write_text(json.dumps(manifest["p4_inheritance"]), encoding="utf-8")
         _cli("prepare-deck-review", "--state", str(gate / "state.json"), "--contact-sheets", str(gate / "contact-sheets.json"), "--visual-system", str(gate / "visual-system.json"), "--qa-report", str(gate / "qa-report.json"), "--roundtrip-report", str(gate / "roundtrip-report.json"), "--fidelity-inheritance", str(gate / "fidelity-inheritance.json"), "--output", str(gate / "deck-evidence.json"))
+        review_inputs = gate / "review-inputs"
+        review_inputs.mkdir()
+        for name in ("approved-preview-contact-sheet.png", "final-candidate-contact-sheet.png", "approved-vs-final-comparison-sheet.png"):
+            shutil.copy2(gate / name, review_inputs / name)
+        shutil.copy2(p4 / "deck-visual-system.json", review_inputs / "deck-visual-system-summary.json")
+        shutil.copy2(gate / "qa-report.json", review_inputs / "deck-final-qa-report.json")
+        shutil.copy2(gate / "roundtrip-report.json", review_inputs / "powerpoint-roundtrip-report.json")
+        shutil.copy2(gate / "fidelity-inheritance.json", review_inputs / "p4-fidelity-inheritance.json")
+        (review_inputs / "exception-review-hashes.json").write_text(json.dumps({"hashes": []}, sort_keys=True) + "\n", encoding="utf-8")
+        call_dir = gate / ".agent-calls" / "01" / "reviewer" / "d03-deck-review"
+        prepared = subprocess.run([sys.executable, str(SCRIPTS / "prepare_agent_call.py"), "--role", "reviewer", "--mode", "deck_consistency", "--work-root", str(gate), "--task-id", "D03", "--input-root", str(review_inputs), "--iteration", "1", "--model-selection-mode", "runtime-default", "--call-id", "d03-deck-review", "--output-dir", str(call_dir), "--run-id", "p5-d03-deck-review"], cwd=ROOT, capture_output=True, text=True, encoding="utf-8", errors="replace")
+        if prepared.returncode:
+            raise RuntimeError(prepared.stdout.strip() or prepared.stderr.strip() or "P5 Deck Review call preparation failed")
         # frozen replay deck review (does NOT satisfy ADR-040)
         _deck_review_fixture(gate)
         # candidate packaging (no decision, no formal dist)
         lock = _cli("lock-packaging-runtime", "--state", str(gate / "state.json"), "--output", str(gate / "runtime-lock.json"))
-        # stage P4 consumed assets under the manifest-relative layout (P3-era paths)
-        p4_asset_manifest = json.loads((p4 / "reconstruction-asset-manifest.json").read_text(encoding="utf-8"))
-        source_map = {
-            "d03-approved-deck/S01/provisional-S01-V01.png": ROOT / "work" / "p3-3-deck" / "S01" / "provisional-S01-V01.png",
-            "d03-approved-deck/S02/provisional-S02-V01.png": ROOT / "work" / "p3-3-deck" / "S02" / "provisional-S02-V01.png",
-            "d03-style-anchor/provisional-S03-V01.png": ROOT / "work" / "p3-3-live-anchor-v2" / "provisional-S03-V01.png",
-        }
-        assets_root = gate / "assets-source"
-        for item in p4_asset_manifest.get("assets", []):
-            relative = item.get("path", "")
-            source = source_map.get(relative)
-            if source is None or not source.is_file():
-                raise RuntimeError(f"missing asset source: {relative}")
-            dest = assets_root / relative
-            dest.parent.mkdir(parents=True, exist_ok=True)
-            shutil.copy2(source, dest)
-        candidate = _cli("package", "--state", str(gate / "state.json"), "--mode", "candidate", "--output-name", "d03-ppt", "--candidate-pptx", str(p4 / "reconstruction-candidate.pptx"), "--work-root", str(work_root), "--runtime-lock", str(gate / "runtime-lock.json"), "--qa-report", str(gate / "qa-report.json"), "--roundtrip-report", str(gate / "roundtrip-report.json"), "--final-render-manifest", str(gate / "final-render-manifest.json"), "--contact-sheets-dir", str(gate), "--final-renders-dir", str(gate / "final-render"), "--p4-asset-manifest", str(p4 / "reconstruction-asset-manifest.json"), "--p4-evidence-root", str(assets_root))
+        candidate = _cli("package", "--state", str(gate / "state.json"), "--mode", "candidate", "--output-name", "d03-ppt", "--candidate-pptx", str(p4 / "reconstruction-candidate.pptx"), "--work-root", str(work_root), "--runtime-lock", str(gate / "runtime-lock.json"), "--qa-report", str(gate / "qa-report.json"), "--roundtrip-report", str(gate / "roundtrip-report.json"), "--final-render-manifest", str(gate / "final-render-manifest.json"), "--contact-sheets-dir", str(gate), "--final-renders-dir", str(gate / "final-render"), "--p4-asset-manifest", str(p4 / "reconstruction-asset-manifest.json"), "--p4-evidence-root", str(committed_p3))
         state = json.loads((gate / "state.json").read_text(encoding="utf-8"))
-        return {"case_id": "D03", "status": "pass", "slides": 3, "state": state["state"], "package_candidate_hash_closure": candidate["package_candidate_hash_closure"], "formal_delivery_created": False, "does_not_satisfy_adr_040": True, "candidate_dir": candidate["candidate_dir"]}
+        return {"case_id": "D03", "status": "pass", "slides": 3, "state": state["state"], "package_candidate_hash_closure": candidate["package_candidate_hash_closure"], "package_candidate_manifest_sha256": candidate["package_candidate_manifest_sha256"], "formal_delivery_created": False, "does_not_satisfy_adr_040": True, "candidate_path": candidate["candidate_path"], "review_call_package_path": call_dir.relative_to(work_root).as_posix()}
     except Exception as exc:
         return {"case_id": "D03", "status": "fail", "reason": str(exc)[:300]}
 
@@ -178,6 +175,7 @@ def _d03_deterministic(work_root: Path) -> dict:
 def _deck_review_fixture(gate: Path) -> None:
     """Frozen replay response with explicit ADR-040 non-satisfaction marking."""
     response = {
+        "schema_version": "1.0", "artifact_type": "deck_consistency_reviewer_response", "deck_id": "D03",
         "reviewer_recommendation": "pass", "issues": [],
         "mandatory_checks": {name: True for name in ["typography_consistent", "palette_consistent", "background_consistent", "card_language_consistent", "density_spacing_consistent", "visual_treatment_consistent", "navigation_consistent", "section_hierarchy_consistent", "same_deck_identity", "no_reopened_p4_fidelity"]},
         "structured_upstream_revision": None,
@@ -193,35 +191,33 @@ def _deck_review_fixture(gate: Path) -> None:
 
 
 def _validate_live_evidence(package: Path) -> dict:
-    """Validate a real Deck Consistency Review evidence package (ADR-040 trusted chain)."""
-    required_files = ["call_manifest.json", "call_record.json", "system_prompt.md", "raw_response.json", "finalized_response.json", "approved-preview-contact-sheet.png", "final-candidate-contact-sheet.png", "approved-vs-final-comparison-sheet.png"]
-    missing = [name for name in required_files if not (package / name).is_file()]
+    from p5_reviewer_evidence import validate_p5_reviewer_evidence
+    return validate_p5_reviewer_evidence(package, expected_profile="deck_consistency", require_live=True)
+
+
+def _prepare_p4_evidence(work_root: Path, *, rebuild: bool, supplied: Path | None) -> Path:
+    if rebuild:
+        p4_work = work_root / "p4-evidence"
+        p4_report = work_root / "p4-evidence-gate.json"
+        command = [sys.executable, str(ROOT / "tools" / "reconstruction" / "p4_reconstruction_eval.py"), "--all", "--work-root", str(p4_work), "--report", str(p4_report), "--python", sys.executable]
+        completed = subprocess.run(command, cwd=ROOT, capture_output=True, text=True, encoding="utf-8", errors="replace")
+        if completed.returncode:
+            raise RuntimeError(completed.stdout.strip() or completed.stderr.strip() or "P4 evidence rebuild failed")
+        supplied = p4_work / "D03"
+    if supplied is None:
+        raise RuntimeError("deterministic gate requires --rebuild-p4-evidence or --p4-evidence-root")
+    root = supplied.resolve()
+    required = ["reconstruction-state.json", "reconstruction-manifest.json", "candidate-deck-report.json", "post-assembly-drift-report.json", "candidate-render-report.json", "reconstruction-candidate.pptx", "reconstruction-asset-manifest.json"]
+    missing = [name for name in required if not (root / name).is_file()]
     if missing:
-        raise RuntimeError(f"live evidence package is missing: {missing}")
-    call_record = json.loads((package / "call_record.json").read_text(encoding="utf-8"))
-    bindings = {key: call_record.get(key) for key in ("evidence_sha256", "raw_response_sha256", "finalized_response_sha256", "role_config_sha256", "prompt_sha256", "response_schema_sha256", "context_id", "technical_retry_count")}
-    if not all(bindings.values()):
-        raise RuntimeError("call record is missing required hash bindings")
-    from schema_utils import load_json, validate_schema
-    from deck_consistency_review import compile_consistency_report
-    import sys as _sys
-    _sys.path.insert(0, str(SCRIPTS))
-    evidence = load_json(package / "call_manifest.json")
-    response = load_json(package / "finalized_response.json")
-    from canonical_artifact import canonical_sha256
-    if _sha256(package / "raw_response.json") != call_record["raw_response_sha256"]:
-        raise RuntimeError("raw_response hash does not match call record")
-    if _sha256(package / "finalized_response.json") != call_record["finalized_response_sha256"]:
-        raise RuntimeError("finalized_response hash does not match call record")
-    report = compile_consistency_report(deck_id=evidence.get("deck_id", "D03"), evidence=evidence, reviewer_response=response, call_record=call_record)
-    if report["does_not_satisfy_adr_040"]:
-        raise RuntimeError("evidence package is not a trusted live review")
-    return {"report": report, "call_record": call_record}
+        raise RuntimeError(f"P4 evidence root is incomplete: {missing}")
+    return root
 
 
-def run_deterministic(work_root: Path) -> dict:
+def run_deterministic(work_root: Path, *, rebuild_p4: bool, p4_evidence_root: Path | None, report_path: Path) -> dict:
     work_root.mkdir(parents=True, exist_ok=True)
-    d03 = _d03_deterministic(work_root)
+    p4_root = _prepare_p4_evidence(work_root, rebuild=rebuild_p4, supplied=p4_evidence_root)
+    d03 = _d03_deterministic(work_root, p4_root)
     fixtures = _d05_d08_fixtures()
     state = json.loads((work_root / "D03" / "state.json").read_text(encoding="utf-8")) if (work_root / "D03" / "state.json").is_file() else {"state": "not_run"}
     report = {
@@ -230,6 +226,7 @@ def run_deterministic(work_root: Path) -> dict:
         "status": "pending_live_evidence",
         "deterministic_gate": "pass" if d03["status"] == "pass" and all(item["status"] == "pass" for item in fixtures) else "fail",
         "package_candidate_hash_closure": d03.get("package_candidate_hash_closure", "n/a"),
+        "package_candidate_manifest_sha256": d03.get("package_candidate_manifest_sha256"),
         "formal_delivery_created": False,
         "does_not_satisfy_adr_040": True,
         "candidate_hash_drift": 0,
@@ -247,32 +244,52 @@ def run_deterministic(work_root: Path) -> dict:
         "state": state["state"],
         "cases": [d03, *fixtures],
     }
-    out = ROOT / "reports" / "p5" / "p5-final-deck-delivery-gate.json"
-    out.parent.mkdir(parents=True, exist_ok=True)
-    out.write_text(json.dumps(report, ensure_ascii=False, indent=2) + chr(10), encoding="utf-8", newline=chr(10))
+    from p5_atomic import write_once_p5_artifact
+    write_once_p5_artifact(report_path.resolve(), report)
     return report
 
 
-def run_consume_live(package: Path, work_root: Path) -> dict:
+def run_consume_live(package: Path, work_root: Path, *, p4_evidence_root: Path, dist_root: Path, output_name: str, report_path: Path) -> dict:
     validated = _validate_live_evidence(package)
-    # Evidence trusted: forward to policy -> decision -> formal packaging via manage_delivery
-    # (the caller supplies state/artifacts; this tool verifies the chain end to end).
-    report = {
-        "schema_version": "1.0",
-        "phase": "P5-final-deck-delivery",
-        "status": "delivery_authorized",
-        "deterministic_gate": "pass",
-        "package_candidate_hash_closure": "pass",
-        "formal_delivery_created": True,
-        "does_not_satisfy_adr_040": False,
-        "live_deck_review": "complete",
-        "call_record_context_id": validated["call_record"].get("context_id"),
-        "reviewer_recommendation": validated["report"]["reviewer_recommendation"],
-        "next": "policy -> create-decision -> lock-packaging-runtime -> formal package -> verify",
+    gate = work_root.resolve() / "D03"
+    p4 = p4_evidence_root.resolve()
+    if validated["manifest"].get("task_id") != "D03":
+        raise RuntimeError("live review evidence belongs to another deck")
+    current_inputs = {
+        "approved-preview-contact-sheet.png": gate / "approved-preview-contact-sheet.png",
+        "final-candidate-contact-sheet.png": gate / "final-candidate-contact-sheet.png",
+        "approved-vs-final-comparison-sheet.png": gate / "approved-vs-final-comparison-sheet.png",
+        "deck-visual-system-summary.json": gate / "review-inputs" / "deck-visual-system-summary.json",
+        "deck-final-qa-report.json": gate / "review-inputs" / "deck-final-qa-report.json",
+        "powerpoint-roundtrip-report.json": gate / "review-inputs" / "powerpoint-roundtrip-report.json",
+        "p4-fidelity-inheritance.json": gate / "review-inputs" / "p4-fidelity-inheritance.json",
+        "exception-review-hashes.json": gate / "review-inputs" / "exception-review-hashes.json",
     }
-    out = ROOT / "reports" / "p5" / "p5-live-review-consume.json"
-    out.parent.mkdir(parents=True, exist_ok=True)
-    out.write_text(json.dumps(report, ensure_ascii=False, indent=2) + chr(10), encoding="utf-8", newline=chr(10))
+    for name, path in current_inputs.items():
+        if _sha256(path) != validated["input_hashes"].get(name):
+            raise RuntimeError(f"live review input is stale: {name}")
+    live_report = gate / "deck-consistency-live-report.json"
+    _cli("record-deck-review", "--state", str(gate / "state.json"), "--evidence", str(gate / "deck-evidence.json"), "--evidence-package", str(package), "--output", str(live_report))
+    evaluation_path = gate / "evaluation.json"
+    evaluation = _cli("evaluate", "--state", str(gate / "state.json"), "--deck-consistency-report", str(live_report), "--output", str(evaluation_path))
+    state = json.loads((gate / "state.json").read_text(encoding="utf-8"))
+    if evaluation["policy_status"] == "awaiting_warning_acceptance":
+        report = {"schema_version":"1.0","phase":"P5-final-deck-delivery","status":"awaiting_warning_acceptance","deterministic_gate":"pass","formal_delivery_created":False,"does_not_satisfy_adr_040":False,"live_deck_review":"complete","state":state["state"],"call_record_context_id":validated["call_record"]["context_id"]}
+        from p5_atomic import write_once_p5_artifact
+        write_once_p5_artifact(report_path.resolve(), report)
+        return report
+    if evaluation["policy_status"] != "pass":
+        report = {"schema_version":"1.0","phase":"P5-final-deck-delivery","status":"not_deliverable","deterministic_gate":"pass","formal_delivery_created":False,"does_not_satisfy_adr_040":False,"live_deck_review":"complete","state":state["state"],"call_record_context_id":validated["call_record"]["context_id"]}
+        from p5_atomic import write_once_p5_artifact
+        write_once_p5_artifact(report_path.resolve(), report)
+        return report
+    decision_path = gate / "decision.json"
+    _cli("create-decision", "--state", str(gate / "state.json"), "--candidate-pptx", str(p4 / "reconstruction-candidate.pptx"), "--qa-report", str(gate / "qa-report.json"), "--roundtrip-report", str(gate / "roundtrip-report.json"), "--deck-consistency-report", str(live_report), "--evaluation", str(evaluation_path), "--p4-candidate-report", str(p4 / "candidate-deck-report.json"), "--output", str(decision_path))
+    formal = _cli("package", "--state", str(gate / "state.json"), "--mode", "formal", "--output-name", output_name, "--candidate-pptx", str(p4 / "reconstruction-candidate.pptx"), "--dist-root", str(dist_root), "--runtime-lock", str(gate / "runtime-lock.json"), "--qa-report", str(gate / "qa-report.json"), "--deck-consistency-report", str(live_report), "--roundtrip-report", str(gate / "roundtrip-report.json"), "--decision", str(decision_path), "--final-render-manifest", str(gate / "final-render-manifest.json"), "--contact-sheets-dir", str(gate), "--final-renders-dir", str(gate / "final-render"), "--p4-asset-manifest", str(p4 / "reconstruction-asset-manifest.json"), "--p4-evidence-root", str(ROOT / "tests" / "fixtures" / "p3"))
+    _cli("verify", "--state", str(gate / "state.json"), "--delivery-dir", str(Path(formal["dist"])), "--dist-root", str(dist_root))
+    report = {"schema_version":"1.0","phase":"P5-final-deck-delivery","status":"pass","deterministic_gate":"pass","formal_delivery_created":True,"does_not_satisfy_adr_040":False,"live_deck_review":"complete","state":"delivered","call_record_context_id":validated["call_record"]["context_id"],"delivered_pptx_sha256":formal["delivered_pptx_sha256"],"provenance_sha256":formal["provenance_sha256"]}
+    from p5_atomic import write_once_p5_artifact
+    write_once_p5_artifact(report_path.resolve(), report)
     return report
 
 
@@ -281,9 +298,16 @@ def parser() -> argparse.ArgumentParser:
     sub = result.add_subparsers(dest="mode", required=True)
     det = sub.add_parser("deterministic")
     det.add_argument("--work-root", type=Path, required=True)
+    det.add_argument("--rebuild-p4-evidence", action="store_true")
+    det.add_argument("--p4-evidence-root", type=Path)
+    det.add_argument("--report", type=Path, required=True)
     live = sub.add_parser("consume-live-review")
     live.add_argument("evidence_package", type=Path)
     live.add_argument("--work-root", type=Path, required=True)
+    live.add_argument("--p4-evidence-root", type=Path, required=True)
+    live.add_argument("--dist-root", type=Path, required=True)
+    live.add_argument("--output-name", required=True)
+    live.add_argument("--report", type=Path, required=True)
     return result
 
 
@@ -297,9 +321,9 @@ def main(argv: list[str] | None = None) -> int:
     args = parser().parse_args(normalized)
     try:
         if args.mode == "deterministic":
-            report = run_deterministic(args.work_root)
+            report = run_deterministic(args.work_root, rebuild_p4=args.rebuild_p4_evidence, p4_evidence_root=args.p4_evidence_root, report_path=args.report)
         else:
-            report = run_consume_live(args.evidence_package, args.work_root)
+            report = run_consume_live(args.evidence_package, args.work_root, p4_evidence_root=args.p4_evidence_root, dist_root=args.dist_root, output_name=args.output_name, report_path=args.report)
         print(json.dumps(report, ensure_ascii=False, indent=2))
         return 0
     except Exception as exc:

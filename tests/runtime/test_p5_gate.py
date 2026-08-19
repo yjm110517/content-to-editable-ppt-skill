@@ -13,6 +13,7 @@ class P5GateTests(unittest.TestCase):
         self.assertEqual(report["status"], "pending_live_evidence")
         self.assertEqual(report["deterministic_gate"], "pass")
         self.assertEqual(report["package_candidate_hash_closure"], "pass")
+        self.assertRegex(report["package_candidate_manifest_sha256"], "^[a-f0-9]{64}$")
         self.assertEqual(report["formal_delivery_created"], False)
         self.assertEqual(report["does_not_satisfy_adr_040"], True)
         self.assertEqual(report["live_deck_review"], "pending")
@@ -31,6 +32,8 @@ class P5GateTests(unittest.TestCase):
         self.assertFalse(d03["formal_delivery_created"])
         self.assertTrue(d03["does_not_satisfy_adr_040"])
         self.assertEqual(d03["state"], "live_review_pending")
+        self.assertRegex(d03["package_candidate_manifest_sha256"], "^[a-f0-9]{64}$")
+        self.assertFalse(Path(d03["candidate_path"]).is_absolute())
 
     def test_d05_d08_fixtures_no_live_calls(self) -> None:
         report = json.loads((ROOT / "reports" / "p5" / "p5-final-deck-delivery-gate.json").read_text(encoding="utf-8"))

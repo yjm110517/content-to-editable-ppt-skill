@@ -82,6 +82,8 @@ def compile_consistency_report(
     """
     validate_schema("deck_consistency_reviewer_response", reviewer_response, SCHEMA_DIR)
     failures: list[dict[str, str]] = []
+    if reviewer_response.get("deck_id") != deck_id:
+        failures.append(error("$.deck_id", "Reviewer response belongs to another deck", "authority_deck_mismatch"))
     issues = reviewer_response.get("issues", [])
     mandatory = reviewer_response.get("mandatory_checks", {})
     failed_checks = [name for name, status in mandatory.items() if status is False]

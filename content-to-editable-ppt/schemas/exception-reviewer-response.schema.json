@@ -3,8 +3,11 @@
   "$id": "exception-reviewer-response.schema.json",
   "type": "object",
   "additionalProperties": false,
-  "required": ["reviewer_recommendation", "issues"],
+  "required": ["schema_version", "artifact_type", "deck_id", "reviewer_recommendation", "issues"],
   "properties": {
+    "schema_version": {"const": "1.0"},
+    "artifact_type": {"const": "exception_reviewer_response"},
+    "deck_id": {"type": "string", "minLength": 1},
     "reviewer_recommendation": { "enum": ["pass", "revise", "fail"] },
     "issues": {
       "type": "array",

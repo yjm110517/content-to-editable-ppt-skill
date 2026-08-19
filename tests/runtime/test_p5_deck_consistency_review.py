@@ -27,6 +27,9 @@ def _evidence() -> dict:
 
 def _pass_response() -> dict:
     return {
+        "schema_version": "1.0",
+        "artifact_type": "deck_consistency_reviewer_response",
+        "deck_id": "D03",
         "reviewer_recommendation": "pass",
         "issues": [],
         "mandatory_checks": {

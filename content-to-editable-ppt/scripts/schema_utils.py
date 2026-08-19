@@ -113,6 +113,7 @@ SCHEMA_FILES = {
     "delivery_provenance": "delivery-provenance.schema.json",
     "delivery_package_candidate_manifest": "delivery-package-candidate-manifest.schema.json",
     "deck_consistency_reviewer_response": "deck-consistency-reviewer-response.schema.json",
+    "p5_reviewer_call_record": "p5-reviewer-call-record.schema.json",
     "exception_reviewer_response": "exception-reviewer-response.schema.json",
     "deck_consistency_report": "deck-consistency-report.schema.json",
 }
@@ -202,6 +203,7 @@ SUPPORTED_SCHEMA_VERSIONS = {
     "delivery_provenance": {"1.0"},
     "delivery_package_candidate_manifest": {"1.0"},
     "deck_consistency_reviewer_response": {"1.0"},
+    "p5_reviewer_call_record": {"1.0"},
     "exception_reviewer_response": {"1.0"},
     "deck_consistency_report": {"1.0"},
     "asset_manifest": {"1.3", "1.4"},

@@ -7,7 +7,7 @@
     "schema_version",
     "artifact_type",
     "deck_id",
-    "roundtrip_copy_sha256",
+    "original_candidate_sha256",
     "structural_comparison",
     "canonical_text_same",
     "element_counts_same",
@@ -31,7 +31,7 @@
       "type": "string",
       "minLength": 1
     },
-    "roundtrip_copy_sha256": {
+    "original_candidate_sha256": {
       "$ref": "#/$defs/hash"
     },
     "structural_comparison": {

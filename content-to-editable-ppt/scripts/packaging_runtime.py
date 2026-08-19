@@ -227,7 +227,8 @@ def build_package_candidate(
         }
         validate_schema("delivery_package_candidate_manifest", candidate_manifest, SCHEMA_DIR)
         (stage / f"{output_name}_package-candidate-manifest.json").write_bytes(p5_canonical_bytes(candidate_manifest))
-        candidate_files[f"{output_name}_package-candidate-manifest.json"] = file_sha256(stage / f"{output_name}_package-candidate-manifest.json")
+        manifest_sha256 = file_sha256(stage / f"{output_name}_package-candidate-manifest.json")
+        candidate_files[f"{output_name}_package-candidate-manifest.json"] = manifest_sha256
 
         final_files = {name: file_sha256(stage / name) for name in sorted(path.name for path in stage.iterdir() if path.is_file())}
         installed = _install_atomically(stage, candidate_dir, work)
@@ -237,6 +238,7 @@ def build_package_candidate(
             "delivery_forbidden": True,
             "formal_delivery_created": False,
             "package_candidate_hash_closure": "pass",
+            "package_candidate_manifest_sha256": manifest_sha256,
             "files": final_files,
             "idempotent": not installed,
             "authority_hashes": authority_hashes,
@@ -244,6 +246,33 @@ def build_package_candidate(
     finally:
         if stage.exists():
             shutil.rmtree(stage, ignore_errors=True)
+
+
+def verify_package_candidate(*, target: Path, expected_manifest_sha256: str) -> dict[str, Any]:
+    root = target.resolve()
+    if not root.is_dir() or contains_reparse_point(root, root.parent):
+        raise ContractError([error("$.target", "package candidate directory is missing or unsafe", "delivery_integrity")])
+    entries = list(root.iterdir())
+    if any(item.is_dir() for item in entries) or len(entries) != 6:
+        raise ContractError([error("$.target", "package candidate must contain exactly six files", "delivery_integrity")])
+    manifests = [item for item in entries if item.name.endswith("_package-candidate-manifest.json")]
+    if len(manifests) != 1:
+        raise ContractError([error("$.target", "package candidate manifest is missing or ambiguous", "delivery_integrity")])
+    manifest_path = manifests[0]
+    manifest_sha = file_sha256(manifest_path)
+    if manifest_sha != expected_manifest_sha256:
+        raise ContractError([error("$.manifest", "package candidate manifest self-hash mismatch", "delivery_integrity")])
+    manifest = load_json(manifest_path)
+    validate_schema("delivery_package_candidate_manifest", manifest, SCHEMA_DIR)
+    if manifest.get("delivery_forbidden") is not True or manifest.get("formal_decision_sha256") is not None:
+        raise ContractError([error("$.manifest", "package candidate authority flags are invalid", "delivery_integrity")])
+    sibling_paths = {item.name: item for item in entries if item != manifest_path}
+    if set(sibling_paths) != set(manifest["package_candidate_files"]):
+        raise ContractError([error("$.manifest.package_candidate_files", "package candidate file set mismatch", "delivery_integrity")])
+    failures = [name for name, digest in manifest["package_candidate_files"].items() if file_sha256(sibling_paths[name]) != digest]
+    if failures:
+        raise ContractError([error("$.manifest.package_candidate_files", f"package candidate sibling hash mismatch: {failures}", "delivery_integrity")])
+    return {"status": "pass", "manifest_sha256": manifest_sha, "files": sorted(sibling_paths)}
 
 
 def package_formal_delivery(

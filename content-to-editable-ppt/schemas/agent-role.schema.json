@@ -4,7 +4,17 @@
   "title": "Agent Role Configuration",
   "type": "object",
   "additionalProperties": false,
-  "required": ["schema_version", "role_id", "role_version", "context_policy", "prompt_file", "output_schema", "parameters", "model_policy", "input_profiles", "forbidden_actions"],
+  "required": ["schema_version", "role_id", "role_version", "context_policy", "parameters", "model_policy", "input_profiles", "forbidden_actions"],
+  "allOf": [
+    {"oneOf": [
+      {"required": ["prompt_file"], "not": {"required": ["prompt_files"]}},
+      {"required": ["prompt_files"], "not": {"required": ["prompt_file"]}}
+    ]},
+    {"oneOf": [
+      {"required": ["output_schema"], "not": {"required": ["output_schemas"]}},
+      {"required": ["output_schemas"], "not": {"required": ["output_schema"]}}
+    ]}
+  ],
   "properties": {
     "schema_version": {"const": "1.3"},
     "role_id": {"enum": ["layout-planner", "visual-reviewer"]},
@@ -15,6 +25,14 @@
       "additionalProperties": {
         "type": "string",
         "pattern": "^\\.\\./schemas/[a-z0-9_-]+\\.schema\\.json$"
+      }
+    },
+    "prompt_files": {
+      "type": "object",
+      "minProperties": 1,
+      "additionalProperties": {
+        "type": "string",
+        "pattern": "^prompts/[a-z0-9_-]+\\.md$"
       }
     },
     "context_policy": {"const": "fresh"},

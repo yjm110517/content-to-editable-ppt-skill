@@ -130,13 +130,13 @@ Read [references/iteration-and-delivery.md](references/iteration-and-delivery.md
 
 P5 deterministic work uses tools/delivery/p5_delivery_eval.py. It never creates a formal delivery on its own.
 
-1. python tools/delivery/p5_delivery_eval.py --deterministic --work-root <work>
+1. python tools/delivery/p5_delivery_eval.py --deterministic --rebuild-p4-evidence --work-root <work> --report <work>/p5-gate.json
    - Runs the D03 deterministic chain (P4 Compatibility View authority, final integrity with real PowerPoint, deck QA, roundtrip, package candidate) and D05/D08 fixtures.
    - Produces delivery-package-candidate/ only: delivery_forbidden = true, formal_decision_sha256 = null.
    - Ends in state live_review_pending. Gate report status = pending_live_evidence; formal_delivery_created = false; does_not_satisfy_adr_040 = true.
 2. A live Deck Consistency Review is REQUIRED by ADR-040 before any policy evaluation, decision, or formal packaging. Frozen replays never satisfy it.
-3. python tools/delivery/p5_delivery_eval.py --consume-live-review <evidence-package> --work-root <work>
-   - Validates call_manifest.json, call_record.json (evidence/raw/finalized/role/prompt/schema hash bindings + context_id + retries), system_prompt.md, three contact sheets, raw_response.json, finalized_response.json.
+3. python tools/delivery/p5_delivery_eval.py --consume-live-review <evidence-package> --work-root <work> --p4-evidence-root <work>/p4-evidence/D03 --dist-root <dist> --output-name <name> --report <work>/p5-final-gate.json
+   - Validates call_manifest.json, call_record.json (evidence/raw/finalized/role/prompt/schema/ledger hash bindings + fresh context + retries), call-ledger.json, system_prompt.md, three contact sheets, raw_response.json, finalized_response.json.
    - Only then: evaluate -> create-decision -> lock-packaging-runtime -> formal package (7 files) -> verify (two-layer hash closure) -> delivered.
 
 Deterministic state must stop at live_review_pending with Decision = absent and Formal Dist = absent. Packaging is a pure function: same inputs + same runtime lock -> identical ZIP bytes; a packaging runtime fingerprint mismatch stops delivery. The delivered PPTX is byte-identical to the P4 candidate deck.

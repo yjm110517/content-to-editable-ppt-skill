@@ -47,7 +47,7 @@ Provenance 不包含自身 Hash，避免自引用循环。Delivery Artifact Hash
 
 ```text
 p4_complete → p5_preflight → final_integrity_check → deterministic_deck_qa → roundtrip_check
-→ exception_review_routing → deck_consistency_review → evaluating_delivery_policy
+→ exception_review_routing → deck_consistency_review_ready → live_review_pending → deck_consistency_review_complete → evaluating_delivery_policy
 → packaging → delivered
 分支：p4_revalidation_required / p5_failed / upstream_revision_required / awaiting_warning_acceptance / delivery_approved
 ```

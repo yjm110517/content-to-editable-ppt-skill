@@ -204,6 +204,7 @@ def _canonicalize(path: Path, width: int, height: int) -> None:
 
 
 def run_roundtrip(*, deck_id: str, candidate_pptx: Path, p4_manifest: dict[str, Any], output: Path, width_px: int, height_px: int, timeout_seconds: int = 240) -> dict[str, Any]:
+    original_sha = file_sha256(candidate_pptx)
     manifest_slides = sorted(p4_manifest.get("slides", []), key=lambda item: item["order"])
     original_snapshot = _structural_snapshot(candidate_pptx, manifest_slides)
     original_size = _slide_size(candidate_pptx)
@@ -300,7 +301,7 @@ def run_roundtrip(*, deck_id: str, candidate_pptx: Path, p4_manifest: dict[str, 
             "schema_version": "1.0",
             "artifact_type": "powerpoint_roundtrip_report",
             "deck_id": deck_id,
-            "roundtrip_copy_sha256": file_sha256(saved_path),
+            "original_candidate_sha256": original_sha,
             "structural_comparison": structural,
             "canonical_text_same": canonical_text_same,
             "element_counts_same": element_counts_same,

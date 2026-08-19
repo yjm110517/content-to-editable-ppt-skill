@@ -74,7 +74,9 @@ p4_complete
    ├─ blocking → p5_failed
    └─ pass
       → exception_review_routing
-      → deck_consistency_review
+      → deck_consistency_review_ready
+      → live_review_pending
+      → deck_consistency_review_complete
       → evaluating_delivery_policy
          ├─ upstream_revision_required
          ├─ awaiting_warning_acceptance

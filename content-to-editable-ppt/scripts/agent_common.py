@@ -53,7 +53,7 @@ def ensure_under(path: Path, root: Path) -> Path:
     return _within(path, root)
 
 
-def load_role(role: str, schema_dir: Path = SCHEMA_DIR) -> tuple[dict[str, Any], Path, Path, Path]:
+def load_role(role: str, schema_dir: Path = SCHEMA_DIR, *, mode: str | None = None) -> tuple[dict[str, Any], Path, Path, Path]:
     filename = "planner.yaml" if role == "planner" else "visual_reviewer.yaml"
     config_path = AGENT_DIR / filename
     try:
@@ -67,8 +67,20 @@ def load_role(role: str, schema_dir: Path = SCHEMA_DIR) -> tuple[dict[str, Any],
     expected = "layout-planner" if role == "planner" else "visual-reviewer"
     if config["role_id"] != expected:
         raise AssetError("role_id does not match selected role", path=str(config_path), code="agent_config", exit_code=2)
-    prompt_path = (AGENT_DIR / config["prompt_file"]).resolve()
-    output_schema = (AGENT_DIR / config["output_schema"]).resolve()
+    if "prompt_files" in config:
+        if mode is None or mode not in config["prompt_files"]:
+            raise AssetError("agent mode has no configured prompt", path=str(config_path), code="agent_config", exit_code=2)
+        prompt_value = config["prompt_files"][mode]
+    else:
+        prompt_value = config["prompt_file"]
+    if "output_schemas" in config:
+        if mode is None or mode not in config["output_schemas"]:
+            raise AssetError("agent mode has no configured output schema", path=str(config_path), code="agent_config", exit_code=2)
+        output_value = config["output_schemas"][mode]
+    else:
+        output_value = config["output_schema"]
+    prompt_path = (AGENT_DIR / prompt_value).resolve()
+    output_schema = (AGENT_DIR / output_value).resolve()
     for candidate, label in ((prompt_path, "prompt"), (output_schema, "output schema")):
         try:
             candidate.relative_to(SKILL_DIR.resolve())
@@ -118,12 +130,14 @@ def load_call_bundle(call_dir: Path, *, work_root: Path, role: str, mode: str, s
     if call_dir != expected:
         raise AssetError("call directory does not match manifest identity", path=str(call_dir), code="call_bundle")
 
-    config, config_path, prompt_path, output_schema_path = load_role(role, schema_dir)
+    config, config_path, prompt_path, output_schema_path = load_role(role, schema_dir, mode=mode)
     expected_config_hash = canonical_yaml_hash(config_path)
     expected_prompt_hash = sha256_bytes(normalized_text_bytes(prompt_path))
     expected_schema_hash = sha256_file(output_schema_path)
     if manifest.get("config_sha256") != expected_config_hash or manifest.get("prompt_sha256") != expected_prompt_hash or manifest.get("output_schema_sha256") != expected_schema_hash:
         raise AssetError("agent role configuration changed after call preparation", path=str(call_dir), code="hash_conflict", exit_code=9)
+    if manifest.get("input_profile", mode) != mode or manifest.get("selected_output_schema", output_schema_path.name) != output_schema_path.name or manifest.get("selected_output_schema_sha256", expected_schema_hash) != expected_schema_hash:
+        raise AssetError("call manifest selected profile/schema mismatch", path=str(call_dir / "call_manifest.json"), code="hash_conflict", exit_code=9)
     if sha256_file(call_dir / "system_prompt.md") != expected_prompt_hash:
         raise AssetError("system prompt hash mismatch", path=str(call_dir / "system_prompt.md"), code="hash_conflict", exit_code=9)
 
@@ -162,7 +176,9 @@ def load_call_bundle(call_dir: Path, *, work_root: Path, role: str, mode: str, s
         raise AssetError("agent call did not succeed", path=str(call_dir / "call_record.json"), code="agent_runtime", exit_code=5)
 
     response = load_json(call_dir / "raw_response.json")
-    response_kind = "planner_response" if role == "planner" else "reviewer_response"
+    response_kind = "planner_response" if role == "planner" else {"review": "reviewer_response", "exception_batch": "exception_reviewer_response", "deck_consistency": "deck_consistency_reviewer_response"}.get(mode)
+    if response_kind is None:
+        raise AssetError("unsupported reviewer response mode", path=mode, code="agent_config", exit_code=2)
     validate_schema(response_kind, response, schema_dir)
     validate_semantics(response_kind, response)
     return manifest, record, response, input_hashes
