@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import hashlib
 import json
+import os
 import shutil
 import sys
 import tempfile
@@ -173,6 +174,13 @@ class P5PackagingTests(unittest.TestCase):
             self.assertEqual(len([path for path in target.iterdir() if path.is_file()]), 7)
             verification = verify_delivery(target=target, provenance_expected_sha256=result["provenance_sha256"], dist_root=base / "dist")
             self.assertEqual(verification["delivery_artifact_hash_closure"], "pass")
+            with tempfile.TemporaryDirectory(dir=ROOT / "work") as local_temporary:
+                local_dist = Path(local_temporary) / "dist"
+                local_target = local_dist / "deck"
+                shutil.copytree(target, local_target)
+                relative_dist = Path(os.path.relpath(local_dist, Path.cwd()))
+                relative_verification = verify_delivery(target=relative_dist / "deck", provenance_expected_sha256=result["provenance_sha256"], dist_root=relative_dist)
+                self.assertEqual(relative_verification["delivery_artifact_hash_closure"], "pass")
 
     def test_write_once_artifact_preserves_old_bytes(self) -> None:
         with tempfile.TemporaryDirectory() as temporary:
