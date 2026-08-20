@@ -229,32 +229,10 @@
       }
     },
     "call_record": {
-      "type": ["object", "null"],
-      "additionalProperties": false,
-      "required": [
-        "evidence_sha256",
-        "raw_response_sha256",
-        "finalized_response_sha256",
-        "role_config_sha256",
-        "prompt_sha256",
-        "response_schema_sha256",
-        "resolved_model_identity_sha256",
-        "transport_request_sha256",
-        "context_id",
-        "technical_retry_count"
-      ],
-      "properties": {
-        "evidence_sha256": { "$ref": "#/$defs/hash" },
-        "raw_response_sha256": { "$ref": "#/$defs/hash" },
-        "finalized_response_sha256": { "$ref": "#/$defs/hash" },
-        "role_config_sha256": { "$ref": "#/$defs/hash" },
-        "prompt_sha256": { "$ref": "#/$defs/hash" },
-        "response_schema_sha256": { "$ref": "#/$defs/hash" },
-        "resolved_model_identity_sha256": { "$ref": "#/$defs/hash" },
-        "transport_request_sha256": { "$ref": "#/$defs/hash" },
-        "context_id": { "type": "string", "minLength": 1 },
-        "technical_retry_count": { "type": "integer", "minimum": 0 }
-      }
+      "oneOf": [
+        {"$ref": "p5-reviewer-call-record.schema.json"},
+        {"type": "null"}
+      ]
     },
     "does_not_satisfy_adr_040": { "type": "boolean" }
   },

@@ -44,10 +44,13 @@ def _pass_response() -> dict:
 
 def _call_record() -> dict:
     return {
+        "schema_version": "1.0", "artifact_type": "p5_reviewer_call_record", "deck_id": "D03",
+        "input_profile": "deck_consistency", "call_id": "deck-review-1", "call_manifest_sha256": "0" * 64,
         "evidence_sha256": "a" * 64, "raw_response_sha256": "b" * 64, "finalized_response_sha256": "c" * 64,
         "role_config_sha256": "d" * 64, "prompt_sha256": "e" * 64, "response_schema_sha256": "f" * 64,
         "resolved_model_identity_sha256": "1" * 64, "transport_request_sha256": "2" * 64,
-        "context_id": "ctx-live-001", "technical_retry_count": 0,
+        "call_ledger_sha256": "3" * 64, "context_id": "ctx-live-001", "parent_context_id": None,
+        "technical_retry_count": 0, "live": True, "status": "succeeded",
     }
 
 
