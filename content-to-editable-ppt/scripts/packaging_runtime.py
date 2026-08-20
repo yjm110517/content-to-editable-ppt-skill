@@ -386,8 +386,8 @@ def package_formal_delivery(
 
 def verify_delivery(*, target: Path, provenance_expected_sha256: str, dist_root: Path) -> dict[str, Any]:
     """Reverse-verify a delivered directory: closure of the six sibling artifacts and provenance self-hash."""
-    _safe_root(dist_root, "dist_root")
-    target = _require_under(target.resolve(), dist_root, "target")
+    resolved_dist_root = _safe_root(dist_root, "dist_root")
+    target = _require_under(target.resolve(), resolved_dist_root, "target")
     failures: list[dict[str, str]] = []
     files = {path.name: path for path in target.iterdir() if path.is_file()}
     provenance_name = next((name for name in files if name.endswith("_provenance.json")), None)
