@@ -10,6 +10,7 @@ if sys_path not in sys.path:
     sys.path.insert(0, sys_path)
 
 from delivery_policy import evaluate_delivery_policy  # noqa: E402
+from manage_delivery import decision_policy_summary  # noqa: E402
 from schema_utils import ContractError  # noqa: E402
 
 
@@ -44,6 +45,14 @@ class P5DeliveryPolicyTests(unittest.TestCase):
     def test_negative_counts_rejected(self) -> None:
         with self.assertRaises(ContractError):
             evaluate_delivery_policy(severity_counts={"critical": -1, "major": 0, "minor": 0, "suggestion": 0}, review_incomplete=0, unexpected_reviewer_calls=0)
+
+    def test_decision_summary_excludes_non_authorizing_suggestions(self) -> None:
+        summary = decision_policy_summary({
+            "severity_counts": {"critical": 0, "major": 0, "minor": 0, "suggestion": 2},
+            "review_incomplete": 0,
+            "unexpected_reviewer_calls": 0,
+        })
+        self.assertEqual(set(summary), {"critical", "major", "minor", "review_incomplete", "unexpected_reviewer_calls"})
 
 
 if __name__ == "__main__":
