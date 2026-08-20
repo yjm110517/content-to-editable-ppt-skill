@@ -33,6 +33,21 @@ def _utc_now_iso() -> str:
     return datetime.now(timezone.utc).isoformat(timespec="seconds").replace("+00:00", "Z")
 
 
+def decision_policy_summary(evaluation: dict) -> dict[str, int]:
+    """Project a policy evaluation into the frozen Delivery Decision contract.
+
+    Suggestions are non-blocking review observations and are intentionally not
+    part of the delivery authorization summary.
+    """
+    return {
+        "critical": evaluation["severity_counts"].get("critical", 0),
+        "major": evaluation["severity_counts"].get("major", 0),
+        "minor": evaluation["severity_counts"].get("minor", 0),
+        "review_incomplete": evaluation["review_incomplete"],
+        "unexpected_reviewer_calls": evaluation["unexpected_reviewer_calls"],
+    }
+
+
 def _load_state(path: Path) -> dict:
     state = load_json(path)
     validate_schema("deck_delivery_state", state, SCHEMA_DIR)
@@ -415,7 +430,7 @@ def run(args: argparse.Namespace) -> dict:
             "artifact_type": "deck_delivery_decision",
             "deck_id": state["deck_id"],
             "status": status,
-            "policy_summary": {key: evaluation["severity_counts"].get(key, 0) for key in ("critical", "major", "minor", "suggestion")} | {"review_incomplete": evaluation["review_incomplete"], "unexpected_reviewer_calls": evaluation["unexpected_reviewer_calls"]},
+            "policy_summary": decision_policy_summary(evaluation),
             "delivered_pptx_sha256": candidate_sha,
             "references": references,
             "p4_candidate_report_sha256": canonical_sha256(p4_candidate_report),
