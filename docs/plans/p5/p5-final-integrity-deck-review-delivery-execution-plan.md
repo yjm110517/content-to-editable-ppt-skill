@@ -5,14 +5,14 @@
 当前基线：
 
 ```text
-main = b1554b1 + P5 deterministic hardening merged
+main = f92b39d + P5 live-review production fixes merged
 P0–P4 = COMPLETE
 P5 Deterministic Implementation = COMPLETE
 P5 Package Candidate = VERIFIED (delivery_forbidden = true)
-P5 Live Deck Review = PENDING (ADR-040)
-P5 Formal Delivery = NOT CREATED
-P5 Formally Complete = false
-v1 End-to-End = false
+P5 Live Deck Review = COMPLETE (D03 LIVE EVIDENCE, ADR-040)
+P5 Formal Delivery = VERIFIED (7-file immutable package)
+P5 Formally Complete = true
+v1 End-to-End = COMPLETE
 Production-quality Release Validated = false
 Release / Tag = NOT CREATED
 ```
