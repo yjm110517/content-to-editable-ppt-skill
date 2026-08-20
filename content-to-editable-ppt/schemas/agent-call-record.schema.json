@@ -39,7 +39,28 @@
     "call_id": {"type": "string", "minLength": 1},
     "context_id": {"type": "string", "minLength": 1},
     "parent_context_id": {"type": "null"},
-    "status": {"enum": ["succeeded", "failed"]}
+    "status": {"enum": ["succeeded", "failed"]},
+    "resolved_model_identity": {
+      "oneOf": [
+        {"$ref": "reviewer-model-identity.schema.json"},
+        {"type": "null"}
+      ]
+    },
+    "resolved_model_identity_sha256": {
+      "oneOf": [
+        {"$ref": "#/$defs/hash"},
+        {"type": "null"}
+      ]
+    },
+    "transport_request_sha256": {
+      "oneOf": [
+        {"$ref": "#/$defs/hash"},
+        {"type": "null"}
+      ]
+    },
+    "prepared_at_utc": {"type": ["string", "null"]},
+    "invoked_at_utc": {"type": ["string", "null"]},
+    "completed_at_utc": {"type": ["string", "null"]}
   },
   "$defs": {
     "hash": {"type": "string", "pattern": "^[a-f0-9]{64}$"}

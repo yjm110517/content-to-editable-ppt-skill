@@ -18,6 +18,7 @@ from agent_common import (
     sha256_bytes,
     stage_directory,
 )
+from agent_request_evidence import input_manifest_entry
 from asset_common import AssetError, atomic_write_bytes, atomic_write_json, failure, load_contract, log_event, success
 from schema_utils import load_json
 
@@ -186,7 +187,7 @@ def main() -> int:
             for name, source in inputs.items():
                 authorized = None if source.resolve().is_relative_to(SKILL_DIR.resolve()) else work_root
                 digest = copy_input(source, stage / "inputs" / name, authorized_root=authorized)
-                entries.append({"name": name, "filename": name, "sha256": digest})
+                entries.append(input_manifest_entry(name, digest))
             schema_hash = next(item["sha256"] for item in entries if item["name"] == output_schema.name)
             manifest = {
                 "schema_version": "1.3", "task_id": task_id, "iteration": args.iteration,

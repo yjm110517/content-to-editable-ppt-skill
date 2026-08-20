@@ -46,6 +46,7 @@ def _call_record() -> dict:
     return {
         "evidence_sha256": "a" * 64, "raw_response_sha256": "b" * 64, "finalized_response_sha256": "c" * 64,
         "role_config_sha256": "d" * 64, "prompt_sha256": "e" * 64, "response_schema_sha256": "f" * 64,
+        "resolved_model_identity_sha256": "1" * 64, "transport_request_sha256": "2" * 64,
         "context_id": "ctx-live-001", "technical_retry_count": 0,
     }
 
@@ -98,6 +99,45 @@ class P5DeckConsistencyReviewTests(unittest.TestCase):
         report = compile_consistency_report(deck_id="D03", evidence=_evidence(), reviewer_response=response, call_record=_call_record())
         self.assertEqual(report["structured_upstream_revision"][0]["responsible_stage"], "p4")
         self.assertEqual(report["structured_upstream_revision"][0]["required_revision_scope"], "local_pages")
+
+    def test_production_cross_slide_outlier_compiles(self) -> None:
+        response = _pass_response()
+        response["schema_version"] = "1.1"
+        response["reviewer_recommendation"] = "revise"
+        response["issues"] = [{
+            "issue_id": "P5-ABC123DEF456", "severity": "minor", "dimension": "typography", "slide_ids": ["S03"],
+            "message": "S03 uses a different title hierarchy from the repeated S01/S02 pattern.",
+            "finding_scope": "cross_slide_systemic",
+            "cross_slide_basis": {"consistency_rule": "deck title hierarchy", "compared_slide_ids": ["S01", "S02", "S03"], "comparison_summary": "S01 and S02 establish the repeated hierarchy; S03 is the outlier.", "page_level_fidelity_reopened": False},
+            "delivery_impact": {"artifact_change_required": True, "systemic_inconsistency": True, "accessibility_blocker": False},
+        }]
+        response["mandatory_checks"]["typography_consistent"] = False
+        report = compile_consistency_report(deck_id="D03", evidence=_evidence(), reviewer_response=response, call_record=_call_record())
+        self.assertEqual(report["issues"][0]["slide_ids"], ["S03"])
+
+    def test_production_single_page_preference_without_comparison_rejected(self) -> None:
+        response = _pass_response()
+        response["schema_version"] = "1.1"
+        response["issues"] = [{
+            "issue_id": "P5-ABC123DEF456", "severity": "suggestion", "dimension": "density_spacing", "slide_ids": ["S03"],
+            "message": "Move the title left.", "finding_scope": "cross_slide_systemic",
+            "cross_slide_basis": {"consistency_rule": "single page preference", "compared_slide_ids": ["S01", "S02"], "comparison_summary": "No affected slide is included.", "page_level_fidelity_reopened": False},
+            "delivery_impact": {"artifact_change_required": False, "systemic_inconsistency": False, "accessibility_blocker": False},
+        }]
+        with self.assertRaises(ContractError):
+            compile_consistency_report(deck_id="D03", evidence=_evidence(), reviewer_response=response, call_record=_call_record())
+
+    def test_unsafe_suggestion_rejected(self) -> None:
+        response = _pass_response()
+        response["schema_version"] = "1.1"
+        response["issues"] = [{
+            "issue_id": "P5-ABC123DEF456", "severity": "suggestion", "dimension": "palette", "slide_ids": ["S02"],
+            "message": "Systemic palette drift.", "finding_scope": "cross_slide_systemic",
+            "cross_slide_basis": {"consistency_rule": "deck palette", "compared_slide_ids": ["S01", "S02"], "comparison_summary": "S02 differs from S01.", "page_level_fidelity_reopened": False},
+            "delivery_impact": {"artifact_change_required": False, "systemic_inconsistency": True, "accessibility_blocker": False},
+        }]
+        with self.assertRaises(ContractError):
+            compile_consistency_report(deck_id="D03", evidence=_evidence(), reviewer_response=response, call_record=_call_record())
 
     def test_pass_with_failed_check_rejected(self) -> None:
         response = _pass_response()

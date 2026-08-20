@@ -1,0 +1,26 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "reviewer-model-identity.schema.json",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["schema_version", "artifact_type", "provider", "model_id", "model_version_or_runtime_fingerprint", "transport_class", "endpoint_class", "parameters"],
+  "properties": {
+    "schema_version": {"const": "1.0"},
+    "artifact_type": {"const": "reviewer_model_identity"},
+    "provider": {"type": "string", "pattern": "^[A-Za-z0-9._-]+$"},
+    "model_id": {"type": "string", "minLength": 1, "maxLength": 200},
+    "model_version_or_runtime_fingerprint": {"type": "string", "minLength": 1, "maxLength": 300},
+    "transport_class": {"type": "string", "pattern": "^[A-Za-z0-9._-]+$"},
+    "endpoint_class": {"type": "string", "pattern": "^[A-Za-z0-9._-]+$"},
+    "parameters": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["temperature", "top_p", "seed"],
+      "properties": {
+        "temperature": {"type": "number", "minimum": 0, "maximum": 2},
+        "top_p": {"type": "number", "exclusiveMinimum": 0, "maximum": 1},
+        "seed": {"type": ["integer", "null"]}
+      }
+    }
+  }
+}

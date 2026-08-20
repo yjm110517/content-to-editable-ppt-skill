@@ -20,7 +20,7 @@ class P5LiveConsumerTests(unittest.TestCase):
             for path in mapping.values():path.write_bytes(path.name.encode())
             for name in ("deck-evidence.json","qa-report.json","roundtrip-report.json","final-render-manifest.json","runtime-lock.json","state.json"):(gate/name).write_text(json.dumps({"state":"delivery_approved"}) if name=="state.json" else "{}")
             p4=root/"p4";p4.mkdir();(p4/"reconstruction-candidate.pptx").write_bytes(b"pptx");(p4/"candidate-deck-report.json").write_text("{}");(p4/"reconstruction-asset-manifest.json").write_text("{}")
-            trusted={"manifest":{"task_id":"D03"},"call_record":{"context_id":"ctx"},"response":{"reviewer_recommendation":"pass"},"input_hashes":{name:hashlib.sha256(path.read_bytes()).hexdigest() for name,path in mapping.items()}}
+            trusted={"manifest":{"task_id":"D03"},"call_record":{"context_id":"ctx","resolved_model_identity_sha256":"c"*64,"transport_request_sha256":"d"*64},"response":{"reviewer_recommendation":"pass"},"input_hashes":{name:hashlib.sha256(path.read_bytes()).hexdigest() for name,path in mapping.items()}}
             calls=[]
             def fake_cli(*args):
                 calls.append(args);command=args[0]

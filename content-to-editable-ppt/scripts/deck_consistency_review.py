@@ -31,6 +31,45 @@ CONSISTENCY_DIMENSIONS = {
 }
 
 
+def _validate_production_scope(response: dict[str, Any]) -> list[dict[str, str]]:
+    if response.get("schema_version") != "1.1":
+        return []
+    failures: list[dict[str, str]] = []
+    issues = response.get("issues", [])
+    issue_by_id = {item.get("issue_id"): item for item in issues}
+    mandatory = response.get("mandatory_checks", {})
+    for index, item in enumerate(issues):
+        base = f"$.issues[{index}]"
+        compared = set(item["cross_slide_basis"]["compared_slide_ids"])
+        affected = set(item["slide_ids"])
+        if not affected.issubset(compared):
+            failures.append(error(base + ".cross_slide_basis.compared_slide_ids", "cross-slide evidence must include every affected slide", "contract_violation"))
+        if item["severity"] == "suggestion":
+            impact = item["delivery_impact"]
+            if any(impact.values()):
+                failures.append(error(base + ".delivery_impact", "a suggestion cannot require artifact change, represent systemic inconsistency, or block accessibility", "unsafe_suggestion"))
+            if any(status is False for status in mandatory.values()):
+                failures.append(error(base, "a suggestion is forbidden while any mandatory consistency check fails", "unsafe_suggestion"))
+
+    failed_checks = {name for name, status in mandatory.items() if status is False}
+    for check in failed_checks:
+        matching = [item for item in issues if item["severity"] != "suggestion" and CONSISTENCY_DIMENSIONS.get(item["dimension"]) == check]
+        if not matching:
+            failures.append(error(f"$.mandatory_checks.{check}", "a failed mandatory check requires a matching non-suggestion cross-slide finding", "contract_violation"))
+
+    blocking_ids = {item["issue_id"] for item in issues if item["severity"] in {"critical", "major"}}
+    upstream = response.get("structured_upstream_revision") or []
+    upstream_ids = {issue_id for entry in upstream for issue_id in entry.get("issue_ids", [])}
+    unknown = upstream_ids - set(issue_by_id)
+    if unknown:
+        failures.append(error("$.structured_upstream_revision.issue_ids", f"upstream revision references unknown issues: {sorted(unknown)}", "unknown_reference"))
+    if blocking_ids - upstream_ids:
+        failures.append(error("$.structured_upstream_revision", "every Critical/Major finding requires an issue-bound upstream revision", "contract_violation"))
+    if issues and all(item["severity"] == "suggestion" for item in issues) and upstream:
+        failures.append(error("$.structured_upstream_revision", "suggestion-only reviews cannot request an upstream revision", "unsafe_suggestion"))
+    return failures
+
+
 def prepare_deck_review_evidence(
     *,
     deck_id: str,
@@ -90,12 +129,13 @@ def compile_consistency_report(
     recommendation = reviewer_response.get("reviewer_recommendation")
     if recommendation == "pass" and failed_checks:
         failures.append(error("$.reviewer_recommendation", "pass is forbidden while a consistency check fails", "contract_violation"))
+    failures.extend(_validate_production_scope(reviewer_response))
     if failures:
         raise ContractError(failures)
 
     trusted = call_record is not None
     if trusted:
-        required_bindings = ("evidence_sha256", "raw_response_sha256", "finalized_response_sha256", "role_config_sha256", "prompt_sha256", "response_schema_sha256", "context_id")
+        required_bindings = ("evidence_sha256", "raw_response_sha256", "finalized_response_sha256", "role_config_sha256", "prompt_sha256", "response_schema_sha256", "resolved_model_identity_sha256", "transport_request_sha256", "context_id")
         missing = [field for field in required_bindings if not call_record.get(field)]
         if missing:
             raise ContractError([error("$.call_record", f"trusted call record is missing bindings: {missing}", "missing_call_record_bindings")])
