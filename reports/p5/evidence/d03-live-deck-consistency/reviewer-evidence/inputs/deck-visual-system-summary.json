@@ -1,0 +1,140 @@
+{
+  "schema_version": "1.0",
+  "canonicalization_version": "p1-rfc8785-nfc-1",
+  "artifact_type": "deck_visual_system",
+  "deck_id": "D03",
+  "revision": 1,
+  "parent_sha256": null,
+  "candidate_sha256": "feafd1ef477b5a25260cae24ae34dfbf10b0fd671cf77a847156b4e009e98670",
+  "deck_request_sha256": "eac575646b45121e1754546b9056097cd2a4c7539d58214b4fcb507644a3aea1",
+  "approved_outline_sha256": "84b9f37f51468f54966b2fb3d708d0d25a31e2805620398b4c2c4d2ad6b951f0",
+  "slide_content_manifest_sha256": "98623c0f1354b5756906d5d9f35689beff6945d117464d47aedafc64ed4cce25",
+  "p2_manifest_sha256": "280fe909457bacfea0279f20956ef82d4150131081b0e49ecd5bc38ac7e46d36",
+  "p3_icon_asset_index_sha256": "5ae91981b48aaa8ffac49ce0a262f690902cec0ab2c9fc503dd0fa21c1a2ce19",
+  "hard_constraints": {
+    "output_ratio": "16:9",
+    "canvas": {
+      "width_px": 1600,
+      "height_px": 900
+    },
+    "safe_area": {
+      "top": 500,
+      "right": 500,
+      "bottom": 500,
+      "left": 500
+    },
+    "palette": {
+      "primary": "#2457C5",
+      "background": "#FFFFFF",
+      "surface": "#F2F5FA",
+      "accent": "#F28C28",
+      "text_primary": "#111111",
+      "text_secondary": "#555555"
+    },
+    "typography": {
+      "title": {
+        "family": "Microsoft YaHei",
+        "fallback_family": "Arial",
+        "size_pt": 30,
+        "minimum_size_pt": 24,
+        "weight": "bold",
+        "max_lines": 2,
+        "line_height_milli": 1200
+      },
+      "subtitle": {
+        "family": "Microsoft YaHei",
+        "fallback_family": "Arial",
+        "size_pt": 24,
+        "minimum_size_pt": 20,
+        "weight": "semibold",
+        "max_lines": 2,
+        "line_height_milli": 1200
+      },
+      "body": {
+        "family": "Microsoft YaHei",
+        "fallback_family": "Arial",
+        "size_pt": 20,
+        "minimum_size_pt": 16,
+        "weight": "regular",
+        "max_lines": 5,
+        "line_height_milli": 1200
+      },
+      "label": {
+        "family": "Microsoft YaHei",
+        "fallback_family": "Arial",
+        "size_pt": 16,
+        "minimum_size_pt": 12,
+        "weight": "regular",
+        "max_lines": 2,
+        "line_height_milli": 1200
+      }
+    },
+    "prohibitions": {
+      "model_rendered_formal_text": true,
+      "model_redrawn_resolved_svg": true,
+      "logos": true,
+      "watermarks": true,
+      "external_assets": true,
+      "extra_facts": true,
+      "full_slide_text_rasterization": true
+    },
+    "raster_handoff_policy": {
+      "must_be_spatially_isolated": true,
+      "must_not_contain_text": true,
+      "must_not_be_occluded": true,
+      "minimum_short_edge": 800,
+      "safe_padding": 300,
+      "avoid_background_entanglement": true,
+      "avoid_long_range_shadow": true
+    }
+  },
+  "soft_design_guidance": {
+    "style_concept": "educational editorial",
+    "style_keywords": [
+      "educational editorial",
+      "clear hierarchy",
+      "visual freedom"
+    ],
+    "grid": {
+      "recommended_columns": 6,
+      "recommended_gutter": 300
+    },
+    "spacing_scale": [
+      200,
+      300,
+      500,
+      800
+    ],
+    "template_families": [
+      {
+        "slide_role": "cover",
+        "family": "cover"
+      },
+      {
+        "slide_role": "process",
+        "family": "process"
+      },
+      {
+        "slide_role": "conclusion",
+        "family": "summary"
+      }
+    ],
+    "card_language": "Cards are optional; use them only where they improve grouping.",
+    "image_treatment": "Allow asymmetric cropping and clear focal subjects.",
+    "chart_treatment": "Reserve clean chart zones for deterministic overlays.",
+    "diagram_treatment": "Use expressive structure without formal labels.",
+    "composition_guidance": [
+      "Use asymmetry when useful",
+      "Preserve generous whitespace",
+      "Create clear scale contrast"
+    ],
+    "creative_freedom": {
+      "asymmetry": true,
+      "scale_contrast": true,
+      "local_overlap": true,
+      "image_text_interplay": true,
+      "irregular_rhythm": true
+    }
+  },
+  "status": "frozen"
+}

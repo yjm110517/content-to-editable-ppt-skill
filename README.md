@@ -4,19 +4,18 @@
 
 ## 当前状态
 
-本仓库已完成 P0 Baseline Freeze、P0.5 Runtime Hardening、P1 Host Content Planning、P2 Markdown Wireframe、P3.1 Asset Resolution、P3.2 Visual System / Prompt Contract、P3.3 Approved Design Preview、P4 Constrained Reconstruction 和 P5 Deterministic Hardening。P5 确定性部分（Authority Compatibility View、Roundtrip 真实比较、安全 QA、Package Candidate、Reviewer Harness 接口）已通过，D03 的确定性链以 live_review_pending 状态停止。
+本仓库已完成 P0 Baseline Freeze、P0.5 Runtime Hardening、P1 Host Content Planning、P2 Markdown Wireframe、P3.1 Asset Resolution、P3.2 Visual System / Prompt Contract、P3.3 Approved Design Preview、P4 Constrained Reconstruction 和 P5 Final Delivery Gate。D03 已完成真实 Deck Consistency Review、不可变 Delivery Decision、正式七文件打包和零模型重放验证。
 
-当前状态（不得对外宣称正式完成）：
+当前工程状态：
 
 - P5 Deterministic Implementation = COMPLETE
 - P5 Package Candidate = VERIFIED（delivery-package-candidate/，delivery_forbidden = true）
-- P5 Live Deck Review = PENDING（ADR-040 要求一次真实 Deck Consistency Review）
-- P5 Formal Delivery = NOT CREATED
-- P5 Formally Complete = false；v1 End-to-End = false
+- P5 Live Deck Review = COMPLETE（ADR-040）
+- P5 Formal Delivery = VERIFIED（Delivered PPTX SHA = P4 Candidate SHA）
+- P5 Formally Complete = true；v1 End-to-End = COMPLETE
 
-当前可执行流程已经延伸到“材料 → 确认内容 → Markdown 文字线稿 → Approved Design Preview → 可编辑多页候选 PPT → P5 确定性验收 → 等待真实 Deck Review”，同时继续支持“参考图片 → 可编辑单页 PPT”。以下能力尚未实现，不能视为当前承诺：
+当前可执行流程已经延伸到“材料 → 确认内容 → Markdown 文字线稿 → Approved Design Preview → 可编辑多页候选 PPT → 真实 Deck Review → 不可变正式交付”，同时继续支持“参考图片 → 可编辑单页 PPT”。以下能力仍属于后续范围：
 
-- 正式交付包、交付决策和发布门槛（仅在真实 Deck Review 后由 --consume-live-review 触发）；
 - 三套真实 Deck Field Validation（Release / Field Validation）；
 - 完整引用和来源管理。
 
@@ -31,7 +30,7 @@ $content-to-editable-ppt
 content-to-editable-ppt/
 ```
 
-该调用名可以用于 P1–P4 内容到多页候选 Deck 工作流和继承的单页重建 Runtime；在 P5 完成前不得对外宣称候选 Deck 已通过最终审核或可正式交付。
+该调用名可以用于 P1–P5 内容到多页正式交付工作流和继承的单页重建 Runtime。正式交付仍必须逐次取得可信 Live Review Evidence；历史 D03 Evidence 只能用于确定性重放。
 
 ## 当前仓库结构
 
@@ -177,7 +176,7 @@ P1 Approved Content
 
 ## 下一阶段
 
-下一步实施 P5 Deck Consistency Review、Packaging 和 Delivery。P4 候选 Deck 已完成可编辑重建和组装后漂移验证，但在 P5 Gate 通过前仍不能正式交付。
+下一步是三套真实 Deck 的 Release / Field Validation。该阶段不改变已通过的 v1 End-to-End 工程结论，也不自动创建 Release 或 Tag。
 
 ## 开发验证
 

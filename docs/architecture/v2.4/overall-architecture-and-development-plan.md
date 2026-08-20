@@ -15,10 +15,10 @@ P3.3 Design Preview             COMPLETE (D03 LIVE EVIDENCE)
 P4 Reconstruction               COMPLETE (D03 LIVE RECONSTRUCTION)
 P5 Deterministic Implementation COMPLETE (Authority / Roundtrip / Security / Package Candidate)
 P5 Package Candidate            VERIFIED (delivery_forbidden = true)
-P5 Live Deck Review             PENDING (ADR-040)
-P5 Formal Delivery              NOT CREATED
-P5 Formally Complete            false
-v1 End-to-End                   false
+P5 Live Deck Review             COMPLETE (D03 LIVE EVIDENCE, ADR-040)
+P5 Formal Delivery              VERIFIED (7-file immutable package)
+P5 Formally Complete            true
+v1 End-to-End                   COMPLETE
 Production-quality Release      Validated = false
 Release / Tag                   NOT CREATED
 ```
