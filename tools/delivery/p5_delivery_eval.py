@@ -240,6 +240,8 @@ def run_deterministic(work_root: Path, *, rebuild_p4: bool, p4_evidence_root: Pa
         "unsafe_relationships": 0,
         "p0_p4_regression": 0,
         "live_deck_review": "pending",
+        "resolved_model_identity_sha256": None,
+        "transport_request_sha256": None,
         "p5_overall": "pending",
         "state": state["state"],
         "cases": [d03, *fixtures],
@@ -274,12 +276,12 @@ def run_consume_live(package: Path, work_root: Path, *, p4_evidence_root: Path, 
     evaluation = _cli("evaluate", "--state", str(gate / "state.json"), "--deck-consistency-report", str(live_report), "--output", str(evaluation_path))
     state = json.loads((gate / "state.json").read_text(encoding="utf-8"))
     if evaluation["policy_status"] == "awaiting_warning_acceptance":
-        report = {"schema_version":"1.0","phase":"P5-final-deck-delivery","status":"awaiting_warning_acceptance","deterministic_gate":"pass","formal_delivery_created":False,"does_not_satisfy_adr_040":False,"live_deck_review":"complete","state":state["state"],"call_record_context_id":validated["call_record"]["context_id"]}
+        report = {"schema_version":"1.0","phase":"P5-final-deck-delivery","status":"awaiting_warning_acceptance","deterministic_gate":"pass","formal_delivery_created":False,"does_not_satisfy_adr_040":False,"live_deck_review":"complete","state":state["state"],"call_record_context_id":validated["call_record"]["context_id"],"resolved_model_identity_sha256":validated["call_record"]["resolved_model_identity_sha256"],"transport_request_sha256":validated["call_record"]["transport_request_sha256"]}
         from p5_atomic import write_once_p5_artifact
         write_once_p5_artifact(report_path.resolve(), report)
         return report
     if evaluation["policy_status"] != "pass":
-        report = {"schema_version":"1.0","phase":"P5-final-deck-delivery","status":"not_deliverable","deterministic_gate":"pass","formal_delivery_created":False,"does_not_satisfy_adr_040":False,"live_deck_review":"complete","state":state["state"],"call_record_context_id":validated["call_record"]["context_id"]}
+        report = {"schema_version":"1.0","phase":"P5-final-deck-delivery","status":"not_deliverable","deterministic_gate":"pass","formal_delivery_created":False,"does_not_satisfy_adr_040":False,"live_deck_review":"complete","state":state["state"],"call_record_context_id":validated["call_record"]["context_id"],"resolved_model_identity_sha256":validated["call_record"]["resolved_model_identity_sha256"],"transport_request_sha256":validated["call_record"]["transport_request_sha256"]}
         from p5_atomic import write_once_p5_artifact
         write_once_p5_artifact(report_path.resolve(), report)
         return report
@@ -287,7 +289,7 @@ def run_consume_live(package: Path, work_root: Path, *, p4_evidence_root: Path, 
     _cli("create-decision", "--state", str(gate / "state.json"), "--candidate-pptx", str(p4 / "reconstruction-candidate.pptx"), "--qa-report", str(gate / "qa-report.json"), "--roundtrip-report", str(gate / "roundtrip-report.json"), "--deck-consistency-report", str(live_report), "--evaluation", str(evaluation_path), "--p4-candidate-report", str(p4 / "candidate-deck-report.json"), "--output", str(decision_path))
     formal = _cli("package", "--state", str(gate / "state.json"), "--mode", "formal", "--output-name", output_name, "--candidate-pptx", str(p4 / "reconstruction-candidate.pptx"), "--dist-root", str(dist_root), "--runtime-lock", str(gate / "runtime-lock.json"), "--qa-report", str(gate / "qa-report.json"), "--deck-consistency-report", str(live_report), "--roundtrip-report", str(gate / "roundtrip-report.json"), "--decision", str(decision_path), "--final-render-manifest", str(gate / "final-render-manifest.json"), "--contact-sheets-dir", str(gate), "--final-renders-dir", str(gate / "final-render"), "--p4-asset-manifest", str(p4 / "reconstruction-asset-manifest.json"), "--p4-evidence-root", str(ROOT / "tests" / "fixtures" / "p3"))
     _cli("verify", "--state", str(gate / "state.json"), "--delivery-dir", str(Path(formal["dist"])), "--dist-root", str(dist_root))
-    report = {"schema_version":"1.0","phase":"P5-final-deck-delivery","status":"pass","deterministic_gate":"pass","formal_delivery_created":True,"does_not_satisfy_adr_040":False,"live_deck_review":"complete","state":"delivered","call_record_context_id":validated["call_record"]["context_id"],"delivered_pptx_sha256":formal["delivered_pptx_sha256"],"provenance_sha256":formal["provenance_sha256"]}
+    report = {"schema_version":"1.0","phase":"P5-final-deck-delivery","status":"pass","deterministic_gate":"pass","formal_delivery_created":True,"does_not_satisfy_adr_040":False,"live_deck_review":"complete","state":"delivered","call_record_context_id":validated["call_record"]["context_id"],"resolved_model_identity_sha256":validated["call_record"]["resolved_model_identity_sha256"],"transport_request_sha256":validated["call_record"]["transport_request_sha256"],"delivered_pptx_sha256":formal["delivered_pptx_sha256"],"provenance_sha256":formal["provenance_sha256"]}
     from p5_atomic import write_once_p5_artifact
     write_once_p5_artifact(report_path.resolve(), report)
     return report

@@ -116,6 +116,7 @@ SCHEMA_FILES = {
     "p5_reviewer_call_record": "p5-reviewer-call-record.schema.json",
     "exception_reviewer_response": "exception-reviewer-response.schema.json",
     "deck_consistency_report": "deck-consistency-report.schema.json",
+    "reviewer_model_identity": "reviewer-model-identity.schema.json",
 }
 
 SUPPORTED_SCHEMA_VERSIONS = {
@@ -202,10 +203,11 @@ SUPPORTED_SCHEMA_VERSIONS = {
     "delivery_packaging_runtime_lock": {"1.0"},
     "delivery_provenance": {"1.0"},
     "delivery_package_candidate_manifest": {"1.0"},
-    "deck_consistency_reviewer_response": {"1.0"},
+    "deck_consistency_reviewer_response": {"1.0", "1.1"},
     "p5_reviewer_call_record": {"1.0"},
     "exception_reviewer_response": {"1.0"},
     "deck_consistency_report": {"1.0"},
+    "reviewer_model_identity": {"1.0"},
     "asset_manifest": {"1.3", "1.4"},
 }
 

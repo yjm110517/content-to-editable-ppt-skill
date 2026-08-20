@@ -13,7 +13,7 @@
     "structured_upstream_revision"
   ],
   "properties": {
-    "schema_version": {"const": "1.0"},
+    "schema_version": {"enum": ["1.0", "1.1"]},
     "artifact_type": {"const": "deck_consistency_reviewer_response"},
     "deck_id": {"type": "string", "minLength": 1},
     "reviewer_recommendation": { "enum": ["pass", "revise", "fail"] },
@@ -28,7 +28,29 @@
           "severity": { "enum": ["critical", "major", "minor", "suggestion"] },
           "dimension": { "enum": ["typography", "palette", "background", "card_language", "density_spacing", "visual_treatment", "navigation", "section_hierarchy", "deck_identity", "systemic_anomaly"] },
           "slide_ids": { "type": "array", "minItems": 1, "items": { "type": "string", "minLength": 1 } },
-          "message": { "type": "string", "minLength": 1 }
+          "message": { "type": "string", "minLength": 1 },
+          "finding_scope": {"const": "cross_slide_systemic"},
+          "cross_slide_basis": {
+            "type": "object",
+            "additionalProperties": false,
+            "required": ["consistency_rule", "compared_slide_ids", "comparison_summary", "page_level_fidelity_reopened"],
+            "properties": {
+              "consistency_rule": {"type": "string", "minLength": 1},
+              "compared_slide_ids": {"type": "array", "minItems": 2, "uniqueItems": true, "items": {"type": "string", "minLength": 1}},
+              "comparison_summary": {"type": "string", "minLength": 1},
+              "page_level_fidelity_reopened": {"const": false}
+            }
+          },
+          "delivery_impact": {
+            "type": "object",
+            "additionalProperties": false,
+            "required": ["artifact_change_required", "systemic_inconsistency", "accessibility_blocker"],
+            "properties": {
+              "artifact_change_required": {"type": "boolean"},
+              "systemic_inconsistency": {"type": "boolean"},
+              "accessibility_blocker": {"type": "boolean"}
+            }
+          }
         }
       }
     },
@@ -68,5 +90,19 @@
         }
       }
     }
-  }
+  },
+  "allOf": [
+    {
+      "if": {"properties": {"schema_version": {"const": "1.1"}}, "required": ["schema_version"]},
+      "then": {
+        "properties": {
+          "issues": {
+            "items": {
+              "required": ["finding_scope", "cross_slide_basis", "delivery_impact"]
+            }
+          }
+        }
+      }
+    }
+  ]
 }

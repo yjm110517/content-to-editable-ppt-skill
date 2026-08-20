@@ -10,6 +10,7 @@ from pathlib import Path
 from typing import Any
 
 from agent_common import SCHEMA_DIR, load_call_bundle, provenance_entry, stage_directory
+from agent_request_evidence import transport_request_sha256, validate_model_identity, validate_runtime_timestamps
 from canonical_artifact import canonical_sha256
 from p5_atomic import p5_canonical_bytes
 from asset_common import AssetError, atomic_write_bytes, atomic_write_json, failure, load_contract, log_event, sha256_file, success
@@ -81,6 +82,25 @@ def _finalize_p5_review(args: argparse.Namespace, work_root: Path, manifest: dic
     if target.exists():
         raise AssetError("P5 evidence output already exists", path=str(target), code="output_conflict", exit_code=9)
     live = args.evidence_mode == "live"
+    model_identity_sha = None
+    request_sha = None
+    if live:
+        if args.mode == "deck_consistency" and response.get("schema_version") != "1.1":
+            raise AssetError("live Deck Consistency Review requires production response schema 1.1", path="$.schema_version", code="call_record", exit_code=9)
+        identity = record.get("resolved_model_identity")
+        if not isinstance(identity, dict):
+            raise AssetError("live P5 evidence requires a resolved reviewer model identity", path="$.resolved_model_identity", code="call_record", exit_code=9)
+        model_identity_sha = validate_model_identity(identity, expected_parameters=manifest["parameters"])
+        if record.get("resolved_model_identity_sha256") != model_identity_sha:
+            raise AssetError("resolved reviewer model identity hash mismatch", path="$.resolved_model_identity_sha256", code="call_record", exit_code=9)
+        request_sha = transport_request_sha256(
+            call_manifest_sha256=sha256_file(args.call_dir / "call_manifest.json"),
+            manifest=manifest,
+            model_identity_sha256=model_identity_sha,
+        )
+        if record.get("transport_request_sha256") != request_sha:
+            raise AssetError("transport request envelope hash mismatch", path="$.transport_request_sha256", code="call_record", exit_code=9)
+        validate_runtime_timestamps(record)
     ledger_sha = None
     if live:
         if args.call_ledger is None or not args.call_ledger.is_file():
@@ -98,6 +118,7 @@ def _finalize_p5_review(args: argparse.Namespace, work_root: Path, manifest: dic
         "call_id": manifest["call_id"], "call_manifest_sha256": sha256_file(manifest_path), "evidence_sha256": canonical_sha256(evidence_identity),
         "raw_response_sha256": sha256_file(args.call_dir / "raw_response.json"), "finalized_response_sha256": hashlib.sha256(finalized_bytes).hexdigest(),
         "role_config_sha256": record["config_sha256"], "prompt_sha256": record["prompt_sha256"], "response_schema_sha256": record["output_schema_sha256"],
+        "resolved_model_identity_sha256": model_identity_sha, "transport_request_sha256": request_sha,
         "call_ledger_sha256": ledger_sha,
         "context_id": record["context_id"], "parent_context_id": record["parent_context_id"], "technical_retry_count": args.technical_retry_count,
         "live": live, "status": "succeeded",

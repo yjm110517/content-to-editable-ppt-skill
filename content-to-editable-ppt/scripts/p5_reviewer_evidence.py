@@ -4,6 +4,7 @@ from pathlib import Path
 from typing import Any
 
 from agent_common import canonical_yaml_hash, load_role, normalized_text_bytes, sha256_bytes
+from agent_request_evidence import transport_request_sha256, validate_input_manifest, validate_model_identity, validate_runtime_timestamps
 from asset_common import sha256_file
 from canonical_artifact import canonical_sha256
 from schema_utils import ContractError, error, load_json, validate_schema
@@ -28,6 +29,7 @@ def validate_p5_reviewer_evidence(package: Path, *, expected_profile: str = "dec
     if manifest.get("role") != "reviewer" or manifest.get("mode") != expected_profile or manifest.get("input_profile") != expected_profile:
         raise ContractError([error("$.call_manifest", "Reviewer evidence profile mismatch", "call_record")])
     config, config_path, prompt_path, output_schema = load_role("reviewer", SCHEMA_DIR, mode=expected_profile)
+    validate_input_manifest(manifest, config["input_profiles"][expected_profile])
     failures: list[dict[str, str]] = []
     actual_inputs: dict[str, str] = {}
     for index, item in enumerate(manifest.get("inputs", [])):
@@ -63,6 +65,23 @@ def validate_p5_reviewer_evidence(package: Path, *, expected_profile: str = "dec
     if require_live and p5_record.get("live") is not True:
         failures.append(error("$.call_record.live", "ADR-040 requires a live Deck Consistency Review", "live_deck_review_required"))
     if p5_record.get("live") is True:
+        if expected_profile == "deck_consistency" and finalized.get("schema_version") != "1.1":
+            failures.append(error("$.finalized_response.schema_version", "Live Deck Consistency Review requires production schema 1.1", "live_deck_review_required"))
+        identity = runtime_record.get("resolved_model_identity")
+        try:
+            identity_sha = validate_model_identity(identity, expected_parameters=manifest["parameters"]) if isinstance(identity, dict) else ""
+        except ContractError as exc:
+            failures.extend(exc.errors)
+            identity_sha = ""
+        if not identity_sha or runtime_record.get("resolved_model_identity_sha256") != identity_sha or p5_record.get("resolved_model_identity_sha256") != identity_sha:
+            failures.append(error("$.call_record.resolved_model_identity_sha256", "Resolved reviewer model identity binding mismatch", "authority_hash_mismatch"))
+        expected_request_sha = transport_request_sha256(call_manifest_sha256=manifest_sha, manifest=manifest, model_identity_sha256=identity_sha) if identity_sha else ""
+        if not expected_request_sha or runtime_record.get("transport_request_sha256") != expected_request_sha or p5_record.get("transport_request_sha256") != expected_request_sha:
+            failures.append(error("$.call_record.transport_request_sha256", "Transport request envelope binding mismatch", "authority_hash_mismatch"))
+        try:
+            validate_runtime_timestamps(runtime_record)
+        except ContractError as exc:
+            failures.extend(exc.errors)
         ledger_path = root / "call-ledger.json"
         if not ledger_path.is_file() or p5_record.get("call_ledger_sha256") != sha256_file(ledger_path):
             failures.append(error("$.call_record.call_ledger_sha256", "Live call ledger binding mismatch", "authority_hash_mismatch"))

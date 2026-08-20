@@ -10,6 +10,12 @@ from typing import Any
 import yaml
 
 from asset_common import AssetError, canonical_json_bytes, contains_reparse_point, sha256_file
+from agent_request_evidence import (
+    transport_request_sha256,
+    validate_input_manifest,
+    validate_model_identity,
+    validate_runtime_timestamps,
+)
 from schema_utils import ContractError, load_json, validate_schema, validate_semantics
 
 
@@ -131,6 +137,7 @@ def load_call_bundle(call_dir: Path, *, work_root: Path, role: str, mode: str, s
         raise AssetError("call directory does not match manifest identity", path=str(call_dir), code="call_bundle")
 
     config, config_path, prompt_path, output_schema_path = load_role(role, schema_dir, mode=mode)
+    validate_input_manifest(manifest, config["input_profiles"][mode])
     expected_config_hash = canonical_yaml_hash(config_path)
     expected_prompt_hash = sha256_bytes(normalized_text_bytes(prompt_path))
     expected_schema_hash = sha256_file(output_schema_path)
@@ -174,6 +181,19 @@ def load_call_bundle(call_dir: Path, *, work_root: Path, role: str, mode: str, s
             raise AssetError(f"call record field does not match manifest: {key}", path=str(call_dir / "call_record.json"), code="call_record")
     if record["status"] != "succeeded":
         raise AssetError("agent call did not succeed", path=str(call_dir / "call_record.json"), code="agent_runtime", exit_code=5)
+    identity = record.get("resolved_model_identity")
+    if identity is not None:
+        identity_sha = validate_model_identity(identity, expected_parameters=manifest["parameters"])
+        if record.get("resolved_model_identity_sha256") != identity_sha:
+            raise AssetError("resolved model identity hash mismatch", path=str(call_dir / "call_record.json"), code="call_record", exit_code=9)
+        request_sha = transport_request_sha256(
+            call_manifest_sha256=sha256_file(call_dir / "call_manifest.json"),
+            manifest=manifest,
+            model_identity_sha256=identity_sha,
+        )
+        if record.get("transport_request_sha256") != request_sha:
+            raise AssetError("transport request envelope hash mismatch", path=str(call_dir / "call_record.json"), code="call_record", exit_code=9)
+        validate_runtime_timestamps(record)
 
     response = load_json(call_dir / "raw_response.json")
     response_kind = "planner_response" if role == "planner" else {"review": "reviewer_response", "exception_batch": "exception_reviewer_response", "deck_consistency": "deck_consistency_reviewer_response"}.get(mode)

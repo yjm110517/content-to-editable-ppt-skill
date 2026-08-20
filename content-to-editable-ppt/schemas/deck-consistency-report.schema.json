@@ -83,6 +83,28 @@
           "message": {
             "type": "string",
             "minLength": 1
+          },
+          "finding_scope": {"const": "cross_slide_systemic"},
+          "cross_slide_basis": {
+            "type": "object",
+            "additionalProperties": false,
+            "required": ["consistency_rule", "compared_slide_ids", "comparison_summary", "page_level_fidelity_reopened"],
+            "properties": {
+              "consistency_rule": {"type": "string", "minLength": 1},
+              "compared_slide_ids": {"type": "array", "minItems": 2, "uniqueItems": true, "items": {"type": "string", "minLength": 1}},
+              "comparison_summary": {"type": "string", "minLength": 1},
+              "page_level_fidelity_reopened": {"const": false}
+            }
+          },
+          "delivery_impact": {
+            "type": "object",
+            "additionalProperties": false,
+            "required": ["artifact_change_required", "systemic_inconsistency", "accessibility_blocker"],
+            "properties": {
+              "artifact_change_required": {"type": "boolean"},
+              "systemic_inconsistency": {"type": "boolean"},
+              "accessibility_blocker": {"type": "boolean"}
+            }
           }
         }
       }
@@ -216,6 +238,8 @@
         "role_config_sha256",
         "prompt_sha256",
         "response_schema_sha256",
+        "resolved_model_identity_sha256",
+        "transport_request_sha256",
         "context_id",
         "technical_retry_count"
       ],
@@ -226,6 +250,8 @@
         "role_config_sha256": { "$ref": "#/$defs/hash" },
         "prompt_sha256": { "$ref": "#/$defs/hash" },
         "response_schema_sha256": { "$ref": "#/$defs/hash" },
+        "resolved_model_identity_sha256": { "$ref": "#/$defs/hash" },
+        "transport_request_sha256": { "$ref": "#/$defs/hash" },
         "context_id": { "type": "string", "minLength": 1 },
         "technical_retry_count": { "type": "integer", "minimum": 0 }
       }
