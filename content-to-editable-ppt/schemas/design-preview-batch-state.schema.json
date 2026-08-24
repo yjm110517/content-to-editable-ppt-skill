@@ -1,0 +1,22 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "design-preview-batch-state.schema.json",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["schema_version", "artifact_type", "deck_id", "state", "budgets", "counters", "current_artifacts", "pages", "history"],
+  "properties": {
+    "schema_version": {"const": "1.0"},
+    "artifact_type": {"const": "design_preview_batch_state"},
+    "deck_id": {"type": "string", "minLength": 1},
+    "state": {"enum": ["p3_2_complete", "anchor_approved", "map_evidence_required", "building_previews", "contact_sheet_ready", "awaiting_deck_confirmation", "design_previews_approved", "p3_3_complete", "failed"]},
+    "budgets": {"type": "object", "additionalProperties": false, "required": ["initial_generation_per_slide", "technical_retry_per_stage", "map_pass_per_page", "map_correction_per_page"], "properties": {"initial_generation_per_slide": {"const": 1}, "technical_retry_per_stage": {"const": 2}, "map_pass_per_page": {"const": 1}, "map_correction_per_page": {"const": 1}}},
+    "counters": {"type": "object", "additionalProperties": false, "required": ["image_generation_calls", "host_map_pass_count", "map_correction_count", "automatic_regeneration_count", "planner_calls", "reviewer_calls"], "properties": {"image_generation_calls": {"type": "integer", "minimum": 0}, "host_map_pass_count": {"type": "integer", "minimum": 0}, "map_correction_count": {"type": "integer", "minimum": 0}, "automatic_regeneration_count": {"const": 0}, "planner_calls": {"const": 0}, "reviewer_calls": {"const": 0}}},
+    "current_artifacts": {"type": "object", "additionalProperties": {"oneOf": [{"$ref": "#/$defs/hash"}, {"type": "null"}]}},
+    "pages": {"type": "array", "minItems": 1, "items": {"$ref": "#/$defs/page"}},
+    "history": {"type": "array", "items": {"type": "object"}}
+  },
+  "$defs": {
+    "hash": {"type": "string", "pattern": "^[a-f0-9]{64}$"},
+    "page": {"type": "object", "additionalProperties": false, "required": ["slide_id", "order", "status", "generated_layer_record_sha256", "map_input_manifest_sha256", "map_call_record_sha256", "element_map_sha256", "compatibility_report_sha256", "final_preview_record_sha256", "error_code"], "properties": {"slide_id": {"type": "string", "minLength": 1}, "order": {"type": "integer", "minimum": 1}, "status": {"enum": ["anchor_approved", "generated", "map_package_ready", "mapped", "compatible", "preview_built", "rendered", "failed"]}, "generated_layer_record_sha256": {"oneOf": [{"$ref": "#/$defs/hash"}, {"type": "null"}]}, "map_input_manifest_sha256": {"oneOf": [{"$ref": "#/$defs/hash"}, {"type": "null"}]}, "map_call_record_sha256": {"oneOf": [{"$ref": "#/$defs/hash"}, {"type": "null"}]}, "element_map_sha256": {"oneOf": [{"$ref": "#/$defs/hash"}, {"type": "null"}]}, "compatibility_report_sha256": {"oneOf": [{"$ref": "#/$defs/hash"}, {"type": "null"}]}, "final_preview_record_sha256": {"oneOf": [{"$ref": "#/$defs/hash"}, {"type": "null"}]}, "error_code": {"type": ["string", "null"]}}}
+  }
+}
