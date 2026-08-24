@@ -6,7 +6,7 @@
   "additionalProperties": false,
   "required": ["schema_version", "canonicalization_version", "artifact_type", "deck_id", "revision", "approved_outline_sha256", "slide_content_manifest_sha256", "candidate_sha256", "wireframe_path", "wireframe_sha256", "slides", "status"],
   "properties": {
-    "schema_version": {"const": "1.1"},
+    "schema_version": {"enum": ["1.1", "1.2"]},
     "canonicalization_version": {"const": "p1-rfc8785-nfc-1"},
     "artifact_type": {"const": "markdown_wireframe_manifest"},
     "deck_id": {"type": "string", "minLength": 1},
@@ -39,7 +39,10 @@
         "role": {"enum": ["icon", "image", "chart", "diagram", "illustration"]},
         "subtype": {"oneOf": [{"type": "null"}, {"enum": ["process", "timeline", "cycle", "relationship", "architecture"]}]},
         "semantic": {"type": "string", "minLength": 1},
-        "semantic_source_refs": {"type": "array", "minItems": 1, "uniqueItems": true, "items": {"type": "string", "minLength": 1}}
+        "semantic_source_refs": {"type": "array", "minItems": 1, "uniqueItems": true, "items": {"type": "string", "minLength": 1}},
+        "placement": {"$ref": "markdown-wireframe-candidate.schema.json#/$defs/placement"},
+        "storyboard": {"type": "array", "minItems": 1, "maxItems": 12, "items": {"$ref": "markdown-wireframe-candidate.schema.json#/$defs/storyboard_beat"}},
+        "reading_order": {"type": "array", "minItems": 1, "maxItems": 12, "uniqueItems": true, "items": {"type": "string", "pattern": "^B[0-9]{2,}$"}}
       }
     }
   }

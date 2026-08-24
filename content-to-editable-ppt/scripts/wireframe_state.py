@@ -56,7 +56,7 @@ def start_planning(state: dict[str, Any], *, pass_id: str, host_model_invocation
     else:
         if not user_evidence_sha256:
             raise WireframeStateError("revision planning requires user evidence")
-        latest = next((item for item in reversed(state["history"]) if item["event"] == "layout_changes_requested"), None)
+        latest = next((item for item in reversed(state["history"]) if item["event"] in {"layout_changes_requested", "visual_storyboard_changes_requested"}), None)
         if latest is None or latest["user_evidence_sha256"] != user_evidence_sha256:
             raise WireframeStateError("revision does not bind latest layout feedback")
         counters["host_wireframe_revision_pass_count"] += 1
@@ -132,11 +132,29 @@ def record_feedback(state: dict[str, Any], *, feedback_sha256: str, decision: st
         raise WireframeStateError("feedback requires awaiting_wireframe_feedback")
     if decision in {"accepted", "continue"}:
         target, event = "p2_complete", "wireframe_accepted"
-    elif scope == "layout":
-        target, event = "revision_requested", "layout_changes_requested"
+    elif scope in {"layout", "visual_storyboard"}:
+        target, event = "revision_requested", "visual_storyboard_changes_requested" if scope == "visual_storyboard" else "layout_changes_requested"
     else:
         target, event = "p1_revision_required", "content_changes_requested"
     result = _record(state, event=event, target=target, artifact_sha256=feedback_sha256, user_evidence_sha256=user_message_sha256, affected_slide_ids=affected_slide_ids)
     result["current_artifacts"]["feedback_sha256"] = feedback_sha256
     result["changed_slide_ids"] = list(affected_slide_ids) if target in {"revision_requested", "p1_revision_required"} else []
+    return result
+
+
+def request_visual_revision(state: dict[str, Any], *, feedback_sha256: str, affected_slide_ids: list[str], user_message_sha256: str) -> dict[str, Any]:
+    if state["state"] != "p2_complete":
+        raise WireframeStateError("visual revision requires p2_complete")
+    if not affected_slide_ids:
+        raise WireframeStateError("visual revision requires affected slides")
+    result = _record(
+        state,
+        event="visual_storyboard_changes_requested",
+        target="revision_requested",
+        artifact_sha256=feedback_sha256,
+        user_evidence_sha256=user_message_sha256,
+        affected_slide_ids=affected_slide_ids,
+    )
+    result["current_artifacts"]["feedback_sha256"] = feedback_sha256
+    result["changed_slide_ids"] = list(affected_slide_ids)
     return result

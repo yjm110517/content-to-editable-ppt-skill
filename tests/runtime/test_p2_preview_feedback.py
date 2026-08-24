@@ -16,6 +16,7 @@ from canonical_artifact import canonical_sha256
 from deterministic_project_slide_content import build_projection
 from markdown_wireframe import build_validation_report, load_markdown_authority
 from tests.runtime.test_p2_markdown_binder import NOW, H, approved, candidate
+from tests.runtime.test_p2_visual_storyboard import storyboard_candidate
 
 
 class P2MarkdownWorkflowTests(unittest.TestCase):
@@ -93,6 +94,27 @@ class P2MarkdownWorkflowTests(unittest.TestCase):
             paths = self.prepare(Path(temporary)); self.reach_preview(paths); before = paths["state"].read_bytes()
             self.run_cli("bind", "--state", paths["state"], "--candidate", paths["candidate"], "--approved-outline", paths["outline"], "--slide-content-dir", paths["content"], "--wireframe-root", paths["wireframes"], expect=4)
             self.assertEqual(before, paths["state"].read_bytes())
+
+    def test_visual_storyboard_revision_from_completed_p2_is_scope_bound(self) -> None:
+        with tempfile.TemporaryDirectory() as temporary:
+            paths = self.prepare(Path(temporary)); preview_manifest = self.reach_preview(paths)
+            self.run_cli("record-preview", "--state", paths["state"], "--wireframe-root", paths["wireframes"], "--mode", "user_visible", "--user-message-sha256", H)
+            accepted_feedback = self.feedback(paths, preview_manifest, decision="continue", scope="none", slides=[])
+            self.run_cli("record-feedback", "--state", paths["state"], "--wireframe-root", paths["wireframes"], "--feedback", accepted_feedback)
+            state = json.loads(paths["state"].read_text(encoding="utf-8")); accepted = json.loads((paths["wireframes"] / "wireframe-manifest.json").read_text(encoding="utf-8"))
+            request = {"schema_version":"1.0","canonicalization_version":"p1-rfc8785-nfc-1","artifact_type":"markdown_wireframe_feedback","feedback_id":"visual-r2","deck_id":"D01","revision":1,"wireframe_manifest_sha256":canonical_sha256(accepted),"preview_sha256":state["current_artifacts"]["preview_sha256"],"decision":"changes_requested","change_scope":"visual_storyboard","affected_slide_ids":["S01"],"user_message_sha256":H,"created_at_utc":NOW}
+            request_path = Path(temporary) / "visual-request.json"; request_path.write_text(json.dumps(request), encoding="utf-8")
+            result = self.run_cli("request-visual-revision", "--state", paths["state"], "--wireframe-root", paths["wireframes"], "--feedback", request_path)
+            self.assertEqual(result["state"], "revision_requested")
+            revision = storyboard_candidate(); revision.update({"artifact_id":"wf-candidate-2","revision":2,"parent_sha256":canonical_sha256(candidate()),"pass_id":"visual-r2","host_model_invocation_id":"host-r2"})
+            revision_path = Path(temporary) / "candidate-r2.json"; revision_path.write_text(json.dumps(revision, ensure_ascii=False), encoding="utf-8")
+            report_path = Path(temporary) / "report-r2.json"
+            submitted = self.run_cli("submit-candidate", "--state", paths["state"], "--candidate", revision_path, "--approved-outline", paths["outline"], "--slide-content-dir", paths["content"], "--validation-report", report_path, "--wireframe-root", paths["wireframes"], "--user-evidence-sha256", H)
+            self.assertEqual(submitted["validation_status"], "pass")
+            bound = self.run_cli("bind", "--state", paths["state"], "--candidate", revision_path, "--approved-outline", paths["outline"], "--slide-content-dir", paths["content"], "--wireframe-root", paths["wireframes"])
+            self.assertEqual(bound["revision"], 2)
+            self.assertTrue((paths["wireframes"] / "revisions" / "r001" / "wireframe-manifest.json").is_file())
+            self.assertTrue((paths["wireframes"] / "revisions" / "r002" / "preview-manifest.json").is_file())
 
     def test_correction_requires_issue_binding_before_value_and_budget(self) -> None:
         with tempfile.TemporaryDirectory() as temporary:

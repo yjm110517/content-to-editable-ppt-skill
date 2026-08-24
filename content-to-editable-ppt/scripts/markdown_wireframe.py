@@ -29,6 +29,14 @@ NON_STRUCTURAL = re.compile(r"[A-Za-z0-9\u3400-\u9fff]")
 FORBIDDEN_ASSET_HINT = re.compile(r"(?i)\b(?:tabler|lucide|phosphor|iconify|openmoji|stroke|fill|rgb|rgba|hsl|hsla)\b|\.svg\b|#[a-f0-9]{3,8}\b|\b[a-f0-9]{64}\b|(?:^|[\\/])(?:icons?|assets?)[\\/]|(?:蓝色|红色|绿色|黑色|白色|黄色|紫色|橙色|灰色|线宽)")
 VISUAL_LABELS = {"icon": "图标", "image": "图片", "chart": "图表", "illustration": "插画"}
 DIAGRAM_LABELS = {"process": "流程图", "timeline": "时间线", "cycle": "循环图", "relationship": "关系图", "architecture": "架构图"}
+ACTION_LABELS = {
+    "show_sequence": "呈现序列", "show_scan": "逐项扫描", "highlight_focal_item": "突出焦点",
+    "show_comparison": "呈现比较", "show_exclusion": "排除区域", "show_retained_region": "保留区域",
+    "show_contraction": "范围收缩", "show_branching": "呈现分支", "show_contrast": "形成对照",
+    "show_accumulation": "表现累积", "show_trace": "呈现轨迹", "show_relationship": "呈现关系",
+}
+REGION_LABELS = {"top": "上方", "left": "左侧", "center": "中央", "right": "右侧", "bottom": "下方", "full_width": "通栏"}
+PROMINENCE_LABELS = {"primary": "主视觉", "supporting": "辅助视觉", "background": "背景视觉"}
 
 
 def utc_now() -> str:
@@ -49,7 +57,24 @@ def authority_items(slide: dict[str, Any]) -> list[dict[str, Any]]:
 
 def visual_display(item: dict[str, Any]) -> str:
     role = DIAGRAM_LABELS[item["subtype"]] if item["role"] == "diagram" else VISUAL_LABELS[item["role"]]
-    return f"[{role} {item['visual_ref']}：{normalize_text(item['semantic'])}]"
+    if "placement" not in item:
+        return f"[{role} {item['visual_ref']}：{normalize_text(item['semantic'])}]"
+    placement = item["placement"]
+    beats = "→".join(item["reading_order"])
+    return f"[{role} {item['visual_ref']}｜{REGION_LABELS[placement['region']]}·{PROMINENCE_LABELS[placement['prominence']]}｜{beats}]"
+
+
+def storyboard_display(item: dict[str, Any]) -> list[str]:
+    if "storyboard" not in item:
+        return []
+    by_id = {beat["beat_id"]: beat for beat in item["storyboard"]}
+    lines = [f"#### {item['visual_ref']}｜{normalize_text(item['semantic'])}"]
+    lines.append(f"位置：{REGION_LABELS[item['placement']['region']]}；层级：{PROMINENCE_LABELS[item['placement']['prominence']]}。")
+    lines.append("")
+    for beat_id in item["reading_order"]:
+        beat = by_id[beat_id]
+        lines.append(f"- {beat_id}｜{ACTION_LABELS[beat['action']]}｜{normalize_text(beat['focus_phrase'])}（来源：{beat['source_ref']}）")
+    return lines
 
 
 def load_markdown_authority(
@@ -142,7 +167,7 @@ def _issue(index: int, *, slide_id: str | None, code: str, path: str, message: s
     }
 
 
-def validate_candidate(candidate: dict[str, Any], bundle: dict[str, Any]) -> list[dict[str, Any]]:
+def validate_candidate(candidate: dict[str, Any], bundle: dict[str, Any], *, storyboard_required_slide_ids: set[str] | None = None) -> list[dict[str, Any]]:
     validate_schema("markdown_wireframe_candidate", candidate, SCHEMA_DIR)
     problems: list[tuple[str | None, str, str, str, bool]] = []
     if candidate["deck_id"] != bundle["approved_outline"]["deck_id"]:
@@ -205,6 +230,23 @@ def validate_candidate(candidate: dict[str, Any], bundle: dict[str, Any]) -> lis
                     problems.append((slide_id, "unsupported_visual_semantic", visual_base + ".semantic", "Visual semantic must be a continuous substring of its Approved Content sources", True))
             if FORBIDDEN_ASSET_HINT.search(json.dumps(visual, ensure_ascii=False)):
                 problems.append((slide_id, "concrete_asset_forbidden", visual_base, "P2 Visual Placeholder must not name a library, icon file, path, hash, color, or stroke", True))
+            storyboard_required = candidate["schema_version"] == "1.2" and (storyboard_required_slide_ids is None or slide_id in storyboard_required_slide_ids)
+            if storyboard_required and not all(key in visual for key in {"placement", "storyboard", "reading_order"}):
+                problems.append((slide_id, "storyboard_missing", visual_base, "P2 1.2 visual requires Placement, Storyboard, and Reading Order", False))
+                continue
+            if all(key in visual for key in {"placement", "storyboard", "reading_order"}):
+                beats = visual["storyboard"]
+                beat_ids = [beat["beat_id"] for beat in beats]
+                if len(beat_ids) != len(set(beat_ids)):
+                    problems.append((slide_id, "duplicate_storyboard_beat", visual_base + ".storyboard", "Storyboard Beat IDs must be unique", False))
+                if visual["reading_order"] != beat_ids:
+                    problems.append((slide_id, "storyboard_order_mismatch", visual_base + ".reading_order", "Reading order must list every Storyboard Beat exactly once in declared order", False))
+                for beat_index, beat in enumerate(beats):
+                    beat_base = f"{visual_base}.storyboard[{beat_index}]"
+                    if beat["source_ref"] not in source_refs:
+                        problems.append((slide_id, "storyboard_source_not_bound", beat_base + ".source_ref", "Storyboard Beat must use one of the Visual Placeholder semantic sources", True))
+                    elif normalize_text(beat["focus_phrase"]) not in authority_text[beat["source_ref"]]:
+                        problems.append((slide_id, "storyboard_phrase_not_authority_substring", beat_base + ".focus_phrase", "Storyboard focus phrase must be a continuous P1 Authority substring", True))
         draft_visual_refs = VISUAL_TOKEN.findall(draft)
         if len(draft_visual_refs) != len(set(draft_visual_refs)) or sorted(draft_visual_refs) != sorted(declared_visual_refs):
             problems.append((slide_id, "visual_placeholder_mapping_mismatch", base + ".layout_draft", "Every declared Visual Ref must occur exactly once in the layout draft", False))
@@ -219,8 +261,8 @@ def validate_candidate(candidate: dict[str, Any], bundle: dict[str, Any]) -> lis
     ]
 
 
-def build_validation_report(candidate: dict[str, Any], bundle: dict[str, Any], *, report_id: str, validated_at_utc: str | None = None) -> dict[str, Any]:
-    issues = validate_candidate(candidate, bundle)
+def build_validation_report(candidate: dict[str, Any], bundle: dict[str, Any], *, report_id: str, validated_at_utc: str | None = None, storyboard_required_slide_ids: set[str] | None = None) -> dict[str, Any]:
+    issues = validate_candidate(candidate, bundle, storyboard_required_slide_ids=storyboard_required_slide_ids)
     status = "blocking" if any(not issue["correctable"] for issue in issues) else ("correctable" if issues else "pass")
     return {
         "schema_version": "1.0",
@@ -265,16 +307,22 @@ def _render_slide(candidate_slide: dict[str, Any], authority: dict[str, Any]) ->
         "```text",
         draft,
         "```",
-        "",
-        "### 布局说明",
-        "",
-        normalize_text(candidate_slide["layout_notes"]),
     ])
+    storyboard_lines: list[str] = []
+    for visual in candidate_slide["visual_placeholders"]:
+        rendered = storyboard_display(visual)
+        if rendered:
+            if storyboard_lines:
+                storyboard_lines.append("")
+            storyboard_lines.extend(rendered)
+    if storyboard_lines:
+        lines.extend(["", "### 视觉分镜", "", *storyboard_lines])
+    lines.extend(["", "### 布局说明", "", normalize_text(candidate_slide["layout_notes"])])
     return "\n".join(lines)
 
 
-def bind_markdown(candidate: dict[str, Any], bundle: dict[str, Any]) -> tuple[bytes, dict[str, Any]]:
-    issues = validate_candidate(candidate, bundle)
+def bind_markdown(candidate: dict[str, Any], bundle: dict[str, Any], *, storyboard_required_slide_ids: set[str] | None = None) -> tuple[bytes, dict[str, Any]]:
+    issues = validate_candidate(candidate, bundle, storyboard_required_slide_ids=storyboard_required_slide_ids)
     if issues:
         raise ContractError([error(item["path"], item["message"], item["code"]) for item in issues])
     slides = sorted(candidate["slides"], key=lambda item: item["order"])
@@ -282,7 +330,7 @@ def bind_markdown(candidate: dict[str, Any], bundle: dict[str, Any]) -> tuple[by
         _render_slide(slide, bundle["slide_contents"][slide["slide_id"]]) for slide in slides
     ) + "\n").encode("utf-8")
     manifest = {
-        "schema_version": "1.1",
+        "schema_version": candidate["schema_version"],
         "canonicalization_version": CANONICALIZATION_VERSION,
         "artifact_type": "markdown_wireframe_manifest",
         "deck_id": candidate["deck_id"],
@@ -328,6 +376,9 @@ def audit_markdown(markdown: bytes, manifest: dict[str, Any], bundle: dict[str, 
         for visual in slide["visual_placeholders"]:
             if text.count(visual_display(visual)) != 1:
                 failures.append(error("$.wireframe", f"Visual Placeholder {visual['visual_ref']} is missing, duplicated, or changed", "markdown_visual_mapping"))
+            rendered_storyboard = storyboard_display(visual)
+            if rendered_storyboard and text.count("\n".join(rendered_storyboard)) != 1:
+                failures.append(error("$.wireframe", f"Visual Storyboard {visual['visual_ref']} is missing, duplicated, or changed", "markdown_storyboard_mapping"))
     if failures:
         raise ContractError(failures)
 
