@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import argparse
+import copy
 import json
 import os
 from pathlib import Path
@@ -35,6 +36,7 @@ def parser()->argparse.ArgumentParser:
     foot=sub.add_parser("compile-footprints");_authority_args(foot);foot.add_argument("--state",type=Path,required=True);foot.add_argument("--visual-system",type=Path,required=True);foot.add_argument("--output",type=Path,required=True)
     prompt=sub.add_parser("compile-prompts");_authority_args(prompt);prompt.add_argument("--state",type=Path,required=True);prompt.add_argument("--visual-system",type=Path,required=True);prompt.add_argument("--footprints",type=Path,required=True);prompt.add_argument("--previous-package",type=Path);prompt.add_argument("--package-output",type=Path,required=True);prompt.add_argument("--anchor-output",type=Path,required=True)
     verify=sub.add_parser("verify");verify.add_argument("--state",type=Path,required=True);verify.add_argument("--visual-system",type=Path,required=True);verify.add_argument("--footprints",type=Path,required=True);verify.add_argument("--prompt-package",type=Path,required=True);verify.add_argument("--anchor-request",type=Path,required=True)
+    rebind=sub.add_parser("rebind-authority");_authority_args(rebind);rebind.add_argument("--old-state",type=Path,required=True);rebind.add_argument("--old-visual-system",type=Path,required=True);rebind.add_argument("--old-footprints",type=Path,required=True);rebind.add_argument("--old-prompt-package",type=Path,required=True);rebind.add_argument("--old-anchor-request",type=Path,required=True);rebind.add_argument("--old-icon-asset-index",type=Path,required=True);rebind.add_argument("--state-output",type=Path,required=True);rebind.add_argument("--visual-system-output",type=Path,required=True);rebind.add_argument("--footprints-output",type=Path,required=True);rebind.add_argument("--package-output",type=Path,required=True);rebind.add_argument("--anchor-output",type=Path,required=True)
     return result
 
 
@@ -59,6 +61,23 @@ def main()->int:
             state=_state(args.state.resolve());bundle=_bundle(args);system=load_json(args.visual_system.resolve());footprints=load_json(args.footprints.resolve());previous=load_json(args.previous_package.resolve()) if args.previous_package else None
             if state["state"]!="compiling_prompts" or canonical_sha256(footprints)!=state["current_artifacts"]["text_footprint_manifest_sha256"]: raise ContractError([error("$","Prompt inputs do not match State","authority_hash_mismatch")])
             package,anchor=compile_prompt_package(system,footprints,bundle,previous);_write_once(args.package_output.resolve(),package);_write_once(args.anchor_output.resolve(),anchor);state["current_artifacts"]["deck_prompt_package_sha256"]=canonical_sha256(package);state["current_artifacts"]["style_anchor_request_sha256"]=canonical_sha256(anchor);state=transition(state,"style_anchor_ready",evidence=canonical_sha256(anchor));state=transition(state,"p3_2_complete");_replace(args.state.resolve(),state);details={"style_anchor_slide_id":anchor["slide_id"],"compiled_slides":len(package["slides"])}
+        elif args.action=="rebind-authority":
+            old_state=_state(args.old_state.resolve());old_system=load_json(args.old_visual_system.resolve());old_footprints=load_json(args.old_footprints.resolve());old_package=load_json(args.old_prompt_package.resolve());old_anchor=load_json(args.old_anchor_request.resolve());old_index=load_json(args.old_icon_asset_index.resolve());bundle=_bundle(args)
+            for kind,value in (("deck_visual_system",old_system),("text_footprint_manifest",old_footprints),("deck_prompt_package",old_package),("style_anchor_request",old_anchor)):validate_schema(kind,value,SCHEMA_DIR)
+            expected=(canonical_sha256(old_system),canonical_sha256(old_footprints),canonical_sha256(old_package),canonical_sha256(old_anchor));actual=(old_state["current_artifacts"]["deck_visual_system_sha256"],old_state["current_artifacts"]["text_footprint_manifest_sha256"],old_state["current_artifacts"]["deck_prompt_package_sha256"],old_state["current_artifacts"]["style_anchor_request_sha256"])
+            if old_state["state"]!="p3_2_complete" or expected!=actual:raise ContractError([error("$","old P3.2 Authority is incomplete or stale","authority_hash_mismatch")])
+            validate_schema("p3_icon_asset_authority_index",old_index,SCHEMA_DIR)
+            if canonical_sha256(old_index)!=old_system["p3_icon_asset_index_sha256"]:raise ContractError([error("$.old_icon_asset_index","Old Icon Index does not bind old Visual System","authority_hash_mismatch")])
+            unchanged=("deck_request_sha256","approved_outline_sha256","slide_content_manifest_sha256")
+            if any(old_system[field]!=bundle["hashes"][field] for field in unchanged):raise ContractError([error("$","P1, Deck Request, or Icon Authority changed; Visual System rebind is forbidden","authority_hash_mismatch")])
+            if old_system["p3_icon_asset_index_sha256"]!=bundle["hashes"]["p3_icon_asset_index_sha256"] and (old_index["entries"] or bundle["icon_asset_index"]["entries"]):raise ContractError([error("$.icon_asset_index","Icon assets changed; Visual System rebind is forbidden","authority_hash_mismatch")])
+            rebound=copy.deepcopy(old_system);rebound["revision"]=old_system["revision"]+1;rebound["parent_sha256"]=canonical_sha256(old_system);rebound.update(bundle["hashes"]);validate_schema("deck_visual_system",rebound,SCHEMA_DIR)
+            footprints=compile_text_footprints(rebound,bundle);package,anchor=compile_prompt_package(rebound,footprints,bundle,old_package)
+            if anchor["slide_id"]!=old_anchor["slide_id"]:raise ContractError([error("$.style_anchor","rebound Authority changes the Style Anchor selection","anchor_selection_changed")])
+            next_state=copy.deepcopy(old_state);next_state["revision"]=rebound["revision"];next_state["current_artifacts"].update({"authority_bundle_sha256":bundle["authority_bundle_sha256"],"deck_visual_system_sha256":canonical_sha256(rebound),"text_footprint_manifest_sha256":canonical_sha256(footprints),"deck_prompt_package_sha256":canonical_sha256(package),"style_anchor_request_sha256":canonical_sha256(anchor)});next_state["history"].append({"from":"p3_2_complete","to":"p3_2_complete","event":"p2_authority_rebound","evidence":canonical_sha256(package)});validate_schema("visual_system_state",next_state,SCHEMA_DIR)
+            outputs=(args.state_output,args.visual_system_output,args.footprints_output,args.package_output,args.anchor_output)
+            if any(path.resolve().exists() for path in outputs):raise ContractError([error("$","rebind outputs must not already exist","overwrite_forbidden")])
+            _write_once(args.visual_system_output.resolve(),rebound);_write_once(args.footprints_output.resolve(),footprints);_write_once(args.package_output.resolve(),package);_write_once(args.anchor_output.resolve(),anchor);_write_once(args.state_output.resolve(),next_state);state=next_state;details={"reused_prompt_slide_ids":[item["slide_id"] for item in package["slides"] if item["reused"]],"p2_manifest_sha256":bundle["hashes"]["p2_manifest_sha256"]}
         else:
             state=_state(args.state.resolve());system=load_json(args.visual_system.resolve());footprints=load_json(args.footprints.resolve());package=load_json(args.prompt_package.resolve());anchor=load_json(args.anchor_request.resolve());
             for kind,value in (("deck_visual_system",system),("text_footprint_manifest",footprints),("deck_prompt_package",package),("style_anchor_request",anchor)):validate_schema(kind,value,SCHEMA_DIR)
