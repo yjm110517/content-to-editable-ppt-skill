@@ -9,7 +9,7 @@ ROOT = Path(__file__).resolve().parents[2]
 sys.path.insert(0, str(ROOT / "content-to-editable-ppt" / "scripts"))
 
 from schema_utils import validate_schema
-from wireframe_state import WireframeStateError, consume_correction, initial_state, record_feedback, record_preview, request_visual_revision, start_planning, submit_validation
+from wireframe_state import WireframeStateError, authorize_revision_budget, consume_correction, initial_state, record_feedback, record_preview, request_visual_revision, start_planning, submit_validation
 
 
 H = "a" * 64
@@ -47,15 +47,25 @@ class P2MarkdownContractsStateTests(unittest.TestCase):
         self.assertEqual(revised["counters"]["host_wireframe_revision_pass_count"], 1)
 
     def test_completed_p2_accepts_explicit_visual_storyboard_revision(self) -> None:
-        state = initial_state(task_id="T", deck_id="D", approved_outline_sha256=H, slide_content_manifest_sha256=H)
+        state = initial_state(task_id="T", deck_id="D", approved_outline_sha256=H, slide_content_manifest_sha256=H, absolute_host_model_invocation_ceiling=3)
+        state["counters"]["host_model_invocation_count"] = 3
         state["state"] = "p2_complete"; state["current_revision"] = 1
         revised = request_visual_revision(state, feedback_sha256=H, affected_slide_ids=["S01"], user_message_sha256=H)
         self.assertEqual(revised["state"], "revision_requested")
         self.assertEqual(revised["changed_slide_ids"], ["S01"])
+        self.assertEqual(revised["budgets"]["absolute_host_model_invocation_ceiling"], 6)
         planned = start_planning(revised, pass_id="r2", host_model_invocation_id="h2", user_evidence_sha256=H)
         self.assertEqual(planned["state"], "wireframe_planning")
         with self.assertRaises(WireframeStateError):
             request_visual_revision(state, feedback_sha256=H, affected_slide_ids=[], user_message_sha256=H)
+
+    def test_legacy_pending_revision_can_authorize_budget_once(self) -> None:
+        state = initial_state(task_id="T", deck_id="D", approved_outline_sha256=H, slide_content_manifest_sha256=H, absolute_host_model_invocation_ceiling=3)
+        state["state"]="revision_requested"; state["changed_slide_ids"]=["S01"]; state["counters"]["host_model_invocation_count"]=3
+        state["history"].append({"from":"p2_complete","to":"revision_requested","event":"visual_storyboard_changes_requested","artifact_sha256":H,"user_evidence_sha256":H,"host_model_invocation_id":None,"affected_slide_ids":["S01"],"timestamp_utc":"2026-08-24T00:00:00Z"})
+        authorized=authorize_revision_budget(state,user_evidence_sha256=H)
+        self.assertEqual(authorized["budgets"]["absolute_host_model_invocation_ceiling"],6)
+        with self.assertRaises(WireframeStateError):authorize_revision_budget(authorized,user_evidence_sha256=H)
 
     def test_state_schema_accepts_new_state(self) -> None:
         state = initial_state(task_id="T", deck_id="D", approved_outline_sha256=H, slide_content_manifest_sha256=H)
