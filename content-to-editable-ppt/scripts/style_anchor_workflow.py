@@ -5,6 +5,7 @@ from PIL import Image
 from canonical_artifact import canonical_sha256
 from schema_utils import ContractError,error,load_json,validate_schema
 SCHEMA_DIR=Path(__file__).resolve().parents[1]/"schemas"
+REFERENCE_MASK_PADDING_NORMALIZED=250
 def sha(path:Path)->str:return hashlib.sha256(path.read_bytes()).hexdigest()
 def write_once(path:Path,value:dict):
     if path.exists():raise ContractError([error(str(path),"immutable artifact exists","overwrite_forbidden")])
@@ -35,11 +36,24 @@ def approve(args):
     preview=load_json(args.final_preview_record);feedback=load_json(args.feedback);package=load_json(args.prompt_package);lock=load_json(args.runtime_lock);mapping=load_json(args.element_map);validate_schema("final_design_preview_record",preview,SCHEMA_DIR);validate_schema("style_anchor_feedback",feedback,SCHEMA_DIR)
     if feedback["decision"]!="accepted" or feedback["change_scope"]!="none" or feedback["final_preview_sha256"]!=preview["final_preview_sha256"]:raise ContractError([error("$.feedback","Anchor is not explicitly accepted","confirmation_required")])
     result={"schema_version":"1.0","artifact_type":"style_anchor_record","deck_id":preview["deck_id"],"slide_id":preview["slide_id"],"revision":preview["revision"],"final_preview_sha256":preview["final_preview_sha256"],"generated_layer_sha256":preview["generated_layer_sha256"],"element_map_sha256":canonical_sha256(mapping),"deck_visual_system_sha256":package["deck_visual_system_sha256"],"deck_prompt_package_sha256":canonical_sha256(package),"runtime_lock_sha256":canonical_sha256(lock),"feedback_sha256":canonical_sha256(feedback),"status":"approved"};validate_schema("style_anchor_record",result,SCHEMA_DIR);write_once(args.output,result);return {"style_anchor_sha256":canonical_sha256(result)}
-def reference(args):
-    anchor=load_json(args.style_anchor_record);mapping=load_json(args.element_map);validate_schema("style_anchor_record",anchor,SCHEMA_DIR);validate_schema("design_element_map",mapping,SCHEMA_DIR);final=Image.open(args.final_preview).convert("RGB");raw=Image.open(args.raw_layer).convert("RGB");masked=[]
+def _mask_compositor_regions(final, raw, mapping):
+    """Restore raw pixels around compositor-owned elements with a safety halo.
+
+    PowerPoint glyph rasterization can extend a few pixels beyond the logical
+    text box.  The halo keeps an approved style reference free of formal text
+    without changing the reconstruction BBox itself.
+    """
+    masked=[]
     for item in mapping["elements"]:
         if item["reconstruction_class"] not in {"native_text","native_chart","sanitized_svg"}:continue
-        box=item["normalized_bbox"];coords=(box["x"]*final.width//10000,box["y"]*final.height//10000,(box["x"]+box["w"])*final.width//10000,(box["y"]+box["h"])*final.height//10000);final.paste(raw.crop(coords),coords);masked.append(item["element_id"])
+        box=item["normalized_bbox"]
+        left=max(0,box["x"]-REFERENCE_MASK_PADDING_NORMALIZED);top=max(0,box["y"]-REFERENCE_MASK_PADDING_NORMALIZED)
+        right=min(10000,box["x"]+box["w"]+REFERENCE_MASK_PADDING_NORMALIZED);bottom=min(10000,box["y"]+box["h"]+REFERENCE_MASK_PADDING_NORMALIZED)
+        coords=(left*final.width//10000,top*final.height//10000,right*final.width//10000,bottom*final.height//10000)
+        final.paste(raw.crop(coords),coords);masked.append(item["element_id"])
+    return masked
+def reference(args):
+    anchor=load_json(args.style_anchor_record);mapping=load_json(args.element_map);validate_schema("style_anchor_record",anchor,SCHEMA_DIR);validate_schema("design_element_map",mapping,SCHEMA_DIR);final=Image.open(args.final_preview).convert("RGB");raw=Image.open(args.raw_layer).convert("RGB");masked=_mask_compositor_regions(final,raw,mapping)
     args.output_image.parent.mkdir(parents=True,exist_ok=True);final.save(args.output_image,format="PNG",compress_level=9);result={"schema_version":"1.0","artifact_type":"style_anchor_reference_record","deck_id":anchor["deck_id"],"slide_id":anchor["slide_id"],"style_anchor_sha256":canonical_sha256(anchor),"approved_preview_sha256":anchor["final_preview_sha256"],"raw_layer_sha256":sha(args.raw_layer),"element_map_sha256":canonical_sha256(mapping),"reference_path":args.output_image.name,"reference_sha256":sha(args.output_image),"masked_element_ids":masked,"formal_text_remaining":False,"status":"ready"};validate_schema("style_anchor_reference_record",result,SCHEMA_DIR);write_once(args.output_record,result);return {"reference_sha256":result["reference_sha256"]}
 def parser():
     p=argparse.ArgumentParser();s=p.add_subparsers(dest="action",required=True)
