@@ -124,6 +124,28 @@ def _intents(slide: dict[str, Any], footprint: dict[str, Any], icon_index: dict[
     return result
 
 
+def _storyboard_directive(visuals: list[dict[str, Any]]) -> str:
+    planned = [
+        {
+            "visual_ref": visual["visual_ref"],
+            "placement": visual["placement"],
+            "storyboard": visual["storyboard"],
+            "reading_order": visual["reading_order"],
+        }
+        for visual in visuals
+        if all(key in visual for key in {"placement", "storyboard", "reading_order"})
+    ]
+    if not planned:
+        return ""
+    encoded = json.dumps(planned, ensure_ascii=False, sort_keys=True, separators=(",", ":"))
+    return (
+        "\n\nMUST VISUALLY DEPICT — P2 APPROVED STORYBOARD\n" + encoded
+        + "\nPLACEMENT AND READING ORDER ARE REQUIRED."
+        + "\nDO NOT SUBSTITUTE WITH GENERIC DATA, SEARCH, DASHBOARD, OR ABSTRACT TECHNOLOGY IMAGERY."
+        + "\nUse geometry and visual relationships for the actions. Formal strings, numbers, formulas, and labels remain compositor-owned."
+    )
+
+
 def compile_prompt_package(system: dict[str, Any], footprint: dict[str, Any], bundle: dict[str, Any], previous: dict[str, Any] | None=None) -> tuple[dict[str, Any],dict[str, Any]]:
     validate_schema("deck_visual_system",system,SCHEMA_DIR); validate_schema("text_footprint_manifest",footprint,SCHEMA_DIR)
     anchor,high=_anchor(bundle,system); pages={item["slide_id"]:item for item in bundle["approved_outline"]["pages"]}; candidates={item["slide_id"]:item for item in bundle["p2_candidate"]["slides"]}; contents=bundle["slide_contents"]; families={item["slide_role"]:item["family"] for item in system["soft_design_guidance"]["template_families"]}; old={item["slide_id"]:item for item in (previous or {}).get("slides",[])}
@@ -133,9 +155,9 @@ def compile_prompt_package(system: dict[str, Any], footprint: dict[str, Any], bu
         sid=slide["slide_id"]; page=pages[sid]; content=contents[sid]; cand=candidates[sid]; intents=_intents(slide,footprint,bundle["icon_asset_index"]); relevant=[item for item in footprint["entries"] if item["slide_id"]==sid]
         data={"slide_id":sid,"role":page["role"],"purpose":page["purpose"],"key_message":page["key_message"],"content":{"title":content["title"],"blocks":content["content_blocks"]},"layout_draft":cand["layout_draft"],"layout_notes":cand["layout_notes"],"visual_placeholders":slide["visual_placeholders"],"text_footprints":relevant,"element_intents":intents}
         input_sha=canonical_sha256({"system":canonical_sha256(system),"slide":data,"icon_index":bundle["hashes"]["p3_icon_asset_index_sha256"]}); reused=sid in old and old[sid]["prompt_input_sha256"]==input_sha
-        prompt=old[sid]["prompt"] if reused else shared+"\n\n"+DATA_HEADER+"\n<<<BEGIN_SLIDE_DATA>>>\n"+_escape(json.dumps(data,ensure_ascii=False,sort_keys=True,separators=(",",":")))+"\n<<<END_SLIDE_DATA>>>\n\nReserve every Text Footprint as minimum clear space. Do not draw compositor-owned elements. Raster extraction candidates must be isolated, unoccluded, text-free, with minimum_short_edge=800 and safe_padding=300."
+        prompt=old[sid]["prompt"] if reused else shared+_storyboard_directive(slide["visual_placeholders"])+"\n\n"+DATA_HEADER+"\n<<<BEGIN_SLIDE_DATA>>>\n"+_escape(json.dumps(data,ensure_ascii=False,sort_keys=True,separators=(",",":")))+"\n<<<END_SLIDE_DATA>>>\n\nReserve every Text Footprint as minimum clear space. Do not draw compositor-owned elements. Raster extraction candidates must be isolated, unoccluded, text-free, with minimum_short_edge=800 and safe_padding=300."
         slides.append({"slide_id":sid,"order":slide["order"],"role":page["role"],"template_family":families[page["role"]],"prompt_input_sha256":input_sha,"prompt_sha256":_sha(prompt.encode("utf-8")),"prompt":prompt,"element_intents":intents,"reused":reused})
-    package={"schema_version":"1.0","artifact_type":"deck_prompt_package","deck_id":bundle["deck_id"],"deck_visual_system_sha256":canonical_sha256(system),"text_footprint_manifest_sha256":canonical_sha256(footprint),**bundle["hashes"],"generation_policy":{"provider_policy":"runtime_default","model_policy":"runtime_default","initial_generation_limit":1,"technical_retry_limit":2},"shared_prompt":shared,"negative_prompt":NEGATIVE_PROMPT,"style_anchor_slide_id":anchor,"high_risk_slide_ids":high,"slides":slides,"status":"compiled"}
+    package={"schema_version":"1.1" if bundle["p2_manifest"]["schema_version"]=="1.2" else "1.0","artifact_type":"deck_prompt_package","deck_id":bundle["deck_id"],"deck_visual_system_sha256":canonical_sha256(system),"text_footprint_manifest_sha256":canonical_sha256(footprint),**bundle["hashes"],"generation_policy":{"provider_policy":"runtime_default","model_policy":"runtime_default","initial_generation_limit":1,"technical_retry_limit":2},"shared_prompt":shared,"negative_prompt":NEGATIVE_PROMPT,"style_anchor_slide_id":anchor,"high_risk_slide_ids":high,"slides":slides,"status":"compiled"}
     validate_schema("deck_prompt_package",package,SCHEMA_DIR)
     anchor_slide=next(item for item in slides if item["slide_id"]==anchor); request={"schema_version":"1.0","artifact_type":"style_anchor_request","deck_id":bundle["deck_id"],"deck_prompt_package_sha256":canonical_sha256(package),"deck_visual_system_sha256":canonical_sha256(system),"slide_id":anchor,"slide_prompt_sha256":anchor_slide["prompt_sha256"],"selection_basis":"representativeness_first_v1","high_risk_slide_ids":high,"status":"ready_for_generation"}; validate_schema("style_anchor_request",request,SCHEMA_DIR); return package,request
 

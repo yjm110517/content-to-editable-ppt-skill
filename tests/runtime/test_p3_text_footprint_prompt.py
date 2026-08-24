@@ -23,6 +23,14 @@ from tests.runtime import test_p3_visual_system_contracts as contracts
 
 
 class TextFootprintPromptTests(unittest.TestCase):
+    @staticmethod
+    def add_storyboard(bundle: dict) -> None:
+        placement={"region":"center","prominence":"primary"}
+        storyboard=[{"beat_id":"B01","action":"show_sequence","source_ref":"S01-TITLE","focus_phrase":"生成式AI"}]
+        for visual in (bundle["p2_manifest"]["slides"][0]["visual_placeholders"][0],bundle["p2_candidate"]["slides"][0]["visual_placeholders"][0]):
+            visual.update({"placement":placement,"storyboard":storyboard,"reading_order":["B01"]})
+        bundle["p2_manifest"]["schema_version"]="1.2";bundle["p2_candidate"]["schema_version"]="1.2"
+
     @patch.dict(os.environ,{"IVT_AVAILABLE_FONTS":"Microsoft YaHei;Arial"})
     def test_footprint_is_deterministic_and_uses_actual_font_hash(self)->None:
         with tempfile.TemporaryDirectory() as temporary:
@@ -50,6 +58,18 @@ class TextFootprintPromptTests(unittest.TestCase):
         with tempfile.TemporaryDirectory() as temporary:
             bundle,_=contracts.VisualSystemContractTests().authority(Path(temporary));system=freeze_visual_system(contracts.visual_candidate(),bundle);foot=compile_text_footprints(system,bundle);first,_=compile_prompt_package(system,foot,bundle);second,_=compile_prompt_package(system,foot,bundle,first)
             self.assertFalse(first["slides"][0]["reused"]);self.assertTrue(second["slides"][0]["reused"]);self.assertEqual(first["slides"][0]["prompt_sha256"],second["slides"][0]["prompt_sha256"])
+
+    @patch.dict(os.environ,{"IVT_AVAILABLE_FONTS":"Microsoft YaHei;Arial"})
+    def test_storyboard_compiles_as_required_visual_instruction_and_invalidates_only_changed_input(self)->None:
+        with tempfile.TemporaryDirectory() as temporary:
+            bundle,_=contracts.VisualSystemContractTests().authority(Path(temporary));system=freeze_visual_system(contracts.visual_candidate(),bundle);foot=compile_text_footprints(system,bundle);legacy,_=compile_prompt_package(system,foot,bundle)
+            self.add_storyboard(bundle);revised,_=compile_prompt_package(system,foot,bundle,legacy)
+            self.assertEqual(revised["schema_version"],"1.1");self.assertFalse(revised["slides"][0]["reused"])
+            prompt=revised["slides"][0]["prompt"]
+            self.assertIn("MUST VISUALLY DEPICT — P2 APPROVED STORYBOARD",prompt)
+            self.assertIn("DO NOT SUBSTITUTE WITH GENERIC DATA",prompt)
+            stable,_=compile_prompt_package(system,foot,bundle,revised)
+            self.assertTrue(stable["slides"][0]["reused"]);self.assertEqual(revised["slides"][0]["prompt_sha256"],stable["slides"][0]["prompt_sha256"])
 
     @patch.dict(os.environ,{"IVT_AVAILABLE_FONTS":"Microsoft YaHei;Arial"})
     def test_resolved_svg_is_compositor_owned(self)->None:
