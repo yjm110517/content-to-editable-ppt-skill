@@ -157,4 +157,25 @@ def request_visual_revision(state: dict[str, Any], *, feedback_sha256: str, affe
     )
     result["current_artifacts"]["feedback_sha256"] = feedback_sha256
     result["changed_slide_ids"] = list(affected_slide_ids)
+    ceiling = result["budgets"]["absolute_host_model_invocation_ceiling"]
+    if ceiling is not None:
+        result["budgets"]["absolute_host_model_invocation_ceiling"] = max(ceiling, result["counters"]["host_model_invocation_count"]) + result["budgets"]["max_host_invocations_per_pass"]
+    return result
+
+
+def authorize_revision_budget(state: dict[str, Any], *, user_evidence_sha256: str) -> dict[str, Any]:
+    if state["state"] != "revision_requested":
+        raise WireframeStateError("revision budget authorization requires revision_requested")
+    request = next((item for item in reversed(state["history"]) if item["event"] in {"visual_storyboard_changes_requested", "layout_changes_requested"}), None)
+    if request is None or request["user_evidence_sha256"] != user_evidence_sha256:
+        raise WireframeStateError("revision budget authorization does not bind current user request")
+    if any(item["event"] == "revision_budget_authorized" and item["user_evidence_sha256"] == user_evidence_sha256 for item in state["history"]):
+        raise WireframeStateError("revision budget is already authorized")
+    ceiling = state["budgets"]["absolute_host_model_invocation_ceiling"]
+    if ceiling is None:
+        raise WireframeStateError("unbounded Host budget does not require authorization")
+    if ceiling - state["counters"]["host_model_invocation_count"] >= state["budgets"]["max_host_invocations_per_pass"]:
+        raise WireframeStateError("revision budget is already authorized")
+    result = _record(state, event="revision_budget_authorized", target="revision_requested", user_evidence_sha256=user_evidence_sha256, affected_slide_ids=state["changed_slide_ids"])
+    result["budgets"]["absolute_host_model_invocation_ceiling"] = max(ceiling, state["counters"]["host_model_invocation_count"]) + state["budgets"]["max_host_invocations_per_pass"]
     return result

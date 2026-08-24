@@ -11,7 +11,7 @@ from typing import Any
 from canonical_artifact import canonical_sha256
 from markdown_wireframe import SCHEMA_DIR, audit_markdown, bind_markdown, build_validation_report, load_markdown_authority, sha256_bytes, utc_now
 from schema_utils import ContractError, error, load_json, validate_schema
-from wireframe_state import WireframeStateError, consume_correction, initial_state, mark_bound, record_feedback, record_preview, request_visual_revision, submit_validation
+from wireframe_state import WireframeStateError, authorize_revision_budget, consume_correction, initial_state, mark_bound, record_feedback, record_preview, request_visual_revision, submit_validation
 
 
 def _bytes_json(document: dict[str, Any]) -> bytes:
@@ -165,6 +165,8 @@ def parser() -> argparse.ArgumentParser:
     revise = commands.add_parser("request-visual-revision")
     revise.add_argument("--state", type=Path, required=True); revise.add_argument("--wireframe-root", type=Path, required=True)
     revise.add_argument("--feedback", type=Path, required=True)
+    budget = commands.add_parser("authorize-revision-budget")
+    budget.add_argument("--state", type=Path, required=True); budget.add_argument("--user-evidence-sha256", required=True)
     verify = commands.add_parser("verify")
     verify.add_argument("--state", type=Path, required=True); verify.add_argument("--approved-outline", type=Path, required=True)
     verify.add_argument("--slide-content-dir", type=Path, required=True); verify.add_argument("--wireframe-root", type=Path, required=True)
@@ -212,9 +214,10 @@ def main() -> int:
                     raise ContractError([error("$.schema_version", "Visual Storyboard Revision requires Candidate 1.2", "unsupported_schema_version")])
                 required_storyboards = set(state["changed_slide_ids"]) if state["state"] == "revision_requested" else None
                 report = build_validation_report(candidate, bundle, report_id=f"{candidate['artifact_id']}-validation", storyboard_required_slide_ids=required_storyboards)
+                next_state = submit_validation(state, candidate_sha256=canonical_sha256(candidate), report_sha256=canonical_sha256(report), status=report["status"], host_model_invocation_id=candidate["host_model_invocation_id"], pass_id=candidate["pass_id"], user_evidence_sha256=args.user_evidence_sha256)
+                validate_schema("markdown_wireframe_state", next_state, SCHEMA_DIR)
                 _write_once(args.validation_report.resolve(), _bytes_json(report))
-                state = submit_validation(state, candidate_sha256=canonical_sha256(candidate), report_sha256=canonical_sha256(report), status=report["status"], host_model_invocation_id=candidate["host_model_invocation_id"], pass_id=candidate["pass_id"], user_evidence_sha256=args.user_evidence_sha256)
-                _replace_state(args.state.resolve(), state); details = {"validation_status": report["status"]}
+                state = next_state; _replace_state(args.state.resolve(), state); details = {"validation_status": report["status"]}
             elif args.action == "apply-correction":
                 candidate, report, correction = load_json(args.candidate.resolve()), load_json(args.validation_report.resolve()), load_json(args.correction.resolve())
                 state = consume_correction(state, host_model_invocation_id=correction["host_model_invocation_id"])
@@ -238,6 +241,9 @@ def main() -> int:
                 state = record_preview(state, preview_sha256=canonical_sha256(preview), mode=args.mode, user_message_sha256=args.user_message_sha256)
                 if args.mode == "skipped": state = _publish(args.wireframe_root.resolve(), state)
                 _replace_state(args.state.resolve(), state); details = {"preview_sha256": canonical_sha256(preview)}
+            elif args.action == "authorize-revision-budget":
+                state = authorize_revision_budget(state, user_evidence_sha256=args.user_evidence_sha256)
+                _replace_state(args.state.resolve(), state); details = {"absolute_host_model_invocation_ceiling": state["budgets"]["absolute_host_model_invocation_ceiling"]}
             elif args.action in {"record-feedback", "request-visual-revision"}:
                 feedback = load_json(args.feedback.resolve()); validate_schema("markdown_wireframe_feedback", feedback, SCHEMA_DIR)
                 manifest_path = args.wireframe_root.resolve() / "wireframe-manifest.json" if args.action == "request-visual-revision" else _manifest_path(args.wireframe_root.resolve(), state["current_revision"])
