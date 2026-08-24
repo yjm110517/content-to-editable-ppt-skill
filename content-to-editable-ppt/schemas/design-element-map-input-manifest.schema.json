@@ -1,0 +1,30 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "design-element-map-input-manifest.schema.json",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["schema_version", "artifact_type", "deck_id", "slide_id", "prompt_package_sha256", "generated_layer_sha256", "inputs"],
+  "properties": {
+    "schema_version": {"const": "1.0"},
+    "artifact_type": {"const": "design_element_map_input_manifest"},
+    "deck_id": {"type": "string", "minLength": 1},
+    "slide_id": {"type": "string", "minLength": 1},
+    "prompt_package_sha256": {"$ref": "#/$defs/hash"},
+    "generated_layer_sha256": {"$ref": "#/$defs/hash"},
+    "inputs": {"type": "array", "minItems": 6, "items": {"$ref": "#/$defs/input"}}
+  },
+  "$defs": {
+    "hash": {"type": "string", "pattern": "^[a-f0-9]{64}$"},
+    "input": {
+      "type": "object", "additionalProperties": false,
+      "required": ["name", "filename", "sha256", "media_type", "purpose"],
+      "properties": {
+        "name": {"type": "string", "minLength": 1},
+        "filename": {"type": "string", "pattern": "^[A-Za-z0-9][A-Za-z0-9._-]*$"},
+        "sha256": {"$ref": "#/$defs/hash"},
+        "media_type": {"type": "string", "minLength": 1},
+        "purpose": {"type": "string", "minLength": 1}
+      }
+    }
+  }
+}
