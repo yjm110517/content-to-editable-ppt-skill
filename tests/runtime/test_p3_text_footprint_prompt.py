@@ -72,6 +72,14 @@ class TextFootprintPromptTests(unittest.TestCase):
             self.assertTrue(stable["slides"][0]["reused"]);self.assertEqual(revised["slides"][0]["prompt_sha256"],stable["slides"][0]["prompt_sha256"])
 
     @patch.dict(os.environ,{"IVT_AVAILABLE_FONTS":"Microsoft YaHei;Arial"})
+    def test_prompt_bytes_allow_safe_reuse_after_authority_only_rebind(self)->None:
+        with tempfile.TemporaryDirectory() as temporary:
+            bundle,_=contracts.VisualSystemContractTests().authority(Path(temporary));system=freeze_visual_system(contracts.visual_candidate(),bundle);foot=compile_text_footprints(system,bundle);old,_=compile_prompt_package(system,foot,bundle)
+            rebound=copy.deepcopy(system);rebound["revision"]+=1;rebound["parent_sha256"]=canonical_sha256(system);rebound["p2_manifest_sha256"]="b"*64
+            current,_=compile_prompt_package(rebound,foot,bundle,old)
+            self.assertTrue(current["slides"][0]["reused"]);self.assertEqual(old["slides"][0]["prompt_sha256"],current["slides"][0]["prompt_sha256"])
+
+    @patch.dict(os.environ,{"IVT_AVAILABLE_FONTS":"Microsoft YaHei;Arial"})
     def test_resolved_svg_is_compositor_owned(self)->None:
         with tempfile.TemporaryDirectory() as temporary:
             bundle,_=contracts.VisualSystemContractTests().authority(Path(temporary));entry=bundle["icon_asset_index"]["entries"][0];bundle["icon_asset_index"]["entries"][0]={"visual_ref":entry["visual_ref"],"status":"resolved_svg","resolution_record_sha256":"a"*64,"asset_manifest_entry_sha256":"b"*64,"sanitized_svg_sha256":"c"*64};system=freeze_visual_system(contracts.visual_candidate(),bundle);foot=compile_text_footprints(system,bundle);package,_=compile_prompt_package(system,foot,bundle);intent=next(item for item in package["slides"][0]["element_intents"] if item["source_ref"]=="S01-V01");self.assertEqual(intent["element_owner"],"deterministic_compositor");self.assertEqual(intent["render_policy"],"resolved_svg_overlay")
