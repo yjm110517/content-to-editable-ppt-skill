@@ -11,7 +11,7 @@ from typing import Any
 from canonical_artifact import canonical_sha256
 from markdown_wireframe import SCHEMA_DIR, audit_markdown, bind_markdown, build_validation_report, load_markdown_authority, sha256_bytes, utc_now
 from schema_utils import ContractError, error, load_json, validate_schema
-from wireframe_state import WireframeStateError, consume_correction, initial_state, mark_bound, record_feedback, record_preview, submit_validation
+from wireframe_state import WireframeStateError, consume_correction, initial_state, mark_bound, record_feedback, record_preview, request_visual_revision, submit_validation
 
 
 def _bytes_json(document: dict[str, Any]) -> bytes:
@@ -147,6 +147,7 @@ def parser() -> argparse.ArgumentParser:
     submit.add_argument("--state", type=Path, required=True); submit.add_argument("--candidate", type=Path, required=True)
     submit.add_argument("--approved-outline", type=Path, required=True); submit.add_argument("--slide-content-dir", type=Path, required=True)
     submit.add_argument("--validation-report", type=Path, required=True); submit.add_argument("--user-evidence-sha256")
+    submit.add_argument("--wireframe-root", type=Path)
     correct = commands.add_parser("apply-correction")
     correct.add_argument("--state", type=Path, required=True); correct.add_argument("--candidate", type=Path, required=True)
     correct.add_argument("--validation-report", type=Path, required=True); correct.add_argument("--correction", type=Path, required=True)
@@ -161,6 +162,9 @@ def parser() -> argparse.ArgumentParser:
     feedback = commands.add_parser("record-feedback")
     feedback.add_argument("--state", type=Path, required=True); feedback.add_argument("--wireframe-root", type=Path, required=True)
     feedback.add_argument("--feedback", type=Path, required=True)
+    revise = commands.add_parser("request-visual-revision")
+    revise.add_argument("--state", type=Path, required=True); revise.add_argument("--wireframe-root", type=Path, required=True)
+    revise.add_argument("--feedback", type=Path, required=True)
     verify = commands.add_parser("verify")
     verify.add_argument("--state", type=Path, required=True); verify.add_argument("--approved-outline", type=Path, required=True)
     verify.add_argument("--slide-content-dir", type=Path, required=True); verify.add_argument("--wireframe-root", type=Path, required=True)
@@ -183,7 +187,31 @@ def main() -> int:
                 if canonical_sha256(approved) != state["current_artifacts"]["approved_outline_sha256"] or canonical_sha256(projection) != state["current_artifacts"]["slide_content_manifest_sha256"]:
                     raise ContractError([error("$", "actual P1 Authority differs from initialized P2 State", "authority_hash_mismatch")])
                 bundle = load_markdown_authority(approved_outline_path=args.approved_outline.resolve(), slide_content_dir=args.slide_content_dir.resolve(), frozen_outline_sha256=state["current_artifacts"]["approved_outline_sha256"], frozen_manifest_sha256=state["current_artifacts"]["slide_content_manifest_sha256"], expected_deck_id=state["deck_id"])
-                candidate = load_json(args.candidate.resolve()); report = build_validation_report(candidate, bundle, report_id=f"{candidate['artifact_id']}-validation")
+                candidate = load_json(args.candidate.resolve())
+                if state["state"] == "revision_requested":
+                    if args.wireframe_root is None:
+                        raise ContractError([error("--wireframe-root", "revision submission requires the immutable previous Candidate", "missing_authority")])
+                    previous_path = args.wireframe_root.resolve() / "revisions" / f"r{state['current_revision']:03d}" / "candidate.json"
+                    previous = load_json(previous_path)
+                    previous_by_id = {slide["slide_id"]: slide for slide in previous["slides"]}
+                    changed = set(state["changed_slide_ids"])
+                    if candidate["revision"] != state["current_revision"] + 1 or candidate["parent_sha256"] != canonical_sha256(previous):
+                        raise ContractError([error("$", "revision Candidate does not bind its immutable parent", "stale_revision")])
+                    for slide in candidate["slides"]:
+                        old = previous_by_id.get(slide["slide_id"])
+                        if old is None:
+                            continue
+                        if slide["slide_id"] not in changed and slide != old:
+                            raise ContractError([error(f"$.slides.{slide['slide_id']}", "unchanged slide differs from prior Revision", "revision_scope_mismatch")])
+                        if slide["slide_id"] in changed:
+                            for key in {"slide_id", "order", "content_labels"}:
+                                if slide[key] != old[key]:
+                                    raise ContractError([error(f"$.slides.{slide['slide_id']}.{key}", "visual revision cannot change content identity or order", "revision_scope_mismatch")])
+                candidate_version = candidate.get("schema_version")
+                if state["state"] == "revision_requested" and candidate_version != "1.2":
+                    raise ContractError([error("$.schema_version", "Visual Storyboard Revision requires Candidate 1.2", "unsupported_schema_version")])
+                required_storyboards = set(state["changed_slide_ids"]) if state["state"] == "revision_requested" else None
+                report = build_validation_report(candidate, bundle, report_id=f"{candidate['artifact_id']}-validation", storyboard_required_slide_ids=required_storyboards)
                 _write_once(args.validation_report.resolve(), _bytes_json(report))
                 state = submit_validation(state, candidate_sha256=canonical_sha256(candidate), report_sha256=canonical_sha256(report), status=report["status"], host_model_invocation_id=candidate["host_model_invocation_id"], pass_id=candidate["pass_id"], user_evidence_sha256=args.user_evidence_sha256)
                 _replace_state(args.state.resolve(), state); details = {"validation_status": report["status"]}
@@ -197,7 +225,8 @@ def main() -> int:
                 if canonical_sha256(candidate) != state["current_artifacts"]["candidate_sha256"] or canonical_sha256(approved) != state["current_artifacts"]["approved_outline_sha256"] or canonical_sha256(projection) != state["current_artifacts"]["slide_content_manifest_sha256"]:
                     raise ContractError([error("$", "bind inputs do not match State", "authority_hash_mismatch")])
                 bundle = load_markdown_authority(approved_outline_path=args.approved_outline.resolve(), slide_content_dir=args.slide_content_dir.resolve(), frozen_outline_sha256=state["current_artifacts"]["approved_outline_sha256"], frozen_manifest_sha256=state["current_artifacts"]["slide_content_manifest_sha256"], expected_deck_id=state["deck_id"])
-                markdown, manifest = bind_markdown(candidate, bundle); revision = state["current_revision"] + 1; manifest["revision"] = revision
+                required_storyboards = set(state["changed_slide_ids"]) if state["changed_slide_ids"] else None
+                markdown, manifest = bind_markdown(candidate, bundle, storyboard_required_slide_ids=required_storyboards); revision = state["current_revision"] + 1; manifest["revision"] = revision
                 next_state = mark_bound(state, revision=revision, manifest_sha256=canonical_sha256(manifest), wireframe_sha256=manifest["wireframe_sha256"])
                 validate_schema("markdown_wireframe_state", next_state, SCHEMA_DIR)
                 _commit_revision(args.wireframe_root.resolve(), revision, candidate=candidate, markdown=markdown, manifest=manifest)
@@ -209,16 +238,24 @@ def main() -> int:
                 state = record_preview(state, preview_sha256=canonical_sha256(preview), mode=args.mode, user_message_sha256=args.user_message_sha256)
                 if args.mode == "skipped": state = _publish(args.wireframe_root.resolve(), state)
                 _replace_state(args.state.resolve(), state); details = {"preview_sha256": canonical_sha256(preview)}
-            elif args.action == "record-feedback":
+            elif args.action in {"record-feedback", "request-visual-revision"}:
                 feedback = load_json(args.feedback.resolve()); validate_schema("markdown_wireframe_feedback", feedback, SCHEMA_DIR)
-                manifest = load_json(_manifest_path(args.wireframe_root.resolve(), state["current_revision"])); valid_ids = {item["slide_id"] for item in manifest["slides"]}
+                manifest_path = args.wireframe_root.resolve() / "wireframe-manifest.json" if args.action == "request-visual-revision" else _manifest_path(args.wireframe_root.resolve(), state["current_revision"])
+                manifest = load_json(manifest_path); valid_ids = {item["slide_id"] for item in manifest["slides"]}
                 if feedback["deck_id"] != state["deck_id"] or feedback["revision"] != state["current_revision"] or feedback["wireframe_manifest_sha256"] != canonical_sha256(manifest) or feedback["preview_sha256"] != state["current_artifacts"]["preview_sha256"]:
                     raise ContractError([error("$", "Feedback does not bind current preview", "stale_feedback")])
                 affected = feedback["affected_slide_ids"]
                 if not set(affected).issubset(valid_ids) or (feedback["decision"] == "changes_requested") != bool(affected) or ((feedback["decision"] in {"accepted", "continue"}) != (feedback["change_scope"] == "none")):
                     raise ContractError([error("$", "Feedback scope is invalid", "invalid_feedback")])
-                state = record_feedback(state, feedback_sha256=canonical_sha256(feedback), decision=feedback["decision"], scope=feedback["change_scope"], affected_slide_ids=affected, user_message_sha256=feedback["user_message_sha256"])
-                _write_once(args.wireframe_root.resolve() / "revisions" / f"r{state['current_revision']:03d}" / "feedback.json", _bytes_json(feedback))
+                if args.action == "request-visual-revision":
+                    if feedback["decision"] != "changes_requested" or feedback["change_scope"] != "visual_storyboard":
+                        raise ContractError([error("$", "request-visual-revision requires changes_requested + visual_storyboard", "invalid_feedback")])
+                    state = request_visual_revision(state, feedback_sha256=canonical_sha256(feedback), affected_slide_ids=affected, user_message_sha256=feedback["user_message_sha256"])
+                    feedback_name = "visual-storyboard-revision-request.json"
+                else:
+                    state = record_feedback(state, feedback_sha256=canonical_sha256(feedback), decision=feedback["decision"], scope=feedback["change_scope"], affected_slide_ids=affected, user_message_sha256=feedback["user_message_sha256"])
+                    feedback_name = "feedback.json"
+                _write_once(args.wireframe_root.resolve() / "revisions" / f"r{state['current_revision']:03d}" / feedback_name, _bytes_json(feedback))
                 if state["state"] == "p2_complete": state = _publish(args.wireframe_root.resolve(), state)
                 _replace_state(args.state.resolve(), state); details = {"feedback_sha256": canonical_sha256(feedback)}
             else:
