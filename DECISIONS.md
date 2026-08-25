@@ -868,7 +868,7 @@ P0 阶段只记录真实现状，不顺手修复 Runtime。
 
 ## ADR-034 — v2.0 开发按 P0 → P0.5 → P1 → P6 Gate 推进
 
-**Status:** Accepted
+**Status:** Superseded by ADR-042
 
 **Decision**
 
@@ -1128,6 +1128,41 @@ P4 已完成逐页重建与 Post-Assembly 对比，P5 的职责是证明"这就�
 - Packaging 是纯函数，只消费已冻结 Artifact，不产生新业务字段（禁止时间戳、随机 UUID、临时目录、用户名、绝对路径）；
 - 正式交付 Hash 闭包采用两层规则：Provenance 记录另外 6 个交付文件 Hash，Provenance 自身 Hash 由 P5 State/Gate 记录（Provenance 不包含自身 Hash，避免自引用循环）；
 - Packaging Runtime Fingerprint 不一致时停止，不得用不同 zlib/Python 静默生成同名交付包。
+
+---
+
+## ADR-042 — 精简正式 Skill，并保留独立 Single-Slide 兼容入口
+
+**Status:** Accepted
+
+**Decision**
+
+停止继续扩展用户可见的多页 P0～P5 阶段体系。Content-to-Deck 将在阶段 2 原子切换为一个新的多页主入口；用户只需要提供材料、确认方案并接收结果。
+
+现有 `run_pipeline.py` 继续作为第二个、独立且受支持的 Image-to-Editable-PPT 单页兼容入口。单页 Planner Initial/Revision、Visual Reviewer Review、fresh-context 调用包、`run_state`、Recovery、Resume、Targeted Patch、资产处理、PPT 构建、字体审计、渲染、结构 QA、Review Evaluation、正常 Review Gate、Warning Acceptance、Delivery Decision 和七文件交付契约继续有效。
+
+阶段 1 只完成依赖清点和开发权威切换，不改变当前 Runtime 行为，不删除文件，也不改写当前生效的 `SKILL.md`。完整 234 文件分类、公开命令入口和跨边界引用记录在 [PR #60](https://github.com/yjm110517/content-to-editable-ppt-skill/pull/60) 中，不新增 Inventory、State、Gate 或 Evidence Artifact。
+
+**Supersedes and preserves**
+
+- ADR-034 的 P0～P6 阶段开发顺序由本决策取代；
+- ADR-037、ADR-038、ADR-040、ADR-041 在阶段 2 原子切换前仍约束当前多页路径；切换后由阶段 2 精确标记其 Deck-only 义务为历史或被替代；
+- ADR-023 及既有 Single-Slide 状态、Planner、Reviewer、Recovery、Patch、Review Gate、Warning Acceptance 和交付条款继续有效；
+- `visual_reviewer.yaml` 的单页 Review Profile 属于长期兼容边界；Deck Consistency 和 Exception Batch 专用部分可以在阶段 2/3 独立处理；
+- 不新增另一套精简状态机、Gate、Evidence、通用旧 Artifact 适配层或仓库内历史归档目录。
+
+**Why**
+
+当前安装包同时承载用户 Skill、单页 Runtime、多页 P 阶段开发框架和历史验证证据。大量阶段状态、Schema、Gate 和 Evidence 增加了使用与维护成本，却没有直接保证用户可感知的内容、布局和编辑质量。精简必须先收敛多页用户路径，同时避免误删已经验证并明确要求保留的单页兼容能力。
+
+**Consequences**
+
+- 后续精简以 [Skill 精简计划](docs/skill-simplification-plan.md) 及其四份实施文档为执行依据；
+- Content-to-Deck 只保留一个新的多页主入口；独立 Single-Slide 入口继续存在；
+- 阶段 2 切换前，当前 P1～P5 多页实现和权威规范仍保持有效；
+- 阶段 1 的文件分类必须将完整单页依赖闭包归为生产保留；
+- 阶段 2/3 只能删除旧多页专用或历史验证能力，不能借精简降低单页兼容行为；
+- 历史恢复依赖 Git，不在正式安装包中继续累积归档、Replay 或 Evidence。
 
 ---
 
