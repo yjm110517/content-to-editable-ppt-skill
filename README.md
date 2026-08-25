@@ -76,11 +76,10 @@ content-to-editable-ppt-skill/
 
 ### 权威层级
 
-1. [总体架构与开发计划 v2.4](docs/architecture/v2.4/overall-architecture-and-development-plan.md) 决定当前阶段、视觉 Authority、Prompt Package、资产回退、受约束重建和 P5 不可变交付边界。
-2. [Architecture Decision Log](DECISIONS.md) 记录已经接受的关键决策、原因、后果和变更规则。
-3. 对应产品、Runtime 和 Agent 专项规范定义实现要求。
-4. [Artifact、State 与权威数据契约 v1.4](docs/contracts/v1.4/artifact-state-authority-contract.md) 定义 Content、Layout、Asset、Prompt、Preview、Reconstruction 和 P5 Delivery Authority。
-5. [测试与验收计划 v1.4](docs/testing/v1.4/test-and-acceptance-plan.md) 定义生产回退、P3.2、P3.3、P4 和 P5 Gate。
+1. [ADR-042](DECISIONS.md) 与 [Skill 精简计划](docs/skill-simplification-plan.md) 决定后续迁移方向：多页 Content-to-Deck 收敛为一个新主入口，同时完整保留独立 Single-Slide 兼容入口。
+2. 在阶段 2 原子切换前，[总体架构与开发计划 v2.4](docs/architecture/v2.4/overall-architecture-and-development-plan.md)、产品规格 v1.6、Artifact 契约 v1.4 和测试计划 v1.4 继续约束当前 P1～P5 多页路径。
+3. [单页 Runtime 执行与错误恢复规范 v1.1](docs/runtime/v1.1/single-slide-runtime-and-error-recovery.md) 长期约束独立 Image-to-Editable-PPT 单页兼容入口。
+4. [Architecture Decision Log](DECISIONS.md) 记录已经接受的关键决策、原因、后果和变更规则。
 
 ### 当前产品规格（v1.6）
 
@@ -95,7 +94,7 @@ content-to-editable-ppt-skill/
 - [运行环境安装与引导规范 v1.1](docs/runtime/v1.1/environment-setup-and-bootstrap.md)
 - [增量开发文档 v1.4](docs/development/v1.4/development-guide.md)
 
-旧规格、旧架构、旧 Artifact 契约、旧测试计划和 SVG P2 计划保留为历史基线。新开发和验收以产品规格 v1.6、Runtime v1.1、总体架构 v2.4、Artifact 契约 v1.4 和测试计划 v1.4 为准。
+旧规格、旧架构、旧 Artifact 契约、旧测试计划和 SVG P2 计划保留为历史基线。阶段 2 切换前，当前多页执行仍以产品规格 v1.6、总体架构 v2.4、Artifact 契约 v1.4 和测试计划 v1.4 为准；独立单页兼容入口继续以 Runtime v1.1 及其既有 Planner、Reviewer、Recovery 和交付契约为准。
 
 这些文档是开发和验收的完整权威规格。Skill 运行目录中的 `SKILL.md`、`references/`、`agents/` 和 `schemas/` 只保留实际执行所需的精简规则与机器可验证契约。
 

@@ -2,12 +2,12 @@
 
 ## 1. 文档定位
 
-- 状态：待批准的执行计划
+- 状态：由 ADR-042 批准的执行计划（随 PR #60 合入生效）
 - 目标：先缩减正式 Skill，再在精简后的单一路径上处理视觉质量问题
 - 适用范围：`content-to-editable-ppt/` 正式安装包，以及与其直接耦合的测试、工具和文档
 - 不扩展范围：不新增用户入口、输入格式、Agent 角色、阶段、状态机、Gate 或 Evidence 体系
 
-当前 README 仍将 Architecture v2.4、ADR、Specification v1.6、Contract v1.4 和 Testing v1.4 列为权威来源。因此，本计划在获得批准后，必须先通过新的 ADR 正式终止“继续扩展 P0～P5”的方向，并同步 README 的权威层级。在该 ADR 合入之前，本文档只是一份待批准计划，不自行取代现有权威文件。
+ADR-042 已确定后续迁移方向：停止继续扩展用户可见的多页 P0～P5，多页 Content-to-Deck 收敛为一个新主入口，同时完整保留独立 Image-to-Editable-PPT 单页兼容入口。阶段 2 原子切换前，现有多页权威继续有效；Single-Slide Runtime v1.1 及其既有 Planner、Reviewer、Recovery 和交付契约长期有效。
 
 本计划是后续精简工作的唯一总计划。根据用户要求，仅建立下列四份配套实施文档；不得继续扩展第五份阶段文档、精简状态机或证据体系。
 
@@ -16,7 +16,7 @@
 | 顺序 | 实施文档 | 状态 |
 |---:|---|---|
 | 1 | [边界清点与权威切换](simplification/01-boundary-and-authority.md) | 待实施 |
-| 2 | [建立并原子切换唯一入口](simplification/02-single-entry-cutover.md) | 依赖阶段 1 |
+| 2 | [建立并原子切换多页主入口](simplification/02-single-entry-cutover.md) | 依赖阶段 1 |
 | 3 | [删除旧体系并缩减安装包](simplification/03-legacy-removal.md) | 依赖阶段 2 |
 | 4 | [核心验证与文档收口](simplification/04-core-validation-and-documentation.md) | 依赖阶段 3 |
 
@@ -85,7 +85,7 @@
 第一目标完成以下事项：
 
 - 用户侧取消 P0～P5；
-- 正式 Skill 只保留一个生产入口；
+- 多页 Content-to-Deck 只保留一个新主入口；独立 `run_pipeline.py` 单页兼容入口完整保留；
 - 删除安装包中的阶段调度、阶段 Gate、阶段 Evidence 和仅服务历史 Fixture 的代码；
 - 合并重复的 Schema、Reference 和命令入口；
 - Smoke、Fixture、Baseline、Report 和 Field Validation 从正式路径不可达；
@@ -142,15 +142,11 @@
 - `install.ps1`、`LICENSE` 和 `NOTICE`；
 - 仍被正式构建使用的共享 PPT、渲染、字体、图片、SVG 和校验模块。
 
-### 5.3 Agent 角色决策
+### 5.3 Agent 角色边界
 
-正式内容转 PPT 主路径默认由宿主 Agent 完成内容理解和页面方案，不再要求持久化的独立 Planner、Reviewer Evidence 流程。
+正式多页内容转 PPT 主路径默认由宿主 Agent 完成内容理解和页面方案，不再要求持久化的 Deck Planner/Reviewer Evidence 流程。
 
-对 `agents/` 的处理必须先完成使用审计：
-
-- 如果某个角色只服务旧 P 阶段、独立 Evidence 或历史 Fixture，则从安装包删除；
-- 如果图片转单页兼容入口仍有真实用户需求，且确实依赖 Layout Planner，则只为该独立兼容入口保留最小角色配置；
-- 不得为了保留 Agent 配置而继续保留旧状态机、Reviewer Gate 或调用证据包。
+独立单页兼容入口完整保留现有 Layout Planner、Visual Reviewer、fresh-context 调用包、`run_state`、Recovery、Patch、Review Gate、Warning Acceptance、Delivery Decision 和七文件交付。`visual_reviewer.yaml` 的单页 Review Profile 属于生产保留；Deck Consistency 和 Exception Batch 专用部分可在阶段 2/3 独立处理。
 
 ## 6. 目标结构
 
@@ -167,13 +163,14 @@ content-to-editable-ppt/
 ├─ schemas/
 │  └─ 仅保留用户请求、页面方案、构建结果和交付所需 Schema
 ├─ scripts/
-│  ├─ run.py                 # 唯一外部生产入口
+│  ├─ run.py                 # 唯一多页 Content-to-Deck 主入口
+│  ├─ run_pipeline.py        # 独立 Single-Slide 兼容入口
 │  ├─ core/                  # 内部规划、构建、校验和交付模块
 │  ├─ shared/                # PPT、字体、渲染和资产共享模块
 │  ├─ requirements.txt
 │  ├─ package.json
 │  └─ pnpm-lock.yaml
-├─ agents/                   # 仅在保留兼容入口确有需要时存在
+├─ agents/                   # 保留单页 Planner、Reviewer 和必要 Skill 元数据
 ├─ runtime/
 │  └─ vendor-lock.json
 ├─ third_party/
@@ -182,9 +179,9 @@ content-to-editable-ppt/
 └─ NOTICE
 ```
 
-该目录树表达职责，不强制机械改名。底层已验证模块可以继续存在，但用户和宿主 Agent 只能发现一个生产入口。
+该目录树表达职责，不强制机械改名。用户和宿主 Agent 可以发现一个多页主入口以及一个独立单页兼容入口；不得再暴露 P1～P5 阶段入口。
 
-默认交付只包含：
+精简后的多页主路径默认交付只包含：
 
 ```text
 <name>_editable.pptx
@@ -192,6 +189,8 @@ content-to-editable-ppt/
 ```
 
 基础质量结论直接在最终回复中说明。只有运行时确有机器消费需求时才保留内部 Build Report；不得为了形式完整强制新增用户可见 `quality-summary.json`。
+
+独立单页兼容入口继续使用现有七文件交付契约，不受上述多页默认交付收敛影响。
 
 ## 7. 精简原则
 
@@ -251,10 +250,11 @@ content-to-editable-ppt/
    - 仅迁移期间需要；
    - 仅历史测试或 Evidence 使用；
    - 无引用；
-3. 判断图片转单页兼容入口是否有真实用户需求；
+3. 冻结独立单页兼容入口的完整生产依赖闭包；
 4. 新增 ADR，明确：
    - 用户侧废止 P0～P5；
-   - 正式 Skill 改为一个入口；
+   - 多页 Content-to-Deck 改为一个新主入口；
+   - 独立 Single-Slide 入口及其完整审核交付契约继续有效；
    - 阶段 Gate、Evidence 和历史 Fixture 不再构成产品能力；
 5. 同步 README 的权威层级，使本文档和新 ADR 成为精简依据；
 6. 清点结果记录在实施提交或 PR 描述中，不新增永久管理 Artifact。
@@ -274,7 +274,7 @@ content-to-editable-ppt/
 
 该工作流只改变决策与文档权威，不删除运行代码；如边界判断错误，修订 ADR 和清点结论。
 
-### 工作流二：[建立并原子切换唯一入口](simplification/02-single-entry-cutover.md)
+### 工作流二：[建立并原子切换多页主入口](simplification/02-single-entry-cutover.md)
 
 #### 目的
 
@@ -286,7 +286,7 @@ content-to-editable-ppt/
 2. 外部入口只接收原始用户请求、材料、输出目录和必要运行配置；
 3. 内部可以调用内容规划、构建、验证和交付函数，但不暴露为用户步骤；
 4. 使用现有底层模块完成一套真实小型多页 Deck；
-5. 如果图片转单页兼容入口决定保留，通过同一入口的明确模式访问，不与多页路径交织；
+5. 保持独立 `run_pipeline.py` 单页兼容入口及完整审核交付流程，不将其并入新的多页主入口；
 6. 不建立通用旧 Artifact 适配层；确需一次性迁移代码时，限定在本工作流并在切换完成时删除；
 7. 在一次原子切换中：
    - 启用新入口；
@@ -337,7 +337,7 @@ content-to-editable-ppt/
 - 安装包内每个文件都对应当前用户能力、核心风险或必要依赖；
 - `rg` 和运行时追踪均不存在孤立 import、失效 Schema 引用或旧命令；
 - 新入口仍能完成真实小型多页 Deck；
-- 保留兼容入口时，其最小 Fixture 通过；
+- 独立单页兼容入口的现有核心回归通过；
 - 正常安装不包含 Baseline、阶段 Report、Smoke 或固定 Evidence；
 - 本工作流实现文件、入口和长期 Artifact 的净减少。
 
@@ -364,7 +364,7 @@ content-to-editable-ppt/
    - PPTX 无法打开、保存或重新渲染；
    - 非生产目录被正式入口读取；
 2. 使用一套真实小型多页 Deck 完成端到端验证；
-3. 对每个决定保留的兼容入口保留一套最小 Fixture；
+3. 保留独立单页兼容入口的核心回归与必要 Fixture；
 4. 测试输出只写临时目录；
 5. 记录核心测试耗时，并设置适合本地持续运行的耗时预算；
 6. 重写 README，只保留当前产品、安装、输入、确认、生成和交付；
@@ -395,7 +395,7 @@ content-to-editable-ppt/
 
 ```text
 边界清点与权威切换
-→ 建立并原子切换唯一入口
+→ 建立并原子切换多页主入口
 → 删除旧体系并缩减安装包
 → 核心验证与文档收口
 ```
@@ -415,10 +415,10 @@ content-to-editable-ppt/
 
 第一目标“正式 Skill 瘦身”完成需要同时满足：
 
-- [ ] README 和 `SKILL.md` 只描述一条用户主路径；
+- [ ] README 和 `SKILL.md` 只描述一个多页主路径和一个独立单页兼容路径；
 - [ ] 用户侧不出现 P0～P5；
 - [ ] 用户只需提供材料、确认方案、接收结果；
-- [ ] 正式 Skill 只有一个外部生产入口；
+- [ ] 正式 Skill 只有一个多页主入口，并完整保留独立单页兼容入口；
 - [ ] 正式入口只接受原始用户输入，不消费内部 Artifact；
 - [ ] Smoke、Fixture、Baseline、Report、Replay 和 Field Validation 从生产路径不可达；
 - [ ] 安装包内每个文件都有明确生产价值、核心风险价值或依赖价值；

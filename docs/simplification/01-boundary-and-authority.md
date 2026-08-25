@@ -2,9 +2,9 @@
 
 ## 文档状态
 
-- 状态：待实施
+- 状态：随 PR #60 合入后完成
 - 前置条件：无
-- 后续阶段：[阶段 2：建立并原子切换唯一入口](02-single-entry-cutover.md)
+- 后续阶段：[阶段 2：建立并原子切换多页主入口](02-single-entry-cutover.md)
 - 总计划：[Content to Editable PPT Skill 精简计划](../skill-simplification-plan.md)
 
 本阶段只是仓库改造批次，不是 Skill Runtime 阶段或用户状态。
@@ -15,10 +15,10 @@
 
 1. 确认正式 Skill 当前真正使用的能力和依赖；
 2. 将正式安装包文件分为生产保留、迁移期保留、删除候选、无引用四类；
-3. 决定图片转单页兼容入口是否继续存在；
-4. 决定 Planner、Reviewer 配置在精简后是否仍有真实用途；
+3. 冻结独立图片转单页兼容入口的完整生产依赖闭包；
+4. 区分单页必须保留的 Planner/Reviewer 能力与 Deck-only Reviewer/P5 Evidence；
 5. 通过 ADR 正式终止继续扩展 P0～P5 的方向；
-6. 为阶段 2 提供明确的唯一入口边界。
+6. 为阶段 2 提供明确的多页主入口边界和单页禁止触碰清单。
 
 ## 当前基线
 
@@ -46,7 +46,7 @@
 - 外部命令入口清点；
 - Schema、Reference 和 Agent 配置使用情况；
 - 生产代码对 `tests/`、`baseline/`、`reports/`、`tools/` 和 `work/` 的引用；
-- 图片转单页兼容入口的真实使用判断；
+- 图片转单页兼容入口的完整依赖闭包；
 - ADR 和 README 权威层级调整。
 
 ### 不包含
@@ -125,30 +125,28 @@ rg -n "manage_|run_pipeline|p[0-5].*eval|prepare_agent_call|finalize_agent_respo
 
 分别判断：
 
-- `planner.yaml` 和 Planner Prompt 是否只服务图片转单页布局；
-- `visual_reviewer.yaml` 是否只服务旧 Reviewer Evidence 和 P5 Gate；
+- `planner.yaml`、Planner Initial/Revision 和 Prompt 的单页依赖；
+- `visual_reviewer.yaml` 中必须保留的单页 Review Profile 与可拆分的 Deck Consistency/Exception Batch Profile；
 - `openai.yaml` 是否仍是安装 Skill 所需元数据；
 - Host 是否可以直接承担内容和页面方案工作；
 - 删除 Reviewer 后，现有确定性检查能否覆盖必要的文件和编辑性风险。
 
-输出必须形成明确决定，不能保留“以后再看”的默认状态。
+单页 Planner、Visual Reviewer、fresh-context 调用包、`run_state`、Recovery、Patch、Review Gate、Warning Acceptance、Delivery Decision 和七文件交付已由用户明确要求完整保留，全部归为生产保留。审计只负责冻结依赖闭包，不再重新判断是否保留。
 
-### 6. 决定兼容入口
+### 6. 冻结单页兼容闭包
 
-图片转单页可编辑 PPT 只能选择一种结果：
+以下行为及其直接、动态和契约依赖全部归为生产保留：
 
-- 保留：存在真实使用证据，并通过统一入口的独立模式访问；
-- 删除：没有真实使用证据，相关 Planner、Schema、脚本和测试进入阶段 3 删除候选。
+- 独立 `run_pipeline.py` 入口；
+- Planner Initial/Revision；
+- Visual Reviewer 单页 Review；
+- fresh-context 调用包准备与响应 Finalization；
+- `run_state`、Recovery、Resume 和 Targeted Patch；
+- 资产处理、PPT 构建、字体审计、渲染和结构 QA；
+- Review Evaluation、正常 Review Gate 和 Warning Acceptance；
+- Delivery Decision 与现有七文件交付。
 
-不得因历史实现已经存在而默认保留。
-
-“真实使用证据”至少应满足一项：
-
-- 用户曾明确请求该入口对应的能力；
-- 存在测试和 Baseline 之外的当前任务调用记录；
-- 存在明确的外部消费者或当前产品承诺。
-
-代码已经存在、历史 Fixture、Baseline、阶段 Report 和旧开发计划本身不构成真实使用证据。
+清点必须覆盖 Python/JavaScript import、Schema Registry、YAML Prompt/Schema 路径、`subprocess` 脚本名、依赖清单、锁文件、`install.ps1` 和第三方许可证。单页闭包中的文件不得分类为删除候选或无引用。
 
 ## 权威切换
 
@@ -158,7 +156,8 @@ rg -n "manage_|run_pipeline|p[0-5].*eval|prepare_agent_call|finalize_agent_respo
 
 - 决策背景：P0～P5 工程验证体系造成用户流程和安装包膨胀；
 - 决策：用户侧改为提供材料、确认方案、接收结果；
-- 正式 Skill 只保留一个生产入口；
+- 多页 Content-to-Deck 收敛为一个新主入口；
+- 独立 Single-Slide 入口及完整审核交付流程继续有效；
 - 阶段 Gate、Evidence、Fixture Replay 和 Field Validation 不再是产品能力；
 - 历史文档只用于追溯；
 - 本精简计划及四份实施文档成为后续执行依据；
@@ -182,9 +181,9 @@ README 必须明确：
 1. 一个 ADR；
 2. README 权威层级调整；
 3. 提交或 PR 描述中的一次性引用清点；
-4. 图片转单页入口保留/删除决定；
-5. Agent 配置保留/删除决定；
-6. 阶段 2 的唯一入口最小输入输出契约。
+4. 独立单页入口的完整生产依赖闭包；
+5. Agent 配置的单页保留边界与 Deck-only 拆分边界；
+6. 阶段 2 的多页主入口最小输入输出契约。
 
 不得新增长期 Inventory、State、Manifest、Gate Report 或 Evidence 文件。
 
@@ -196,7 +195,7 @@ ADR 或阶段交接必须记录承载清点结果的具体提交 SHA 或 PR 编�
 - [ ] 每个正式安装文件都有分类；
 - [ ] 所有公开命令入口已识别；
 - [ ] 生产代码对测试和历史目录的引用已识别；
-- [ ] 图片转单页入口已有明确决定；
+- [ ] 独立单页入口完整依赖闭包已冻结；
 - [ ] Planner、Reviewer 和 `openai.yaml` 已分别决定；
 - [ ] ADR 已采用下一个有效编号；
 - [ ] README 与 ADR 不矛盾；
@@ -209,9 +208,9 @@ ADR 或阶段交接必须记录承载清点结果的具体提交 SHA 或 PR 编�
 阶段 2 的执行者无需重新研究旧 P 阶段历史，即可从 ADR、总计划和本阶段提交说明中获得：
 
 - 要保留的用户能力；
-- 唯一入口的最小契约；
-- 兼容入口决定；
-- Agent 角色决定；
+- 多页主入口的最小契约；
+- 独立单页入口生产保留闭包；
+- Agent 单页保留与 Deck-only 拆分边界；
 - 旧文件的删除边界。
 
 ## 回退
@@ -223,9 +222,9 @@ ADR 或阶段交接必须记录承载清点结果的具体提交 SHA 或 PR 编�
 交接时提供：
 
 - ADR 编号和链接；
-- 唯一入口最小输入输出契约；
-- 兼容入口决定；
-- Agent 配置决定；
+- 多页主入口最小输入输出契约；
+- 独立单页入口生产保留闭包；
+- Agent 单页保留与 Deck-only 拆分边界；
 - 生产保留与迁移期保留文件列表；
 - 删除候选列表；
 - 已核实并入删除候选的无引用文件列表；
