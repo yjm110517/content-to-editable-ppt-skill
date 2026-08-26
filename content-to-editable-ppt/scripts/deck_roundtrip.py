@@ -85,34 +85,80 @@ def _slide_size(path: Path) -> tuple[int, int]:
 
 
 def _chart_signature(path: Path) -> list[dict[str, Any]]:
-    """Semantic signature of every embedded chart: type + categories + series names + values + number format."""
+    """Semantic signature of every embedded chart: type, categories, series names, and values.
+
+    PowerPoint SaveAs rewrites package-local default number formats.  Those
+    defaults are not a stable chart-data identity, whereas the requested type
+    and data are.
+    """
     signatures: list[dict[str, Any]] = []
     with zipfile.ZipFile(path) as archive:
         chart_names = sorted(name for name in archive.namelist() if re.match(r"^ppt/charts/chart\d+\.xml$", name))
         for chart_name in chart_names:
             root = ET.fromstring(archive.read(chart_name))
-            plot = root.find(f".//{{{CHART_NS}}}plotArea/*")
+            plot_area = root.find(f".//{{{CHART_NS}}}plotArea")
+            plot_children = [] if plot_area is None else list(plot_area)
+            plot = next((item for item in plot_children if item.tag.rsplit("}", 1)[-1].endswith("Chart")), None)
             chart_type = plot.tag.rsplit("}", 1)[-1] if plot is not None else None
-            categories = [item.text or "" for item in root.findall(f".//{{{CHART_NS}}}cat/{{{CHART_NS}}}strRef/{{{CHART_NS}}}strCache/{{{CHART_NS}}}pt/{{{CHART_NS}}}v") + root.findall(f".//{{{CHART_NS}}}cat/{{{CHART_NS}}}strLit/{{{CHART_NS}}}pt/{{{CHART_NS}}}v")]
+            categories = [item.text or "" for item in root.findall(f".//{{{CHART_NS}}}cat/{{{CHART_NS}}}strRef/{{{CHART_NS}}}strCache/{{{CHART_NS}}}pt/{{{CHART_NS}}}v") + root.findall(f".//{{{CHART_NS}}}cat/{{{CHART_NS}}}strLit/{{{CHART_NS}}}pt/{{{CHART_NS}}}v") + root.findall(f".//{{{CHART_NS}}}cat/{{{CHART_NS}}}numRef/{{{CHART_NS}}}numCache/{{{CHART_NS}}}pt/{{{CHART_NS}}}v") + root.findall(f".//{{{CHART_NS}}}cat/{{{CHART_NS}}}numLit/{{{CHART_NS}}}pt/{{{CHART_NS}}}v")]
             values = [item.text or "" for item in root.findall(f".//{{{CHART_NS}}}val/{{{CHART_NS}}}numRef/{{{CHART_NS}}}numCache/{{{CHART_NS}}}pt/{{{CHART_NS}}}v") + root.findall(f".//{{{CHART_NS}}}val/{{{CHART_NS}}}numLit/{{{CHART_NS}}}pt/{{{CHART_NS}}}v")]
             series_names = [item.text or "" for item in root.findall(f".//{{{CHART_NS}}}ser/{{{CHART_NS}}}tx/{{{CHART_NS}}}strRef/{{{CHART_NS}}}strCache/{{{CHART_NS}}}pt/{{{CHART_NS}}}v") + root.findall(f".//{{{CHART_NS}}}ser/{{{CHART_NS}}}tx/{{{CHART_NS}}}strLit/{{{CHART_NS}}}pt/{{{CHART_NS}}}v")]
-            num_formats = [item.get("formatCode", "") for item in root.findall(f".//{{{CHART_NS}}}numFmt")]
-            signatures.append({"chart": chart_name, "type": chart_type, "categories": categories, "series_names": series_names, "values": values, "number_formats": num_formats})
+            # chartN.xml is a package allocation detail.  PowerPoint SaveAs can
+            # renumber it while preserving the chart itself, so it must not be
+            # part of a semantic roundtrip signature.
+            signatures.append({"type": chart_type, "categories": categories, "series_names": series_names, "values": values})
     return signatures
 
 
 def _workbook_signature(path: Path) -> list[dict[str, Any]]:
-    """Embedded workbook cell semantics: per-sheet cell value sequences (semantic, not byte comparison)."""
+    """Embedded workbook cell semantics, including chart XLSX parts."""
     signatures: list[dict[str, Any]] = []
-    with zipfile.ZipFile(path) as archive:
-        for sheet_name in sorted(name for name in archive.namelist() if re.match(r"^xl/worksheets/sheet\d+\.xml$", name)):
-            root = ET.fromstring(archive.read(sheet_name))
+    def record_workbook(workbook: zipfile.ZipFile, label: str, sheet_names: list[str]) -> None:
+        shared: list[str] = []
+        if "xl/sharedStrings.xml" in workbook.namelist():
+            shared_root = ET.fromstring(workbook.read("xl/sharedStrings.xml"))
+            shared = ["".join(node.text or "" for node in item.iter() if node.tag == f"{{{SHEET_NS}}}t") for item in shared_root.findall(f"{{{SHEET_NS}}}si")]
+        sheets: list[dict[str, Any]] = []
+        for sheet_name in sorted(sheet_names):
+            root = ET.fromstring(workbook.read(sheet_name))
             cells: list[dict[str, str | None]] = []
             for cell in root.findall(f".//{{{SHEET_NS}}}c"):
                 value = cell.find(f"{{{SHEET_NS}}}v")
-                cells.append({"ref": cell.get("r", ""), "value": value.text if value is not None else None})
-            signatures.append({"sheet": sheet_name, "cells": cells})
+                raw = value.text if value is not None else None
+                if cell.get("t") == "s" and raw is not None:
+                    raw = shared[int(raw)]
+                elif cell.get("t") == "inlineStr":
+                    text = cell.find(f".//{{{SHEET_NS}}}t")
+                    raw = None if text is None else text.text
+                cells.append({"ref": cell.get("r", ""), "value": raw})
+            sheets.append({"cells": cells})
+        signatures.append({"workbook": label, "sheets": sheets})
+
+    def read_workbook(stream: io.BytesIO, label: str) -> None:
+        with zipfile.ZipFile(stream) as workbook:
+            record_workbook(workbook, label, [name for name in workbook.namelist() if re.match(r"^xl/worksheets/sheet\d+\.xml$", name)])
+    with zipfile.ZipFile(path) as archive:
+        root_sheets = [name for name in archive.namelist() if re.match(r"^xl/worksheets/sheet\d+\.xml$", name)]
+        if root_sheets:
+            record_workbook(archive, "root", root_sheets)
+        for name in sorted(name for name in archive.namelist() if name.startswith("ppt/embeddings/") and name.endswith(".xlsx")):
+            # Workbook filenames are packaging details; order is the chart-binding identity.
+            read_workbook(io.BytesIO(archive.read(name)), "embedded")
     return signatures
+
+
+def _chart_data_same(original: list[dict[str, Any]], saved: list[dict[str, Any]]) -> bool:
+    if len(original) != len(saved):
+        return False
+    for before, after in zip(original, saved):
+        if before["type"] != after["type"] or before["series_names"] != after["series_names"] or before["values"] != after["values"]:
+            return False
+        # PptxGenJS may put categories only in the embedded workbook, whereas
+        # PowerPoint materializes a chart XML cache on SaveAs.  The workbook
+        # comparison below is authoritative in that representation.
+        if before["categories"] and after["categories"] and before["categories"] != after["categories"]:
+            return False
+    return True
 
 
 def _media_signature(path: Path) -> list[str]:
@@ -203,9 +249,11 @@ def _canonicalize(path: Path, width: int, height: int) -> None:
         path.write_bytes(stream.getvalue())
 
 
-def run_roundtrip(*, deck_id: str, candidate_pptx: Path, p4_manifest: dict[str, Any], output: Path, width_px: int, height_px: int, timeout_seconds: int = 240) -> dict[str, Any]:
+def run_roundtrip(*, deck_id: str, candidate_pptx: Path, p4_manifest: dict[str, Any] | None = None, slide_bindings: list[dict[str, Any]] | None = None, output: Path, width_px: int, height_px: int, timeout_seconds: int = 240) -> dict[str, Any]:
     original_sha = file_sha256(candidate_pptx)
-    manifest_slides = sorted(p4_manifest.get("slides", []), key=lambda item: item["order"])
+    if (p4_manifest is None) == (slide_bindings is None):
+        raise ContractError([error("$.slides", "provide exactly one of p4_manifest or slide_bindings", "contract_error")])
+    manifest_slides = sorted((p4_manifest or {}).get("slides", []) if slide_bindings is None else slide_bindings, key=lambda item: item["order"])
     original_snapshot = _structural_snapshot(candidate_pptx, manifest_slides)
     original_size = _slide_size(candidate_pptx)
     original_charts = _chart_signature(candidate_pptx)
@@ -239,7 +287,7 @@ def run_roundtrip(*, deck_id: str, candidate_pptx: Path, p4_manifest: dict[str, 
         }
         canonical_text_same = [item["text"] for item in original_snapshot["slides"]] == [item["text"] for item in saved_snapshot["slides"]]
         element_counts_same = [len(item["object_names"]) for item in original_snapshot["slides"]] == [len(item["object_names"]) for item in saved_snapshot["slides"]]
-        chart_data_same = original_charts == saved_charts
+        chart_data_same = _chart_data_same(original_charts, saved_charts)
         workbook_data_same = original_workbooks == saved_workbooks
         media_same = original_media == saved_media
         if not all(structural.values()):
