@@ -2,7 +2,7 @@
 
 ## 文档状态
 
-- 状态：依赖阶段 1
+- 状态：已实现，待合入
 - 前置文档：[阶段 1：边界清点与权威切换](01-boundary-and-authority.md)
 - 后续阶段：[阶段 3：删除旧体系并缩减安装包](03-legacy-removal.md)
 - 总计划：[Content to Editable PPT Skill 精简计划](../skill-simplification-plan.md)
@@ -49,9 +49,9 @@
 
 ### 外部入口
 
-建议使用 `scripts/run.py`，实际名称可在阶段 1 决定。它是唯一多页主入口，不提供用户必须理解的 `plan/build/verify/deliver` 子命令。现有 `scripts/run_pipeline.py` 继续作为独立单页兼容入口。
+使用 `scripts/run.py`。它是唯一多页主入口，不提供用户必须理解的 `plan/build/verify/deliver` 子命令。现有 `scripts/run_pipeline.py` 继续作为独立单页兼容入口。
 
-入口最少接收：
+入口接收一个已确认的 `deck-build-request.json`，以及新的工作目录和输出目录；需要图片或 SVG 时再接收 `asset-root`。请求固定包含页面顺序、英寸坐标、原生元素、样式和本地资产声明，不接受原始材料、旧 State 或任何历史 Artifact。
 
 - 一个用户侧 Request 包，其中包含原始用户要求、材料引用和用户已确认的页面方案；
 - 工作目录；
@@ -108,7 +108,7 @@
 - SVG 和图片资产处理；
 - 内容完整性、溢出、越界、可编辑性和文件打开检查。
 
-旧 `manage_*` 文件可以暂时作为内部实现被调用，但不能从新 `SKILL.md` 暴露。
+新多页入口只调用共享 Builder、资产处理、渲染、Roundtrip 与 QA；旧 `manage_*` 文件不再处于新路径中，并留待阶段 3 删除。
 
 ### 3. 处理用户确认
 
