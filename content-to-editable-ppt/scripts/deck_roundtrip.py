@@ -351,3 +351,7 @@ def run_roundtrip(*, deck_id: str, candidate_pptx: Path, slide_bindings: list[di
         raise ContractError(failures)
     validate_schema("powerpoint_roundtrip_report", report, SCHEMA_DIR)
     return report
+
+
+if __name__ == "__main__" and len(sys.argv) > 1 and sys.argv[1] == "--_worker":
+    raise SystemExit(_com_worker(sys.argv[2:]))
