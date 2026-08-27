@@ -1,4 +1,4 @@
 interface:
   display_name: "Content to Editable PPT"
-  short_description: "Build and validate the editable PowerPoint runtime"
-  default_prompt: "Use $content-to-editable-ppt to validate and extend the editable PowerPoint runtime for the supplied development task."
+  short_description: "Create editable PowerPoint decks from confirmed content"
+  default_prompt: "Use $content-to-editable-ppt to turn my confirmed content into an editable PowerPoint deck."

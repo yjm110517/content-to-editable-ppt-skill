@@ -1,0 +1,76 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "deck-build-request.schema.json",
+  "title": "Confirmed Direct Deck Build Request",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["schema_version", "artifact_type", "task_id", "deck_id", "output_name", "topic", "objective", "audience", "language", "output_ratio", "confirmation_status", "styles", "slides", "assets"],
+  "properties": {
+    "schema_version": {"const": "1.0"},
+    "artifact_type": {"const": "deck_build_request"},
+    "task_id": {"type": "string", "minLength": 1},
+    "deck_id": {"type": "string", "pattern": "^[A-Za-z0-9][A-Za-z0-9._-]{0,127}$"},
+    "output_name": {"type": "string", "pattern": "^[A-Za-z0-9][A-Za-z0-9_-]{0,79}$"},
+    "topic": {"type": "string", "minLength": 1},
+    "objective": {"type": "string", "minLength": 1},
+    "audience": {"type": "string", "minLength": 1},
+    "language": {"type": "string", "minLength": 2},
+    "output_ratio": {"enum": ["16:9", "4:3"]},
+    "confirmation_status": {"const": "confirmed"},
+    "styles": {
+      "type": "object",
+      "additionalProperties": {"$ref": "layout.schema.json#/$defs/style"}
+    },
+    "slides": {
+      "type": "array",
+      "minItems": 1,
+      "maxItems": 100,
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["slide_id", "order", "background", "elements"],
+        "properties": {
+          "slide_id": {"type": "string", "pattern": "^[A-Za-z0-9][A-Za-z0-9._-]{0,127}$"},
+          "order": {"type": "integer", "minimum": 1, "maximum": 100},
+          "background": {"type": "string", "pattern": "^#[0-9A-Fa-f]{6}$"},
+          "elements": {
+            "type": "array",
+            "minItems": 1,
+            "items": {
+              "oneOf": [
+                {"$ref": "layout.schema.json#/$defs/textElement"},
+                {"$ref": "layout.schema.json#/$defs/shapeElement"},
+                {"$ref": "layout.schema.json#/$defs/lineElement"},
+                {"$ref": "layout.schema.json#/$defs/imageElement"},
+                {"$ref": "layout.schema.json#/$defs/chartElement"}
+              ]
+            }
+          }
+        }
+      }
+    },
+    "assets": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["asset_id", "path", "sha256", "media_type", "contains_text", "text_editability_exempt"],
+        "properties": {
+          "asset_id": {"type": "string", "pattern": "^[A-Za-z0-9][A-Za-z0-9._-]{0,127}$"},
+          "path": {"type": "string", "minLength": 1},
+          "sha256": {"type": "string", "pattern": "^[a-f0-9]{64}$"},
+          "media_type": {"enum": ["image/png", "image/jpeg", "image/svg+xml"]},
+          "contains_text": {"type": "boolean"},
+          "text_editability_exempt": {"type": "boolean"},
+          "exemption_reason": {"type": "string", "minLength": 1}
+        },
+        "allOf": [
+          {
+            "if": {"properties": {"contains_text": {"const": true}}, "required": ["contains_text"]},
+            "then": {"required": ["exemption_reason"], "properties": {"text_editability_exempt": {"const": true}}}
+          }
+        ]
+      }
+    }
+  }
+}

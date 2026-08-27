@@ -1166,6 +1166,39 @@ P4 已完成逐页重建与 Post-Assembly 对比，P5 的职责是证明"这就�
 
 ---
 
+## ADR-043 — 多页 Content-to-Deck 采用已确认请求的直接构建入口
+
+**Status:** Accepted
+
+**Decision**
+
+多页 Content-to-Deck 的正式入口固定为 `scripts/run.py`。宿主在读取材料、展示一次合并页面方案并获得确认后，提供 `deck-build-request.json`；入口直接构建、通过 Microsoft PowerPoint 渲染和往返保存、执行最小结构 QA，并以目录重命名原子发布 PPTX 与单张预览。
+
+该入口不调用旧多页 `manage_*`、阶段 State、Prompt Package、Style Anchor、Design Preview、Reconstruction Seed、Deck Consistency、Exception Batch 或 P5 Evidence。它不提供 Resume、旧 Artifact 输入或用户级子命令。旧实现暂留至阶段 3 删除。
+
+独立 `run_pipeline.py` 单页兼容入口以及其 Planner、Reviewer、Runtime、Recovery、Review Gate、Warning Acceptance 和七文件交付契约不受此决策影响。
+
+**Supersedes and preserves**
+
+- ADR-035、ADR-037、ADR-038、ADR-039、ADR-040 和 ADR-041 的 Deck-only 正式路径由本决策取代；其历史决策记录保留，阶段 3 将删除对应旧实现；
+- ADR-023 及所有单页 Runtime 与审核交付决策继续有效；
+- ADR-042 的两入口边界继续有效；
+- 不新增精简状态机、Gate、Evidence 或旧 Artifact 兼容层。
+
+**Why**
+
+多页用户路径只需要确认一次可执行页面方案。将旧阶段产物作为公开输入会让用户流程复杂、掩盖职责边界，并使测试与历史证据更容易进入正式交付。已确认请求把内容、坐标和本地资产边界一次性固定，而原生 Builder、PowerPoint 运行链与最小 QA 仍保护可编辑性和交付完整性。
+
+**Consequences**
+
+- 正式多页文档只展示 `run.py`；
+- 正式多页输出固定为可编辑 PPTX 与 Contact Sheet Preview；
+- 资产必须本地、受路径边界和哈希验证；文字不得由图片替代或与图片相交；
+- 失败时不发布 `output-dir`，内部诊断保留在 `work-dir`；
+- 阶段 3 只能删除已从新多页入口和单页兼容闭包断开的旧功能簇。
+
+---
+
 # 决策变更规则
 
 如果后续需要修改 `Accepted` ADR，应遵循：

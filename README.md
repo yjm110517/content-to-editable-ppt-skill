@@ -1,188 +1,59 @@
 # Content to Editable PPT Skill
 
-`content-to-editable-ppt-skill` 的目标是把主题、文档或大纲转换为多页、可编辑的 PowerPoint 演示文稿。
+将用户提供的材料转为可编辑 PowerPoint。多页主路径只要求用户提供材料、确认一次页面方案，然后交付 PPTX 与预览；单张参考图片重建继续由独立兼容入口支持。
 
-## 当前状态
+## 使用方式
 
-本仓库已完成 P0 Baseline Freeze、P0.5 Runtime Hardening、P1 Host Content Planning、P2 Markdown Wireframe、P3.1 Asset Resolution、P3.2 Visual System / Prompt Contract、P3.3 Approved Design Preview、P4 Constrained Reconstruction 和 P5 Final Delivery Gate。D03 已完成真实 Deck Consistency Review、不可变 Delivery Decision、正式七文件打包和零模型重放验证。
+### 多页 Content-to-Deck
 
-当前工程状态：
-
-- P5 Deterministic Implementation = COMPLETE
-- P5 Package Candidate = VERIFIED（delivery-package-candidate/，delivery_forbidden = true）
-- P5 Live Deck Review = COMPLETE（ADR-040）
-- P5 Formal Delivery = VERIFIED（Delivered PPTX SHA = P4 Candidate SHA）
-- P5 Formally Complete = true；v1 End-to-End = COMPLETE
-
-当前可执行流程已经延伸到“材料 → 确认内容 → Markdown 文字线稿 → Approved Design Preview → 可编辑多页候选 PPT → 真实 Deck Review → 不可变正式交付”，同时继续支持“参考图片 → 可编辑单页 PPT”。以下能力仍属于后续范围：
-
-- 三套真实 Deck Field Validation（Release / Field Validation）；
-- 完整引用和来源管理。
-
-最终产品目标是先生成高质量图片版页面并由用户确认，再以 Approved Design Preview 为视觉权威、以 P1 内容为文字权威，高保真重建可编辑 PowerPoint，最后由 P5 在真实 Deck Consistency Review 完成后不可变交付。
-
-## 计划中的调用接口
-
-Skill 名称和安装目录已经确定：
-
-```text
-$content-to-editable-ppt
-content-to-editable-ppt/
-```
-
-该调用名可以用于 P1–P5 内容到多页正式交付工作流和继承的单页重建 Runtime。正式交付仍必须逐次取得可信 Live Review Evidence；历史 D03 Evidence 只能用于确定性重放。
-
-## 当前仓库结构
-
-```text
-content-to-editable-ppt-skill/
-├─ README.md
-├─ DECISIONS.md
-├─ LICENSE
-├─ NOTICE
-├─ baseline/
-│  ├─ manifest.json
-│  ├─ baseline-report.md
-│  └─ cases/B01...B06/
-├─ docs/
-│  ├─ architecture/v2.0/ ... v2.4/
-│  ├─ contracts/v1.0/ ... v1.4/
-│  ├─ development/v1.4/
-│  ├─ runtime/
-│  │  ├─ v1.0/
-│  │  └─ v1.1/
-│  ├─ specifications/
-│  │  └─ v1.0/ ... v1.6/
-│  └─ testing/v1.0/ ... v1.4/
-├─ tools/baseline/
-└─ content-to-editable-ppt/
-   ├─ SKILL.md
-   ├─ agents/
-   ├─ references/
-   ├─ schemas/
-   └─ scripts/
-```
-
-## 已继承的运行时能力
-
-- 使用 PptxGenJS 构建原生文本、形状、线条和图片资产；
-- 裁切、打包和校验图片或 SVG 资产；
-- 审计字体并通过 PowerPoint 渲染结果；
-- 检查对象、媒体、越界和可编辑性；
-- 分离布局规划与独立视觉审核角色；
-- 使用确定性 Schema、运行状态和交付门槛。
-
-## 开发文档
-
-### 权威层级
-
-1. [ADR-042](DECISIONS.md) 与 [Skill 精简计划](docs/skill-simplification-plan.md) 决定后续迁移方向：多页 Content-to-Deck 收敛为一个新主入口，同时完整保留独立 Single-Slide 兼容入口。
-2. 在阶段 2 原子切换前，[总体架构与开发计划 v2.4](docs/architecture/v2.4/overall-architecture-and-development-plan.md)、产品规格 v1.6、Artifact 契约 v1.4 和测试计划 v1.4 继续约束当前 P1～P5 多页路径。
-3. [单页 Runtime 执行与错误恢复规范 v1.1](docs/runtime/v1.1/single-slide-runtime-and-error-recovery.md) 长期约束独立 Image-to-Editable-PPT 单页兼容入口。
-4. [Architecture Decision Log](DECISIONS.md) 记录已经接受的关键决策、原因、后果和变更规则。
-
-### 当前产品规格（v1.6）
-
-- [需求规格说明](docs/specifications/v1.6/requirements.md)
-- [功能规格说明](docs/specifications/v1.6/functional-specification.md)
-- [Agent 职责与交接契约](docs/specifications/v1.6/agent-handoff-contract.md)
-- [非功能需求与质量指标](docs/specifications/v1.6/non-functional-requirements.md)
-
-### Runtime 与实现规范
-
-- [单页 Runtime 执行与错误恢复规范 v1.1](docs/runtime/v1.1/single-slide-runtime-and-error-recovery.md)
-- [运行环境安装与引导规范 v1.1](docs/runtime/v1.1/environment-setup-and-bootstrap.md)
-- [增量开发文档 v1.4](docs/development/v1.4/development-guide.md)
-
-旧规格、旧架构、旧 Artifact 契约、旧测试计划和 SVG P2 计划保留为历史基线。阶段 2 切换前，当前多页执行仍以产品规格 v1.6、总体架构 v2.4、Artifact 契约 v1.4 和测试计划 v1.4 为准；独立单页兼容入口继续以 Runtime v1.1 及其既有 Planner、Reviewer、Recovery 和交付契约为准。
-
-这些文档是开发和验收的完整权威规格。Skill 运行目录中的 `SKILL.md`、`references/`、`agents/` 和 `schemas/` 只保留实际执行所需的精简规则与机器可验证契约。
-
-## P0 Baseline
-
-[P0 Baseline Freeze Report](baseline/baseline-report.md) 记录 6 个 Case 的最终迭代、Structural QA、Visual Reviewer、调用次数、技术重试和已知问题。冻结结果不等同于像素级 Golden，也不表示当前视觉缺陷已经修复。
-
-开发用入口：
+宿主先阅读主题、文档或大纲，展示一份合并页面方案（页面顺序、标题、关键信息、视觉方向和所需图片），并等待用户确认。确认后由宿主生成 `deck-build-request.json`，使用唯一多页入口：
 
 ```powershell
-.\tools\baseline\baseline.ps1 -Action Prepare -Case B01 -NodePath <node.exe> -PythonPath <python.exe>
-.\tools\baseline\baseline.ps1 -Action Capture -Case B01 -PythonPath <python.exe>
-.\tools\baseline\baseline.ps1 -Action Verify -All -PythonPath <python.exe>
+python .\\content-to-editable-ppt\\scripts\\run.py `
+  --request <deck-build-request.json> `
+  --work-dir <new-work-directory> `
+  --output-dir <new-output-directory> `
+  [--asset-root <asset-directory>] `
+  [--node <node.exe>]
 ```
 
-## P1 Content Planning
+`work-dir` 与 `output-dir` 必须尚不存在，且三类目录不能互相包含。若使用图片或 SVG，必须提供 `asset-root`；请求中的资产路径相对于该目录，且 SHA-256 必须匹配。
 
-P1 开发入口：
+成功时 `output-dir` 恰好包含：
+
+- `<output_name>_editable.pptx`
+- `<output_name>_preview.png`
+
+新多页入口会在发布前进行 Microsoft PowerPoint 环境检查、构建、渲染、往返保存、结构 QA 和预览生成。任一步失败不会产生 `output-dir`；诊断保留在 `work-dir`。
+
+### 单张参考图重建
+
+`content-to-editable-ppt/scripts/run_pipeline.py` 仍是独立、受支持的 Image-to-Editable-PPT 兼容入口。它完整保留既有 Planner、Visual Reviewer、Recovery、Review Gate、Warning Acceptance、Delivery Decision 与七文件交付流程。它不用于多页 Content-to-Deck。
+
+## 多页请求边界
+
+`deck-build-request.json` 固定声明确认状态、幻灯片顺序、精确英寸坐标、原生 Text/Shape/Line/Image/Chart 元素和本地资产。文字必须是原生对象并携带 `content_ref`；图片不得覆盖文字或整页替代内容。入口不接受旧状态、历史 Manifest、测试 Fixture、Evidence 或 Replay 输入，也不提供用户级 `plan/build/verify/deliver` 子命令。
+
+完整结构见 [Schema](content-to-editable-ppt/schemas/deck-build-request.schema.json)。
+
+## 环境与验证
+
+- Windows + Microsoft PowerPoint
+- Python 3.10+，依赖见 [requirements.txt](content-to-editable-ppt/scripts/requirements.txt)
+- Node.js 20+，依赖见 [package.json](content-to-editable-ppt/scripts/package.json)
 
 ```powershell
-python .\content-to-editable-ppt\scripts\manage_content_plan.py init --task-id <id> --deck-id <id> --state <state.json>
-python .\content-to-editable-ppt\scripts\manage_content_plan.py route --state <state.json> --route <route.json>
-python .\content-to-editable-ppt\scripts\manage_content_plan.py resolve-materials --state <state.json> --materials <materials.json>
-python .\content-to-editable-ppt\scripts\manage_content_plan.py submit-candidate --state <state.json> --candidate <candidate.json> --deck-request <request.json> --materials <materials.json>
-python .\content-to-editable-ppt\scripts\manage_content_plan.py request-confirmation --state <state.json>
-python .\content-to-editable-ppt\scripts\manage_content_plan.py record-outline-response --state <state.json> --candidate <candidate.json> --confirmation <confirmation.json> --approved-output <approved.json>
-python .\content-to-editable-ppt\scripts\manage_content_plan.py project-slide-content --state <state.json> --outline <approved.json> --output-dir <content-dir>
+python .\\content-to-editable-ppt\\scripts\\verify_install.py --manifest .\\runtime-manifest.json
+python .\\content-to-editable-ppt\\scripts\\run.py --help
 ```
 
-[P1 Gate 报告](reports/p1/p1-content-planning-gate.json) 记录 D03、D05、D08、Canonical Hash、确认与投影验收结果。
+## 当前权威
 
-## P2 Markdown Wireframe
+- [SKILL.md](content-to-editable-ppt/SKILL.md)：宿主和用户路径。
+- [ADR-042 与 ADR-043](DECISIONS.md)：多页主入口与独立单页兼容边界。
+- [Skill 精简计划](docs/skill-simplification-plan.md)：阶段 1–4 的执行记录。
 
-P2 的正式目标是由 Host 逐页生成 `deck-wireframe.md`，同时体现完整 Approved Content、等宽字符布局草稿和布局说明；极薄的 `wireframe-manifest.json` 只绑定身份、Hash、页序、Content Ref、Revision 和状态。
-
-Markdown Binder、极薄 Manifest、Validator、受限 Correction、不可变 Revision、聊天预览、反馈路由和新 Gate 均已实现。P2 不生成 SVG、PNG 或 PPTX，也不承担最终视觉设计。
-
-[Markdown P2 Gate 报告](reports/p2/p2-markdown-wireframe-gate.json) 记录 D03、D05、D08 的 Authority、完整性和确定性验收。[旧 P2 Gate 报告](reports/p2/p2-wireframe-gate.json) 与已合并 PR #12–#16 只作为 SVG 历史实现证据。
-
-## P3.1 Asset Resolution
-
-P3.1 Tabler Core 使用固定的 Tabler Outline 3.46.0、不可变 Resolution Record、真实 SVG Sanitizer、Asset Manifest 1.4 和 Consumption Contract。它已经证明同一 Sanitized SVG Source 能被 synthetic Preview Compositor 与 PPT Runtime 消费，但不产生正式 Design Preview。
-
-[历史 P3.1 Gate 报告](reports/p3/p3-icon-resolution-gate.json) 记录 Existing、Composition、Programmatic、Raster Handoff、resvg/Pillow consumption 和 PowerPoint Render Smoke。[Production Fallback Cutover Gate](reports/p3/p3-production-fallback-cutover-gate.json) 证明正式入口只允许准确 Tabler SVG，或生成绑定 Host 决策的 Raster Handoff Pending；Composition 和 Programmatic 仅保留为历史实验能力。
-
-## P3.2 Visual System / Prompt Contract
-
-P3.2 将跨页规则分为 Hard Constraints 与 Soft Design Guidance，使用实际字体文件编译 Text Footprint，并确定性生成逐页 Prompt、图层责任、缓存身份和代表性 Style Anchor Request。[P3.2 Contract / Prompt Gate](reports/p3/p3-visual-system-prompt-contract-gate.json) 明确记录 `visual_quality_status = not_evaluated`；它不生成或批准任何设计图片。
-
-## P3.3 Approved Design Preview
-
-P3.3 使用 Reconstruction Ownership 和 Compatibility Gate，确保用户确认前每个重要视觉都具有明确的 P4 实现方式。Final Preview 由 Microsoft PowerPoint 排版正式文字、Shape、Chart 和 SVG；用户批准的是 PowerPoint Render，而不是 Raw Generated Layer。[P3.3 Gate](reports/p3/p3-approved-design-preview-gate.json) 将真实 Manual Acceptance Evidence 与零调用 Automated Replay 分开记录。
-
-## P4 Constrained Reconstruction
-
-P4 将完整 Reconstruction Seed 确定性投影为可编辑页面 Spec。P3.3 Preview 与 P4 Page/Deck 共用同一套 Text、Shape、Line、Image、Chart 和 Text Layout Builder；Seed 不完整时返回 P3.3，不允许 Planner 看图猜实现方式。
-
-[P4 Gate](reports/p4/p4-constrained-reconstruction-gate.json) 使用 D03 三页真实 Approved Preview 和 Approved Extracted Assets 完成 Page Build、PowerPoint Render、Fidelity Check、多页 Candidate Assembly 和 Post-Assembly Render Drift 检查。D05/D08 分别覆盖 Native Chart/Sanitized SVG/Card 与 Connector/Order-sensitive Cache。P4 输出 `reconstruction-candidate.pptx`，但继续标记 `delivery_forbidden=true`。
-
-## 目标视觉链路
-
-```text
-P1 Approved Content
-→ P2 Markdown Wireframe
-→ P2.1 Visual Placeholder
-→ P3.1 Resolved Standard Assets
-→ P3.2 Deck Visual System + Locked Prompt Package
-→ Approved Style Anchor
-→ P3.3 Approved Design Previews
-→ P4 Constrained Reconstruction
-→ P5 Editable Deck + Final Visual Gate
-```
-
-所有 Deck 必须先确认 Style Anchor。每页 Prompt 由确定性程序注入内容、线稿和资产；默认每页只生成一次 Initial Design，禁止自动重生成。全页执行确定性 QA，Reviewer 只处理异常页并执行一次 Deck 一致性审核。
-
-## 下一阶段
-
-下一步是三套真实 Deck 的 Release / Field Validation。该阶段不改变已通过的 v1 End-to-End 工程结论，也不自动创建 Release 或 Tag。
-
-## 开发验证
-
-Skill 基础结构可使用 Codex 的 `skill-creator` 校验器检查：
-
-```powershell
-python <resolved-skill-creator>\scripts\quick_validate.py .\content-to-editable-ppt
-```
-
-Node.js 运行时要求 Node.js 20 或更高版本。依赖声明位于 `content-to-editable-ppt/scripts/package.json`，Python 依赖声明位于 `content-to-editable-ppt/scripts/requirements.txt`。
+旧的多页阶段文档与内部实现将在阶段 3 按依赖边界清理；它们不再是正式多页入口说明。单页 Runtime 的既有契约继续有效。
 
 ## 许可证与来源
 

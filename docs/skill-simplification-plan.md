@@ -7,7 +7,7 @@
 - 适用范围：`content-to-editable-ppt/` 正式安装包，以及与其直接耦合的测试、工具和文档
 - 不扩展范围：不新增用户入口、输入格式、Agent 角色、阶段、状态机、Gate 或 Evidence 体系
 
-ADR-042 已确定后续迁移方向：停止继续扩展用户可见的多页 P0～P5，多页 Content-to-Deck 收敛为一个新主入口，同时完整保留独立 Image-to-Editable-PPT 单页兼容入口。阶段 2 原子切换前，现有多页权威继续有效；Single-Slide Runtime v1.1 及其既有 Planner、Reviewer、Recovery 和交付契约长期有效。
+ADR-042 确定两入口边界；ADR-043 已将多页 Content-to-Deck 原子切换为 `scripts/run.py`。多页入口消费一次确认后的页面方案并直接交付，独立 Image-to-Editable-PPT 单页兼容入口及其既有 Planner、Reviewer、Recovery 和交付契约长期有效。
 
 本计划是后续精简工作的唯一总计划。根据用户要求，仅建立下列四份配套实施文档；不得继续扩展第五份阶段文档、精简状态机或证据体系。
 
@@ -15,8 +15,8 @@ ADR-042 已确定后续迁移方向：停止继续扩展用户可见的多页 P0
 
 | 顺序 | 实施文档 | 状态 |
 |---:|---|---|
-| 1 | [边界清点与权威切换](simplification/01-boundary-and-authority.md) | 待实施 |
-| 2 | [建立并原子切换多页主入口](simplification/02-single-entry-cutover.md) | 依赖阶段 1 |
+| 1 | [边界清点与权威切换](simplification/01-boundary-and-authority.md) | 已完成（PR #60） |
+| 2 | [建立并原子切换多页主入口](simplification/02-single-entry-cutover.md) | 已实现，待合入 |
 | 3 | [删除旧体系并缩减安装包](simplification/03-legacy-removal.md) | 依赖阶段 2 |
 | 4 | [核心验证与文档收口](simplification/04-core-validation-and-documentation.md) | 依赖阶段 3 |
 

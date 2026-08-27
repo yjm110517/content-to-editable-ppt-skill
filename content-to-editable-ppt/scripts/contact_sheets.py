@@ -61,6 +61,11 @@ def _sheet(slides: list[tuple[str, Path]], output: Path, title: str) -> dict[str
     return {"path": output.name, "sha256": digest, "slides": len(slides)}
 
 
+def compose_preview_sheet(*, slides: list[tuple[str, Path]], output: Path, title: str = "Editable Deck Preview") -> dict[str, str]:
+    """Compose one ordered candidate preview sheet without changing the legacy P5 sheet set."""
+    return _sheet(slides, output, title)
+
+
 def compose_contact_sheets(*, deck_id: str, approved: dict[str, Path], candidates: dict[str, Path], output_dir: Path) -> dict[str, Any]:
     if set(approved) != set(candidates):
         raise ContractError([error("$.slides", "approved previews and candidate renders must cover the same slides", "slide_set_mismatch")])
