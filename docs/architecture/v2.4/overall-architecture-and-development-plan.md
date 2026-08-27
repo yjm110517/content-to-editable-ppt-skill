@@ -1,3 +1,5 @@
+> 历史文档：本文件记录已废止的 P0～P5 多页架构，不能用于当前实现或用户流程。当前权威见根目录 README、`content-to-editable-ppt/SKILL.md`、ADR-042/043 与精简计划。
+
 # Content to Editable PPT Skill 总体架构与开发计划 v2.4
 
 ## 文档地位

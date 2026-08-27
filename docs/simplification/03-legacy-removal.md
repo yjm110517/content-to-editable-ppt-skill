@@ -2,7 +2,7 @@
 
 ## 文档状态
 
-- 状态：依赖阶段 2
+- 状态：已完成，待合入
 - 前置文档：[阶段 2：建立并原子切换多页主入口](02-single-entry-cutover.md)
 - 后续阶段：[阶段 4：核心验证与文档收口](04-core-validation-and-documentation.md)
 - 总计划：[Content to Editable PPT Skill 精简计划](../skill-simplification-plan.md)

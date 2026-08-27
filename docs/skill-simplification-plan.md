@@ -16,9 +16,9 @@ ADR-042 确定两入口边界；ADR-043 已将多页 Content-to-Deck 原子切�
 | 顺序 | 实施文档 | 状态 |
 |---:|---|---|
 | 1 | [边界清点与权威切换](simplification/01-boundary-and-authority.md) | 已完成（PR #60） |
-| 2 | [建立并原子切换多页主入口](simplification/02-single-entry-cutover.md) | 已实现，待合入 |
-| 3 | [删除旧体系并缩减安装包](simplification/03-legacy-removal.md) | 依赖阶段 2 |
-| 4 | [核心验证与文档收口](simplification/04-core-validation-and-documentation.md) | 依赖阶段 3 |
+| 2 | [建立并原子切换多页主入口](simplification/02-single-entry-cutover.md) | 已完成（PR #61） |
+| 3 | [删除旧体系并缩减安装包](simplification/03-legacy-removal.md) | 已完成（待合入） |
+| 4 | [核心验证与文档收口](simplification/04-core-validation-and-documentation.md) | 已完成（待合入） |
 
 ## 2. 当前问题
 

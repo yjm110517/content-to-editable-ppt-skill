@@ -2,7 +2,7 @@
 
 ## 文档状态
 
-- 状态：依赖阶段 3
+- 状态：已完成，待合入
 - 前置文档：[阶段 3：删除旧体系并缩减安装包](03-legacy-removal.md)
 - 总计划：[Content to Editable PPT Skill 精简计划](../skill-simplification-plan.md)
 
@@ -187,15 +187,15 @@ git status --short
 
 | 指标 | 精简前 | 精简后 |
 |---|---:|---:|
-| 正式安装包文件 | 234 | 实际值 |
+| 正式安装包文件 | 234 | 101 |
 | 外部生产入口 | 多个阶段入口 | 1 |
-| Scripts | 100 | 实际值 |
-| Schemas | 107 | 实际值 |
-| References | 14 | 实际值 |
-| Agent 文件 | 6 | 实际值 |
-| Tests | 119 | 实际值 |
+| Scripts | 100 | 57 |
+| Schemas | 107 | 26 |
+| References | 14 | 6 |
+| Agent 文件 | 6 | 5 |
+| Tests | 119 | 12 |
 | 多页默认用户交付物 | 多文件证据包 | PPTX + 预览 |
-| 核心测试耗时 | 阶段开始时实测 | 实际值 |
+| 核心测试耗时 | 阶段开始时实测 | 49 项，约 0.76 秒（不含 PowerPoint 实机验收） |
 
 数量是结果记录，不是机械门槛。每个保留文件仍必须能说明其用户价值或必要依赖。
 
@@ -241,6 +241,10 @@ git status --short
 
 - `正式 Skill 瘦身完成`：所有第一目标验收项通过；
 - `正式 Skill 瘦身未完成`：列出具体阻断项和所属文件，不用新增阶段或状态表达。
+
+### 本次结论
+
+`正式 Skill 瘦身完成`。阶段 3 已删除旧多页 P1～P5 的入口、状态、Schema、Prompt、Fixture 和评估工具；阶段 4 已运行 49 项核心 Runtime 回归，并在 Windows + Microsoft PowerPoint 上完成三页直接 Deck 验收（原生文字/形状、外部 PNG、原生 Chart，PowerPoint Render、Roundtrip 与 QA 均通过，最终目录只含 PPTX 与 Preview）。
 
 ## 回退
 
