@@ -2,7 +2,6 @@ from __future__ import annotations
 
 import argparse
 import json
-import hashlib
 import os
 import re
 import shutil
@@ -10,9 +9,7 @@ from pathlib import Path
 from typing import Any
 
 from agent_common import SCHEMA_DIR, load_call_bundle, provenance_entry, stage_directory
-from agent_request_evidence import transport_request_sha256, validate_model_identity, validate_runtime_timestamps
 from canonical_artifact import canonical_sha256
-from p5_atomic import p5_canonical_bytes
 from asset_common import AssetError, atomic_write_bytes, atomic_write_json, failure, load_contract, log_event, sha256_file, success
 from schema_utils import ContractError, cross_validate, is_safe_relative_path, load_json, validate_schema, validate_semantics
 from shared_validator import validate_documents
@@ -28,7 +25,7 @@ BANNED_SVG = re.compile(r"(?:<script\b|<foreignobject\b|\bon[a-z]+\s*=|(?:href|s
 def parser() -> argparse.ArgumentParser:
     result = argparse.ArgumentParser(description="Validate and atomically submit Planner or Reviewer output.")
     result.add_argument("--role", choices=("planner", "reviewer"), required=True)
-    result.add_argument("--mode", choices=("initial", "revision", "review", "exception_batch", "deck_consistency"), required=True)
+    result.add_argument("--mode", choices=("initial", "revision", "review"), required=True)
     result.add_argument("--call-dir", type=Path, required=True)
     result.add_argument("--planner-call-record", type=Path)
     result.add_argument("--iteration-dir", type=Path)
@@ -38,22 +35,10 @@ def parser() -> argparse.ArgumentParser:
     result.add_argument("--iteration", type=int, required=True)
     result.add_argument("--log-file", type=Path)
     result.add_argument("--schema-dir", type=Path, default=SCHEMA_DIR)
-    result.add_argument("--evidence-mode", choices=("fixture", "live"), default="fixture")
-    result.add_argument("--call-ledger", type=Path)
-    result.add_argument("--technical-retry-count", type=int, default=0)
     return result
 
 
 def _work_root(args: argparse.Namespace) -> Path:
-    if args.role == "reviewer" and args.mode in {"exception_batch", "deck_consistency"}:
-        call_dir = args.call_dir.resolve()
-        try:
-            work_root = call_dir.parents[3]
-        except IndexError as exc:
-            raise AssetError("P5 call directory is not under a work root", path=str(call_dir), code="path_escape") from exc
-        if call_dir.parent.parent.parent.name != ".agent-calls":
-            raise AssetError("P5 call directory must be work-root/.agent-calls/<NN>/reviewer/<call-id>", path=str(call_dir), code="path_escape")
-        return work_root
     if args.role == "planner" and args.mode == "initial":
         if args.output_dir is None:
             raise AssetError("initial mode requires --output-dir", path="--output-dir", code="cli_error", exit_code=2)
@@ -67,79 +52,6 @@ def _work_root(args: argparse.Namespace) -> Path:
     if iteration.parent.name != "iterations" or iteration.name != f"{args.iteration:02d}":
         raise AssetError("iteration-dir must be work-root/iterations/<NN>", path=str(iteration), code="path_escape")
     return iteration.parent.parent
-
-
-def _finalize_p5_review(args: argparse.Namespace, work_root: Path, manifest: dict[str, Any], record: dict[str, Any], response: dict[str, Any], input_hashes: dict[str, str]) -> dict[str, Any]:
-    if args.output_dir is None:
-        raise AssetError("P5 reviewer finalization requires --output-dir", path="--output-dir", code="cli_error", exit_code=2)
-    if not 0 <= args.technical_retry_count <= 2:
-        raise AssetError("technical retry count must be 0..2", path="--technical-retry-count", code="cli_error", exit_code=2)
-    target = args.output_dir.resolve()
-    try:
-        target.relative_to(work_root.resolve())
-    except ValueError as exc:
-        raise AssetError("P5 evidence output escapes work root", path=str(target), code="path_escape") from exc
-    if target.exists():
-        raise AssetError("P5 evidence output already exists", path=str(target), code="output_conflict", exit_code=9)
-    live = args.evidence_mode == "live"
-    model_identity_sha = None
-    request_sha = None
-    if live:
-        if args.mode == "deck_consistency" and response.get("schema_version") != "1.1":
-            raise AssetError("live Deck Consistency Review requires production response schema 1.1", path="$.schema_version", code="call_record", exit_code=9)
-        identity = record.get("resolved_model_identity")
-        if not isinstance(identity, dict):
-            raise AssetError("live P5 evidence requires a resolved reviewer model identity", path="$.resolved_model_identity", code="call_record", exit_code=9)
-        model_identity_sha = validate_model_identity(identity, expected_parameters=manifest["parameters"])
-        if record.get("resolved_model_identity_sha256") != model_identity_sha:
-            raise AssetError("resolved reviewer model identity hash mismatch", path="$.resolved_model_identity_sha256", code="call_record", exit_code=9)
-        request_sha = transport_request_sha256(
-            call_manifest_sha256=sha256_file(args.call_dir / "call_manifest.json"),
-            manifest=manifest,
-            model_identity_sha256=model_identity_sha,
-        )
-        if record.get("transport_request_sha256") != request_sha:
-            raise AssetError("transport request envelope hash mismatch", path="$.transport_request_sha256", code="call_record", exit_code=9)
-        validate_runtime_timestamps(record)
-    ledger_sha = None
-    if live:
-        if args.call_ledger is None or not args.call_ledger.is_file():
-            raise AssetError("live P5 evidence requires a call ledger", path="--call-ledger", code="missing_input", exit_code=3)
-        ledger = load_json(args.call_ledger)
-        matches = [item for item in ledger.get("calls", []) if item.get("call_id") == manifest["call_id"] and item.get("role") == "reviewer" and item.get("live") is True]
-        if len(matches) != 1 or matches[0].get("status") not in {"succeeded", "completed"}:
-            raise AssetError("call ledger does not prove one successful live reviewer call", path=str(args.call_ledger), code="call_record", exit_code=9)
-        ledger_sha = sha256_file(args.call_ledger)
-    finalized_bytes = p5_canonical_bytes(response)
-    manifest_path = args.call_dir / "call_manifest.json"
-    evidence_identity = {"call_manifest_sha256": sha256_file(manifest_path), "inputs": {key: input_hashes[key] for key in sorted(input_hashes)}, "input_profile": args.mode}
-    p5_record = {
-        "schema_version": "1.0", "artifact_type": "p5_reviewer_call_record", "deck_id": manifest["task_id"], "input_profile": args.mode,
-        "call_id": manifest["call_id"], "call_manifest_sha256": sha256_file(manifest_path), "evidence_sha256": canonical_sha256(evidence_identity),
-        "raw_response_sha256": sha256_file(args.call_dir / "raw_response.json"), "finalized_response_sha256": hashlib.sha256(finalized_bytes).hexdigest(),
-        "role_config_sha256": record["config_sha256"], "prompt_sha256": record["prompt_sha256"], "response_schema_sha256": record["output_schema_sha256"],
-        "resolved_model_identity_sha256": model_identity_sha, "transport_request_sha256": request_sha,
-        "call_ledger_sha256": ledger_sha,
-        "context_id": record["context_id"], "parent_context_id": record["parent_context_id"], "technical_retry_count": args.technical_retry_count,
-        "live": live, "status": "succeeded",
-    }
-    validate_schema("p5_reviewer_call_record", p5_record, args.schema_dir)
-    stage = stage_directory(target)
-    try:
-        shutil.copy2(args.call_dir / "call_manifest.json", stage / "call_manifest.json")
-        shutil.copy2(args.call_dir / "call_record.json", stage / "runtime-call-record.json")
-        shutil.copy2(args.call_dir / "system_prompt.md", stage / "system_prompt.md")
-        shutil.copy2(args.call_dir / "raw_response.json", stage / "raw_response.json")
-        shutil.copytree(args.call_dir / "inputs", stage / "inputs")
-        if live:
-            shutil.copy2(args.call_ledger, stage / "call-ledger.json")
-        (stage / "finalized_response.json").write_bytes(finalized_bytes)
-        (stage / "call_record.json").write_bytes(p5_canonical_bytes(p5_record))
-        os.replace(stage, target)
-    except Exception:
-        shutil.rmtree(stage, ignore_errors=True)
-        raise
-    return {"evidence_package": str(target), "call_record": str(target / "call_record.json"), "finalized_response": str(target / "finalized_response.json"), "live": live}
 
 
 def _load_call_input(call_dir: Path, name: str) -> dict[str, Any]:
@@ -464,7 +376,7 @@ def main() -> int:
     try:
         if args.iteration < 1:
             raise AssetError("iteration must be positive", path="--iteration", code="cli_error", exit_code=2)
-        valid = (args.role == "planner" and args.mode in {"initial", "revision"}) or (args.role == "reviewer" and args.mode in {"review", "exception_batch", "deck_consistency"})
+        valid = (args.role == "planner" and args.mode in {"initial", "revision"}) or (args.role == "reviewer" and args.mode == "review")
         if not valid:
             raise AssetError("role and mode are incompatible", path="--mode", code="cli_error", exit_code=2)
         work_root = _work_root(args)
@@ -472,13 +384,9 @@ def main() -> int:
         manifest, record, response, input_hashes = load_call_bundle(args.call_dir, work_root=work_root, role=args.role, mode=args.mode, schema_dir=args.schema_dir)
         if manifest["iteration"] != args.iteration:
             raise AssetError("call iteration does not match CLI", path="--iteration", code="iteration_mismatch", exit_code=9)
-        p5_mode = args.role == "reviewer" and args.mode in {"exception_batch", "deck_consistency"}
-        if not p5_mode:
-            _validate_identity(response, manifest, args.iteration)
-            _verify_work_inputs(args.call_dir, work_root, input_hashes)
-        if p5_mode:
-            outputs = _finalize_p5_review(args, work_root, manifest, record, response, input_hashes)
-        elif args.role == "planner" and args.mode == "initial":
+        _validate_identity(response, manifest, args.iteration)
+        _verify_work_inputs(args.call_dir, work_root, input_hashes)
+        if args.role == "planner" and args.mode == "initial":
             outputs = _finalize_initial(args, response)
         elif args.role == "planner":
             outputs = _finalize_revision(args, manifest, response, input_hashes)

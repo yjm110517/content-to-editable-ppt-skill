@@ -13,22 +13,6 @@ import rfc8785
 from schema_utils import ContractError, error, validate_schema
 
 
-P5_INPUT_PURPOSES = {
-    "approved-preview-contact-sheet.png": "approved_preview_contact_sheet",
-    "final-candidate-contact-sheet.png": "final_candidate_contact_sheet",
-    "approved-vs-final-comparison-sheet.png": "approved_vs_final_comparison_sheet",
-    "deck-visual-system-summary.json": "deck_visual_system_summary",
-    "deck-final-qa-report.json": "deck_final_qa_report",
-    "powerpoint-roundtrip-report.json": "powerpoint_roundtrip_report",
-    "p4-fidelity-inheritance.json": "p4_fidelity_inheritance",
-    "exception-review-hashes.json": "exception_review_hashes",
-    "deck-consistency-reviewer-response.schema.json": "response_schema",
-    "exception-review-evidence.json": "exception_review_evidence",
-    "exception-contact-sheets.png": "exception_contact_sheets",
-    "exception-reviewer-response.schema.json": "response_schema",
-}
-
-
 def _normalize_for_request(value: Any) -> Any:
     if isinstance(value, str):
         return unicodedata.normalize("NFC", value.replace("\r\n", "\n").replace("\r", "\n"))
@@ -69,8 +53,6 @@ def input_media_type(name: str) -> str:
 
 
 def input_purpose(name: str) -> str:
-    if name in P5_INPUT_PURPOSES:
-        return P5_INPUT_PURPOSES[name]
     return re.sub(r"[^a-z0-9]+", "_", Path(name).stem.lower()).strip("_") or "agent_input"
 
 
