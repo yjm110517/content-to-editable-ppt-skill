@@ -1,9 +1,0 @@
-{
-  "$schema": "https://json-schema.org/draft/2020-12/schema", "$id": "reconstruction-manifest.schema.json", "type": "object", "additionalProperties": false,
-  "required": ["schema_version", "artifact_type", "deck_id", "approved_design_preview_manifest_sha256", "asset_manifest_sha256", "slides", "status"],
-  "properties": {
-    "schema_version": {"const": "1.0"}, "artifact_type": {"const": "reconstruction_manifest"}, "deck_id": {"type": "string", "minLength": 1}, "approved_design_preview_manifest_sha256": {"$ref": "#/$defs/hash"}, "asset_manifest_sha256": {"$ref": "#/$defs/hash"},
-    "slides": {"type": "array", "minItems": 1, "items": {"type": "object", "additionalProperties": false, "required": ["slide_id", "order", "spec_path", "spec_sha256", "page_pptx_path", "page_pptx_sha256", "page_render_path", "page_render_sha256", "order_sensitive", "reused"], "properties": {"slide_id": {"type": "string", "minLength": 1}, "order": {"type": "integer", "minimum": 1}, "spec_path": {"type": "string", "minLength": 1}, "spec_sha256": {"$ref": "#/$defs/hash"}, "page_pptx_path": {"type": "string", "minLength": 1}, "page_pptx_sha256": {"$ref": "#/$defs/hash"}, "page_render_path": {"type": "string", "minLength": 1}, "page_render_sha256": {"$ref": "#/$defs/hash"}, "order_sensitive": {"type": "boolean"}, "reused": {"type": "boolean"}}}},
-    "status": {"const": "pages_reconstructed"}
-  }, "$defs": {"hash": {"type": "string", "pattern": "^[a-f0-9]{64}$"}}
-}

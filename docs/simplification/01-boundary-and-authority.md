@@ -160,7 +160,7 @@ rg -n "manage_|run_pipeline|p[0-5].*eval|prepare_agent_call|finalize_agent_respo
 - 独立 Single-Slide 入口及完整审核交付流程继续有效；
 - 阶段 Gate、Evidence、Fixture Replay 和 Field Validation 不再是产品能力；
 - 历史文档只用于追溯；
-- 本精简计划及四份实施文档成为后续执行依据；
+- 本精简计划及三份实施文档成为后续执行依据；
 - 在阶段 2 原子切换前，旧 `SKILL.md` 仍保持可执行。
 
 ### README 调整

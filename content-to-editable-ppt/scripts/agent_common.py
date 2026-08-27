@@ -196,7 +196,7 @@ def load_call_bundle(call_dir: Path, *, work_root: Path, role: str, mode: str, s
         validate_runtime_timestamps(record)
 
     response = load_json(call_dir / "raw_response.json")
-    response_kind = "planner_response" if role == "planner" else {"review": "reviewer_response", "exception_batch": "exception_reviewer_response", "deck_consistency": "deck_consistency_reviewer_response"}.get(mode)
+    response_kind = "planner_response" if role == "planner" else {"review": "reviewer_response"}.get(mode)
     if response_kind is None:
         raise AssetError("unsupported reviewer response mode", path=mode, code="agent_config", exit_code=2)
     validate_schema(response_kind, response, schema_dir)

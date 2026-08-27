@@ -1157,7 +1157,7 @@ P4 已完成逐页重建与 Post-Assembly 对比，P5 的职责是证明"这就�
 
 **Consequences**
 
-- 后续精简以 [Skill 精简计划](docs/skill-simplification-plan.md) 及其四份实施文档为执行依据；
+- 后续精简以 [Skill 精简计划](docs/skill-simplification-plan.md) 及其三份实施文档为执行依据；
 - Content-to-Deck 只保留一个新的多页主入口；独立 Single-Slide 入口继续存在；
 - 阶段 2 切换前，当前 P1～P5 多页实现和权威规范仍保持有效；
 - 阶段 1 的文件分类必须将完整单页依赖闭包归为生产保留；

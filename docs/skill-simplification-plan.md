@@ -9,16 +9,15 @@
 
 ADR-042 确定两入口边界；ADR-043 已将多页 Content-to-Deck 原子切换为 `scripts/run.py`。多页入口消费一次确认后的页面方案并直接交付，独立 Image-to-Editable-PPT 单页兼容入口及其既有 Planner、Reviewer、Recovery 和交付契约长期有效。
 
-本计划是后续精简工作的唯一总计划。根据用户要求，仅建立下列四份配套实施文档；不得继续扩展第五份阶段文档、精简状态机或证据体系。
+本计划是后续精简工作的唯一总计划。根据用户要求，仅建立下列三份配套实施文档；不得继续扩展第四份阶段文档、精简状态机或证据体系。
 
 ### 配套实施文档
 
 | 顺序 | 实施文档 | 状态 |
 |---:|---|---|
 | 1 | [边界清点与权威切换](simplification/01-boundary-and-authority.md) | 已完成（PR #60） |
-| 2 | [建立并原子切换多页主入口](simplification/02-single-entry-cutover.md) | 已实现，待合入 |
-| 3 | [删除旧体系并缩减安装包](simplification/03-legacy-removal.md) | 依赖阶段 2 |
-| 4 | [核心验证与文档收口](simplification/04-core-validation-and-documentation.md) | 依赖阶段 3 |
+| 2 | [建立并原子切换多页主入口](simplification/02-single-entry-cutover.md) | 已完成（PR #61） |
+| 3 | [删除旧体系、核心验收与文档收口](simplification/03-legacy-removal.md) | 已完成（待合入） |
 
 ## 2. 当前问题
 
@@ -234,7 +233,7 @@ content-to-editable-ppt/
 
 ## 8. 执行工作流
 
-整个精简只使用四个串行工作流。它们是代码改造顺序，不是新的用户阶段。
+整个精简只使用三个串行工作流。它们是代码改造顺序，不是新的用户阶段。
 
 ### 工作流一：[边界清点与权威切换](simplification/01-boundary-and-authority.md)
 
@@ -330,7 +329,8 @@ content-to-editable-ppt/
    - 删除不再对应当前产品的 Baseline、Report 和 Evidence；
    - 删除阶段专用评估工具；
    - 依赖 Git 历史恢复，不创建新归档目录；
-9. 每删除一组文件，同时清理 import、文档链接、命令示例和安装引用。
+9. 每删除一组文件，同时清理 import、文档链接、命令示例和安装引用；
+10. 在同一工作流完成核心 Runtime、单页 Warning Acceptance、真实 PowerPoint Deck 验收和文档权威收口。
 
 #### 验证
 
@@ -340,6 +340,7 @@ content-to-editable-ppt/
 - 独立单页兼容入口的现有核心回归通过；
 - 正常安装不包含 Baseline、阶段 Report、Smoke 或固定 Evidence；
 - 本工作流实现文件、入口和长期 Artifact 的净减少。
+- README、`SKILL.md`、ADR 与三份实施文档一致，旧权威文档已标为历史。
 
 #### 完成标准
 
@@ -349,55 +350,14 @@ content-to-editable-ppt/
 
 按功能簇删除并提交。某个功能簇回归失败时，只恢复该功能簇；不得新建长期兼容层来掩盖引用错误。
 
-### 工作流四：[核心验证与文档收口](simplification/04-core-validation-and-documentation.md)
-
-#### 目的
-
-证明精简后的 Skill 仍能完成用户任务，并清除旧权威文档造成的混淆。
-
-#### 具体工作
-
-1. 保留能够捕获以下风险的最小测试集：
-   - 内容丢失或顺序错误；
-   - 文字溢出和元素越界；
-   - 标题、正文和主要结构不可编辑；
-   - PPTX 无法打开、保存或重新渲染；
-   - 非生产目录被正式入口读取；
-2. 使用一套真实小型多页 Deck 完成端到端验证；
-3. 保留独立单页兼容入口的核心回归与必要 Fixture；
-4. 测试输出只写临时目录；
-5. 记录核心测试耗时，并设置适合本地持续运行的耗时预算；
-6. 重写 README，只保留当前产品、安装、输入、确认、生成和交付；
-7. 将旧 P0～P5 Architecture、Specification、Contract、Testing 和 Plan 标记为历史，不再逐版本升级；
-8. 记录精简前后的安装包文件数、外部入口数、长期 Artifact 数和测试耗时。
-
-#### 验证
-
-- 新用户只读 README 和 `SKILL.md` 即可完成任务；
-- 文档中不存在需要用户执行的 P 阶段命令；
-- 正式路径不会展示 Smoke、Fixture、Rejected Preview 或 Field Validation 结果；
-- 真实小型多页 Deck 内容完整、可打开且主要内容可编辑；
-- 核心测试能够捕获内容丢失、溢出、越界、不可编辑、损坏文件和非生产路径误用；
-- 精简期间不降低当前已有的质量保护；
-- 精简前后对比显示正式安装包、入口和长期 Artifact 均净减少。
-
-#### 完成标准
-
-项目能够直接回答：用户提供什么、在哪里确认、最终 PPTX 在哪里。
-
-#### 回退
-
-运行时问题回退对应功能簇；文档问题独立修订。不得恢复旧 P 阶段作为默认用户流程。
-
 ## 9. 执行顺序
 
-四个工作流严格串行：
+三个工作流严格串行：
 
 ```text
 边界清点与权威切换
 → 建立并原子切换多页主入口
-→ 删除旧体系并缩减安装包
-→ 核心验证与文档收口
+→ 删除旧体系、核心验收与文档收口
 ```
 
 不进行并行改造，避免多个工作流同时修改 Request、Deck Plan、Build Result 或 `SKILL.md`。

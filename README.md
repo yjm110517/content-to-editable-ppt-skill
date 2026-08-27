@@ -51,9 +51,9 @@ python .\\content-to-editable-ppt\\scripts\\run.py --help
 
 - [SKILL.md](content-to-editable-ppt/SKILL.md)：宿主和用户路径。
 - [ADR-042 与 ADR-043](DECISIONS.md)：多页主入口与独立单页兼容边界。
-- [Skill 精简计划](docs/skill-simplification-plan.md)：阶段 1–4 的执行记录。
+- [Skill 精简计划](docs/skill-simplification-plan.md)：阶段 1–3 的执行记录。
 
-旧的多页阶段文档与内部实现将在阶段 3 按依赖边界清理；它们不再是正式多页入口说明。单页 Runtime 的既有契约继续有效。
+旧的多页阶段实现已在阶段 3 按依赖边界清理。旧 Architecture、Specification、Contract 和 Testing 文档仅保留为历史记录，不再是正式多页入口说明；单页 Runtime 的既有契约继续有效。
 
 ## 许可证与来源
 

@@ -32,7 +32,7 @@ class DirectDeckBuilderTests(unittest.TestCase):
             request_path = root / "request.json"; request_path.write_text(json.dumps(value), encoding="utf-8")
             assets = root / "assets.json"; assets.write_text("[]", encoding="utf-8")
             output, report = root / "deck.pptx", root / "build-report.json"
-            command = [os.environ.get("P3_TEST_NODE", "node"), str(SCRIPTS / "build_deck.mjs"), "--request", str(request_path), "--staged-assets", str(assets), "--output", str(output), "--report", str(report)]
+            command = [os.environ.get("DECK_TEST_NODE", "node"), str(SCRIPTS / "build_deck.mjs"), "--request", str(request_path), "--staged-assets", str(assets), "--output", str(output), "--report", str(report)]
             completed = subprocess.run(command, cwd=ROOT, capture_output=True, text=True, encoding="utf-8", errors="replace")
             self.assertEqual(completed.returncode, 0, completed.stdout + completed.stderr)
             built = json.loads(report.read_text(encoding="utf-8")); self.assertEqual(built["slide_order"], ["S01", "S02"])
