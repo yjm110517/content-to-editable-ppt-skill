@@ -20,7 +20,7 @@ def sha(path: Path) -> str:
 
 
 def parser() -> argparse.ArgumentParser:
-    result = argparse.ArgumentParser(description="Render every slide of a P4 reconstruction PPTX through Microsoft PowerPoint.")
+    result = argparse.ArgumentParser(description="Render every slide of a PPTX through Microsoft PowerPoint.")
     result.add_argument("--input", type=Path, required=True)
     result.add_argument("--output-dir", type=Path, required=True)
     result.add_argument("--report", type=Path, required=True)
@@ -85,7 +85,7 @@ def render(args: argparse.Namespace) -> dict:
     if args.output_dir.exists() or args.report.exists(): raise RuntimeError("render output already exists")
     if args.width_px < 1 or args.height_px < 1: raise RuntimeError("render dimensions must be positive")
     count = _slide_count(args.input); args.output_dir.parent.mkdir(parents=True, exist_ok=True)
-    with tempfile.TemporaryDirectory(prefix=".p4-render-", dir=args.output_dir.parent) as temporary:
+    with tempfile.TemporaryDirectory(prefix=".deck-render-", dir=args.output_dir.parent) as temporary:
         stage = Path(temporary); state = stage / "state.json"; exported = stage / "slides"
         command = [sys.executable, str(Path(__file__).resolve()), "--_worker", str(args.input), str(exported), str(args.width_px), str(args.height_px), str(state)]
         completed = subprocess.run(command, capture_output=True, text=True, timeout=args.timeout_seconds, creationflags=getattr(subprocess, "CREATE_NO_WINDOW", 0))
@@ -94,7 +94,7 @@ def render(args: argparse.Namespace) -> dict:
         files = sorted(exported.glob("slide-*.png"))
         if len(files) != count: raise RuntimeError("PowerPoint render slide count mismatch")
         for item in files: _canonicalize(item, args.width_px, args.height_px)
-        report = {"schema_version":"1.0","artifact_type":"reconstruction_render_report","renderer":"Microsoft PowerPoint","renderer_version":details["version"],"ppt_sha256":sha(args.input),"width_px":args.width_px,"height_px":args.height_px,"rendered_page_count":count,"slides":[{"order":index,"path":item.name,"sha256":sha(item)} for index,item in enumerate(files,1)],"status":"pass"}
+        report = {"schema_version":"1.0","artifact_type":"deck_render_report","renderer":"Microsoft PowerPoint","renderer_version":details["version"],"ppt_sha256":sha(args.input),"width_px":args.width_px,"height_px":args.height_px,"rendered_page_count":count,"slides":[{"order":index,"path":item.name,"sha256":sha(item)} for index,item in enumerate(files,1)],"status":"pass"}
         staged_report = stage / "report.json"; staged_report.write_text(json.dumps(report, ensure_ascii=False, sort_keys=True, separators=(",", ":")) + "\n", encoding="utf-8", newline="\n")
         shutil.copytree(exported, args.output_dir); os.replace(staged_report, args.report); return report
 

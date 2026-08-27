@@ -116,7 +116,7 @@ def execute(args: argparse.Namespace) -> dict[str, str]:
     _subprocess([node, str(SCRIPT_DIR / "build_deck.mjs"), "--request", str(request_copy), "--staged-assets", str(staged_path), "--output", str(pptx), "--report", str(build_report)], timeout=args.timeout_seconds, component="build", exit_code=6, log=log)
     dimensions = DIMENSIONS[document["output_ratio"]]
     rendered = work / "rendered"; render_report = work / "render-report.json"
-    _subprocess([sys.executable, str(SCRIPT_DIR / "render_reconstruction_deck.py"), "--input", str(pptx), "--output-dir", str(rendered), "--report", str(render_report), "--width-px", str(dimensions["width_px"]), "--height-px", str(dimensions["height_px"]), "--timeout-seconds", str(args.timeout_seconds)], timeout=args.timeout_seconds + 10, component="render", exit_code=7, log=log)
+    _subprocess([sys.executable, str(SCRIPT_DIR / "render_deck.py"), "--input", str(pptx), "--output-dir", str(rendered), "--report", str(render_report), "--width-px", str(dimensions["width_px"]), "--height-px", str(dimensions["height_px"]), "--timeout-seconds", str(args.timeout_seconds)], timeout=args.timeout_seconds + 10, component="render", exit_code=7, log=log)
     roundtrip_path = work / "roundtrip-report.json"
     bindings = [{"slide_id": slide["slide_id"], "order": slide["order"]} for slide in document["slides"]]
     try:

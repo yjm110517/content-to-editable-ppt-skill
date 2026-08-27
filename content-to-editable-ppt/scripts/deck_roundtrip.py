@@ -1,6 +1,5 @@
 from __future__ import annotations
 
-import argparse
 import hashlib
 import io
 import json
@@ -17,7 +16,7 @@ from xml.etree import ElementTree as ET
 
 from PIL import Image
 
-from final_integrity import decoded_rgb_sha256, file_sha256
+from media_hash import decoded_rgb_sha256, file_sha256
 from schema_utils import ContractError, error, validate_schema
 
 
@@ -30,18 +29,6 @@ OBJECT_TAGS = {f"{{{NS['p']}}}sp", f"{{{NS['p']}}}pic", f"{{{NS['p']}}}graphicFr
 PRESENTATION_NS = "http://schemas.openxmlformats.org/presentationml/2006/main"
 CHART_NS = "http://schemas.openxmlformats.org/drawingml/2006/chart"
 SHEET_NS = "http://schemas.openxmlformats.org/spreadsheetml/2006/main"
-
-
-def parser() -> argparse.ArgumentParser:
-    result = argparse.ArgumentParser(description="Run PowerPoint Open/SaveAs/Reopen/Render roundtrip on a P4 candidate copy with real semantic comparison.")
-    result.add_argument("--deck-id", required=True)
-    result.add_argument("--candidate-pptx", type=Path, required=True)
-    result.add_argument("--p4-manifest", type=Path, required=True)
-    result.add_argument("--output", type=Path, required=True)
-    result.add_argument("--width-px", type=int, required=True)
-    result.add_argument("--height-px", type=int, required=True)
-    result.add_argument("--timeout-seconds", type=int, default=240)
-    return result
 
 
 def _slide_names(archive: zipfile.ZipFile) -> list[str]:
@@ -173,7 +160,7 @@ def _media_signature(path: Path) -> list[str]:
 
 
 def _structural_snapshot(path: Path, manifest_slides: list[dict[str, Any]]) -> dict[str, Any]:
-    """Slide identity is manifest-driven: slideN.xml order is mapped through the P4 manifest,
+    """Slide identity is manifest-driven: slideN.xml order is mapped through the binding list,
     and each page is identified by its cNvPr objectName set (Expected Element IDs), not object counts."""
     with zipfile.ZipFile(path) as archive:
         names = _slide_names(archive)
@@ -249,18 +236,16 @@ def _canonicalize(path: Path, width: int, height: int) -> None:
         path.write_bytes(stream.getvalue())
 
 
-def run_roundtrip(*, deck_id: str, candidate_pptx: Path, p4_manifest: dict[str, Any] | None = None, slide_bindings: list[dict[str, Any]] | None = None, output: Path, width_px: int, height_px: int, timeout_seconds: int = 240) -> dict[str, Any]:
+def run_roundtrip(*, deck_id: str, candidate_pptx: Path, slide_bindings: list[dict[str, Any]], output: Path, width_px: int, height_px: int, timeout_seconds: int = 240) -> dict[str, Any]:
     original_sha = file_sha256(candidate_pptx)
-    if (p4_manifest is None) == (slide_bindings is None):
-        raise ContractError([error("$.slides", "provide exactly one of p4_manifest or slide_bindings", "contract_error")])
-    manifest_slides = sorted((p4_manifest or {}).get("slides", []) if slide_bindings is None else slide_bindings, key=lambda item: item["order"])
+    manifest_slides = sorted(slide_bindings, key=lambda item: item["order"])
     original_snapshot = _structural_snapshot(candidate_pptx, manifest_slides)
     original_size = _slide_size(candidate_pptx)
     original_charts = _chart_signature(candidate_pptx)
     original_workbooks = _workbook_signature(candidate_pptx)
     original_media = _media_signature(candidate_pptx)
     failures: list[dict[str, str]] = []
-    with tempfile.TemporaryDirectory(prefix=".p5-roundtrip-", dir=candidate_pptx.parent) as temporary:
+    with tempfile.TemporaryDirectory(prefix=".deck-roundtrip-", dir=candidate_pptx.parent) as temporary:
         stage = Path(temporary)
         copy_path = stage / "roundtrip-copy.pptx"
         saved_path = stage / "roundtrip-saved.pptx"
@@ -325,7 +310,7 @@ def run_roundtrip(*, deck_id: str, candidate_pptx: Path, p4_manifest: dict[str, 
         # Render the ORIGINAL candidate through the same PowerPoint pipeline for pixel comparison.
         original_render_dir = stage / "original-render"
         original_report_path = stage / "original-render-report.json"
-        original_command = [sys.executable, str(Path(__file__).resolve().parent / "render_reconstruction_deck.py"), "--input", str(candidate_pptx.resolve()), "--output-dir", str(original_render_dir), "--report", str(original_report_path), "--width-px", str(width_px), "--height-px", str(height_px)]
+        original_command = [sys.executable, str(Path(__file__).resolve().parent / "render_deck.py"), "--input", str(candidate_pptx.resolve()), "--output-dir", str(original_render_dir), "--report", str(original_report_path), "--width-px", str(width_px), "--height-px", str(height_px)]
         original_completed = subprocess.run(original_command, capture_output=True, text=True, encoding="utf-8", errors="replace", timeout=timeout_seconds, creationflags=getattr(subprocess, "CREATE_NO_WINDOW", 0))
         if original_completed.returncode:
             raise ContractError([error("$.render_original", original_completed.stdout.strip() or original_completed.stderr.strip(), "roundtrip_failed")])
@@ -366,26 +351,3 @@ def run_roundtrip(*, deck_id: str, candidate_pptx: Path, p4_manifest: dict[str, 
         raise ContractError(failures)
     validate_schema("powerpoint_roundtrip_report", report, SCHEMA_DIR)
     return report
-
-
-def main() -> int:
-    args = parser().parse_args()
-    try:
-        from schema_utils import load_json
-        manifest = load_json(args.p4_manifest)
-        report = run_roundtrip(deck_id=args.deck_id, candidate_pptx=args.candidate_pptx, p4_manifest=manifest, output=args.output, width_px=args.width_px, height_px=args.height_px, timeout_seconds=args.timeout_seconds)
-        output = args.output.resolve()
-        output.parent.mkdir(parents=True, exist_ok=True)
-        output.write_text(json.dumps(report, ensure_ascii=False, sort_keys=True, separators=(",", ":")) + "\n", encoding="utf-8", newline="\n")
-        print(json.dumps({"status": "ok", "outputs": {"report": str(output), "roundtrip_status": report["status"]}, "error": None}, ensure_ascii=False))
-        return 0
-    except Exception as exc:
-        issues = exc.errors if isinstance(exc, ContractError) else [{"path": "$", "code": "roundtrip_internal_error", "message": str(exc)}]
-        print(json.dumps({"status": "error", "outputs": {}, "error": {"issues": issues}}, ensure_ascii=False))
-        return 4 if isinstance(exc, ContractError) else 70
-
-
-if __name__ == "__main__":
-    if len(sys.argv) > 1 and sys.argv[1] == "--_worker":
-        raise SystemExit(_com_worker(sys.argv[2:]))
-    raise SystemExit(main())

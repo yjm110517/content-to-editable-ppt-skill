@@ -1,9 +1,0 @@
-{
-  "$schema": "https://json-schema.org/draft/2020-12/schema", "$id": "post-assembly-drift-report.schema.json", "type": "object", "additionalProperties": false,
-  "required": ["schema_version", "artifact_type", "deck_id", "candidate_deck_sha256", "slides", "post_assembly_slide_drift", "unexpected_assembly_mutation", "status"],
-  "properties": {
-    "schema_version": {"const": "1.0"}, "artifact_type": {"const": "post_assembly_drift_report"}, "deck_id": {"type": "string", "minLength": 1}, "candidate_deck_sha256": {"$ref": "#/$defs/hash"},
-    "slides": {"type": "array", "minItems": 1, "items": {"type": "object", "additionalProperties": false, "required": ["slide_id", "order", "page_render_sha256", "assembled_render_sha256", "pixel_identical", "drift_code"], "properties": {"slide_id": {"type": "string", "minLength": 1}, "order": {"type": "integer", "minimum": 1}, "page_render_sha256": {"$ref": "#/$defs/hash"}, "assembled_render_sha256": {"$ref": "#/$defs/hash"}, "pixel_identical": {"type": "boolean"}, "drift_code": {"type": ["string", "null"]}}}},
-    "post_assembly_slide_drift": {"type": "integer", "minimum": 0}, "unexpected_assembly_mutation": {"type": "integer", "minimum": 0}, "status": {"enum": ["pass", "fail"]}
-  }, "$defs": {"hash": {"type": "string", "pattern": "^[a-f0-9]{64}$"}}
-}

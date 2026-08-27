@@ -25,29 +25,17 @@ def _make_deck(path: Path, slide_count: int = 2) -> None:
     presentation.save(str(path))
 
 
-def _manifest(slide_count: int) -> dict:
-    return {
-        "schema_version": "1.0", "artifact_type": "reconstruction_manifest", "deck_id": "D05",
-        "approved_design_preview_manifest_sha256": "a" * 64, "asset_manifest_sha256": "b" * 64,
-        "slides": [
-            {"slide_id": f"S{index + 1:02d}", "order": index + 1, "spec_path": f"pages/S{index + 1:02d}/visual-reconstruction-spec.json", "spec_sha256": "c" * 64,
-             "page_pptx_path": f"pages/S{index + 1:02d}/page.pptx", "page_pptx_sha256": "d" * 64,
-             "page_render_path": f"pages/S{index + 1:02d}/render/slide-001.png", "page_render_sha256": "e" * 64,
-             "order_sensitive": False, "reused": False}
-            for index in range(slide_count)
-        ],
-        "status": "pages_reconstructed",
-    }
+def _bindings(slide_count: int) -> list[dict]:
+    return [{"slide_id": f"S{index + 1:02d}", "order": index + 1} for index in range(slide_count)]
 
 
-class P5RoundtripPureTests(unittest.TestCase):
+class DeckRoundtripPureTests(unittest.TestCase):
     def test_slide_identity_is_object_names_not_counts(self) -> None:
         with tempfile.TemporaryDirectory() as temporary:
             root = Path(temporary)
             deck = root / "candidate.pptx"
             _make_deck(deck, slide_count=2)
-            manifest = _manifest(2)
-            snapshot = _structural_snapshot(deck, manifest["slides"])
+            snapshot = _structural_snapshot(deck, _bindings(2))
             self.assertTrue(snapshot["valid"])
             self.assertEqual(len(snapshot["slides"]), 2)
             # every slide carries its own textbox object name
@@ -71,7 +59,7 @@ class P5RoundtripPureTests(unittest.TestCase):
             root = Path(temporary)
             deck = root / "candidate.pptx"
             _make_deck(deck, slide_count=1)
-            snapshot = _structural_snapshot(deck, _manifest(2)["slides"])
+            snapshot = _structural_snapshot(deck, _bindings(2))
             self.assertFalse(snapshot["valid"])
 
     def test_chart_signature_is_semantic(self) -> None:
