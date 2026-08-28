@@ -1257,9 +1257,9 @@ Status: Deprecated
 
 ---
 
-# 当前基线
+# 历史 v2.3 Specification Baseline
 
-当前 v2.3 Specification Baseline 的核心方向为：
+以下基线记录 ADR-042、ADR-043 和阶段 3 精简前的 v2.3 方向。它不描述当前正式多页路径；其中 P2～P5、Approved Design Preview、Style Anchor、Prompt Package 和 Deck Visual System 的 Deck-only 义务已由 ADR-043 取代。仍有效的单页 Runtime 决策以各自 Accepted ADR、`SKILL.md` 和 Runtime Contract 为准。
 
 ```text
 Windows only

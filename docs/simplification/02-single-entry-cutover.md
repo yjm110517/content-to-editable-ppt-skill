@@ -2,9 +2,9 @@
 
 ## 文档状态
 
-- 状态：已实现，待合入
+- 状态：已完成（PR #61，已合入 `main`）
 - 前置文档：[阶段 1：边界清点与权威切换](01-boundary-and-authority.md)
-- 后续阶段：[阶段 3：删除旧体系并缩减安装包](03-legacy-removal.md)
+- 后续阶段：[阶段 3：删除旧体系、核心验收与文档收口](03-legacy-removal.md)
 - 总计划：[Content to Editable PPT Skill 精简计划](../skill-simplification-plan.md)
 
 本阶段只是仓库改造批次，不是 Skill Runtime 阶段或用户状态。
@@ -190,18 +190,18 @@ git diff --check
 
 ## 验收清单
 
-- [ ] 唯一多页主入口已建立；
-- [ ] 入口没有用户级子阶段；
-- [ ] 宿主负责一次确认，CLI 不维护等待状态；
-- [ ] 真实小型多页 Deck 通过；
-- [ ] 生产入口不读取测试、Smoke、Baseline 或 Report；
-- [ ] 独立单页兼容入口及完整审核交付流程保持有效；
-- [ ] `SKILL.md` 和 README 在同一提交切换；
-- [ ] `SKILL.md` 不再出现 P1～P5 调度；
-- [ ] 旧入口从正式文档不可发现；
-- [ ] 旧内部模块尚未提前批量删除；
-- [ ] 没有通用旧 Artifact 兼容层；
-- [ ] `git diff --check` 通过。
+- [x] 唯一多页主入口已建立；
+- [x] 入口没有用户级子阶段；
+- [x] 宿主负责一次确认，CLI 不维护等待状态；
+- [x] 真实小型多页 Deck 通过；
+- [x] 生产入口不读取测试、Smoke、Baseline 或 Report；
+- [x] 独立单页兼容入口及完整审核交付流程保持有效；
+- [x] `SKILL.md` 和 README 在同一提交切换；
+- [x] `SKILL.md` 不再出现 P1～P5 调度；
+- [x] 旧入口从正式文档不可发现；
+- [x] 旧内部模块尚未提前批量删除；
+- [x] 没有通用旧 Artifact 兼容层；
+- [x] `git diff --check` 通过。
 
 ## 阶段输出
 

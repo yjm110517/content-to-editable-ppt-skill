@@ -2,7 +2,7 @@
 
 ## 文档状态
 
-- 状态：已完成，待合入
+- 状态：已完成（PR #62，已合入 `main`）
 - 前置文档：[阶段 2：建立并原子切换多页主入口](02-single-entry-cutover.md)
 - 总计划：[Content to Editable PPT Skill 精简计划](../skill-simplification-plan.md)
 
