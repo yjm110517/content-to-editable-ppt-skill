@@ -49,11 +49,16 @@ python .\\content-to-editable-ppt\\scripts\\run.py --help
 
 ## 当前权威
 
-- [SKILL.md](content-to-editable-ppt/SKILL.md)：宿主和用户路径。
 - [ADR-042 与 ADR-043](DECISIONS.md)：多页主入口与独立单页兼容边界。
+- [SKILL.md](content-to-editable-ppt/SKILL.md)：依据 Accepted ADR 描述宿主和用户路径。
+- [`run.py`](content-to-editable-ppt/scripts/run.py) 与 [`run_pipeline.py`](content-to-editable-ppt/scripts/run_pipeline.py)：当前两条 Runtime 实现与行为。
 - [Skill 精简计划](docs/skill-simplification-plan.md)：阶段 1–3 的执行记录。
 
 旧的多页阶段实现已在阶段 3 按依赖边界清理。旧 Architecture、Specification、Contract 和 Testing 文档仅保留为历史记录，不再是正式多页入口说明；单页 Runtime 的既有契约继续有效。
+
+## 后续视觉优先重构研究
+
+[视觉优先三阶段重构研究](docs/visual-first-redesign/README.md)基于当前代码、两条 Runtime 路径和 ADR-042/043，整理下一阶段可能采用的产品方向、Stage 1 目标设计以及 Stage 2 Benchmark。该目录属于研究与提案，不改变当前入口、Runtime 行为或 Accepted ADR。
 
 ## 许可证与来源
 
