@@ -1,758 +1,1265 @@
-# Stage 2 研究、Benchmark 与决策
+# Stage 2 Guidance：已确认内容与线稿 → 高质量 PPT 设计图片
 
-> **Status**：Research / Benchmark Pending（研究中，Benchmark 待执行）
-> **Document type**：Technical Research + Decision Gate（技术研究与决策门禁）
-> **Authority**：无当前 Runtime 决策权；只定义候选、假设、评测和最终选型门槛
-> **Current runtime relationship**：不修改当前 [`run.py`](../../content-to-editable-ppt/scripts/run.py) 或 [`run_pipeline.py`](../../content-to-editable-ppt/scripts/run_pipeline.py)，不替换当前正式多页路线
-> **Depends on**：[`01-product-requirements.md`](01-product-requirements.md)、[`02-stage1-design.md`](02-stage1-design.md)、[外部项目证据](references/external-project-and-source-review.md)
-> **Next decision gate**：Benchmark Decision = `Passed`
-> **Last updated**：2026-08-28
+> **Status**：Final Guidance / 已确认架构指导  
+> **Document type**：Stage 2 Guidance（Stage 2 指导）  
+> **Last updated**：2026-08-28  
+> **Scope**：定义 Stage 2 的目标流程、职责边界、输入输出、Prompt 生成方式、真实图片验证方式，以及面向 Stage 3 的重建友好约束。  
+> **Authority note**：本文件用于指导后续原型、Benchmark 与实现；在新的 Proposal ADR 被验证并正式 Accepted 之前，不覆盖当前 Accepted ADR、正式 `SKILL.md` 或现有 Runtime。  
 
 ---
 
-## 一、Stage 2 要解决什么
+# 1. Stage 2 的目标
 
-Stage 2 要回答：
+Stage 2 的任务不是重新规划内容，也不是直接生成可编辑 PowerPoint。
 
-> 在不改变 Stage 1 已确认正式内容的前提下，怎样把大纲和 Markdown 线框转换成专业、统一、多样，并适合 Stage 3 重建的 PPT 设计图？
+Stage 2 的目标是：
 
-当前文档同时承担三件事：
+> **在 Stage 1 已确认的正式内容和 Markdown Wireframe 基础上，由 Host 完成视觉设计细化，再由程序确定性编译生图 Prompt，调用图片模型生成真实 PPT 设计图，并通过代表页与整套页面验证视觉效果。**
+
+最终链路：
 
 ```text
-研究候选
+Stage 1 Approved Content
++
+Stage 1 Markdown Wireframe
+        ↓
+Candidate Deck Visual System
+        ↓
+Host Visual Design Elaboration
+        ↓
+Slide Visual Design Spec
+        ↓
+Deterministic Prompt Compiler
+        ↓
+Final Image Prompt
+        ↓
+Image Model
+        ↓
+Generated Slide Image
+        ↓
+Visual Review
+        ↓
+Representative Design Gate
+        ↓
+Validated Deck Visual System
+        ↓
+Full-deck Design Generation
+        ↓
+User Visual Approval
+        ↓
+Approved Design Preview
+        ↓
+Stage 3
+```
+
+Stage 2 解决的是：
+
+> **“已经确定要讲什么、怎么组织以后，这套 PPT 具体应该被设计成什么样，并稳定生成出来。”**
+
+---
+
+# 2. Authority 边界
+
+正式 Authority 顺序保持：
+
+```text
+Accepted ADR / DECISIONS
 ↓
-定义 Benchmark
+正式 SKILL.md / Runtime Contract
 ↓
-记录最终 Decision
-```
-
-不再拆成两份研究文档。
-
-当前 `run.py` 不调用 Visual Designer、Deck Visual System、Prompt Compiler、图片模型或 Deck Visual Reviewer；旧 Deck-only P3/P5 实现也已在精简阶段删除。以下内容均是未来候选，不是现有模块说明。
-
----
-
-## 二、统一状态词
-
-只使用：
-
-- **Candidate**：已进入待测试列表；
-- **Hypothesis**：推测可能有效，但尚无实验支持；
-- **TBD**：尚未形成明确候选答案。
-
-当前状态：
-
-```text
-Anchor Project: Future Slide — Candidate
-Independent Visual Designer Agent — Hypothesis
-Structured Deck Visual System — Candidate idea
-Deterministic Prompt Compiler — Candidate idea
-Primary Image Model — TBD
-Fallback Image Model — TBD
-Reviewer pass threshold — TBD
-```
-
----
-
-## 三、Stage 2 的质量目标
-
-研究至少关注：
-
-1. 第一眼专业感；
-2. 构图质量；
-3. 信息层级；
-4. 页面类型与内容匹配；
-5. 留白与视觉节奏；
-6. 多页风格一致；
-7. 页面构图多样；
-8. 正式内容不被改写；
-9. 避免“AI 卡片味”；
-10. Stage 3 重建友好。
-
----
-
-## 四、GitHub 选型原则
-
-不采用：
-
-```text
-多个大型 Runtime 拼装
-```
-
-当前策略：
-
-```text
-One Anchor, Multiple References
-一个主参考候选 + 多个辅助参考
-```
-
-原则：
-
-- 最多只选一个未来 Anchor；
-- 其他项目只提供质量规则、Prompt、Provider 或产品边界证据；
-- Anchor Benchmark 不通过时优先换 Anchor，而不是继续拼项目。
-
----
-
-## 五、Future Slide — Anchor Candidate
-
-当前：
-
-```text
-bytonylee/future-slide — Candidate
-```
-
-主要关注：
-
-```text
-slide-design
-gpt-image-slide-prompt
-gpt-image-slide-render
-```
-
-其 Stage 1 页面规划与本项目已有 Stage 1 设计职责重叠，不作为优先移植对象。
-
-### 当前 Hypothesis
-
-Future Slide 式：
-
-```text
-整套视觉规律
+当前 Runtime 实现与行为
 ↓
-逐页结构化设计意图
+README 等用户说明
+↓
+Target Design / Research / Guidance
+↓
+External Evidence
+```
+
+本文件属于 Guidance，不得静默绕过已经 Accepted 的 ADR。
+
+在 Visual-first 新路线完成 Benchmark、Proposal ADR 并被正式 Accepted 以前：
+
+- 当前多页直接构建路线仍称 **Current Direct-Build Route**；
+- 不提前正式命名为 Fast Mode；
+- `run_pipeline.py` 继续作为 **Single-Slide Compatibility**；
+- 现有单页 Planner / Reviewer / Recovery / Patch / Review Gate 能力继续保留。
+
+---
+
+# 3. Stage 2 输入
+
+Stage 2 必须消费 Stage 1 已正式确认的成果。
+
+## 3.1 整套 PPT 级输入
+
+至少包括：
+
+```text
+Presentation Brief
+Storyline
+Structured Outline
+Stage 1 approval state
+```
+
+用于理解：
+
+- 主题；
+- 受众；
+- 演示目标；
+- 页面顺序；
+- 跨页叙事关系。
+
+---
+
+## 3.2 单页正式内容
+
+建议至少包括：
+
+```yaml
+slide_id: S06
+order: 6
+section: 研究设计
+role: process
+
+title: 三周干预围绕知识连接逐步展开
+
+content_blocks:
+  - id: phase_1
+    label: 知识激活
+    text: 第一周通过活动激活已有程序结构知识
+
+  - id: phase_2
+    label: 语法对应
+    text: 第二周建立积木块与 Python 语法之间的对应关系
+
+  - id: phase_3
+    label: 独立迁移
+    text: 第三周完成文本编程迁移
+
+key_message: >
+  三阶段形成递进关系，并最终完成独立迁移。
+
+source_refs:
+  - manuscript:Methods.3.2
+```
+
+其中：
+
+- `title`
+- `label`
+- `text`
+- 数字
+- 专名
+- 阶段名称
+- 缩写
+- 正式结论
+
+都属于 **Stage 1 Text Authority**。
+
+---
+
+## 3.3 Markdown Wireframe
+
+Stage 1 Markdown Wireframe 是：
+
+> **单页 Layout Authority（布局权威）**
+
+目标级别是 **L2 结构线稿**。
+
+它至少要说明：
+
+1. 页面有哪些主要区域；
+2. 正式内容分别属于哪个区域；
+3. 内容之间的空间关系；
+4. 内容之间的逻辑关系；
+5. 阅读方向；
+6. 主视觉位置或作用；
+7. 哪些信息需要强调。
+
+例如：
+
+```text
+┌──────────────────────────────────────┐
+│ 标题                                 │
+│                                      │
+│ [第一周] → [第二周 ★] → [第三周]     │
+│                           ↓          │
+│                       [最终结果]      │
+└──────────────────────────────────────┘
+
+关系：三阶段递进
+阅读方向：左 → 右
+重点：第二阶段
+最终落点：独立迁移
+```
+
+Stage 2 不重新选择 Layout，也不重新规划页面拓扑。
+
+---
+
+# 4. Stage 2 输出
+
+Stage 2 正式输出不是单一 PNG，而是一组有 Authority 区分的交付物：
+
+```text
+Validated Deck Visual System
++
+Slide Visual Design Specs
++
+Final Image Prompts
++
+Generated Slide Images
++
+Visual Review Results
++
+Approved Design Preview
++
+Stage 3 Handoff Metadata
+```
+
+其中：
+
+- **Stage 1**：文字、数据、逻辑 Authority；
+- **Approved Design Preview**：最终视觉 Authority；
+- **Slide Visual Design Spec**：Stage 3 的辅助结构证据；
+- **Final Image Prompt**：派生执行产物，不是新的 Authority。
+
+---
+
+# 5. ① Stage 2 的范围
+
+第 ① 项正式确定：
+
+> **Stage 2 不止生成 Prompt，而是一直执行到真实图片生成与实际视觉效果验证。**
+
+原因是：
+
+> Prompt 的质量不能只通过阅读 Prompt 文本来证明，必须看真实图片结果。
+
+因此 Stage 2 包括：
+
+```text
+视觉设计
 ↓
 Prompt 编译
 ↓
-整页设计图
-```
-
-可能比：
-
-```text
-简单直接 Prompt
+图片生成
 ↓
-图片模型
+图片审核
+↓
+视觉系统验证
+↓
+整套设计图生成
+↓
+用户视觉确认
 ```
 
-带来：
+Stage 2 不包括：
 
-- 更稳定的跨页风格；
-- 更清晰的视觉层级；
-- 更少随机卡片化；
-- 更好的复杂页表现。
+```text
+可编辑 PowerPoint 重建
+```
 
-这必须由 Baseline 对照证明。
+这一部分属于 Stage 3。
 
 ---
 
-## 六、Deck Visual System — Candidate idea
+# 6. ② 谁负责视觉设计
 
-当前研究保留：
+第 ② 项正式确定：
+
+> **Stage 2 的视觉理解与视觉设计由 Host Agent 直接完成。**
+
+不新增独立：
 
 ```text
+Visual Designer Agent
+```
+
+Host 是当前实际运行 Skill 的 Codex / Claude Code 等主 Agent。
+
+Host 在 Stage 2 负责：
+
+- 理解 Stage 1 内容；
+- 理解 Markdown Wireframe；
+- 理解整套视觉方向；
+- 决定单页主视觉表达；
+- 决定视觉层级；
+- 决定留白与节奏；
+- 决定图形语言；
+- 将整套视觉系统落实到当前页；
+- 输出结构化 `Slide Visual Design Spec`。
+
+Host 不负责：
+
+- 重新规划 Storyline；
+- 重新决定 Layout；
+- 修改 Stage 1 正式内容；
+- 自行新增正式页面文字；
+- 自由书写最终 Prompt。
+
+---
+
+# 7. ③ 整套视觉系统如何确定
+
+第 ③ 项正式确定采用：
+
+> **Reference-first + Proposal-if-needed + Image-confirmed**
+
+流程：
+
+```text
+Stage 1 已确认成果
+↓
+检查视觉输入
+```
+
+## 7.1 有参考 PPT / 图片
+
+```text
+Host 提取参考视觉规律
+↓
+Candidate Deck Visual System
+```
+
+可提取：
+
+- 色彩体系；
+- 字体层级；
+- 留白；
+- 图形语言；
+- 图片使用方式；
+- 阴影 / 材质；
+- 页面密度；
+- 标题与主体比例；
+- 跨页一致性规律。
+
+但不得机械复制单页 Layout。
+
+---
+
+## 7.2 无参考图，但用户视觉要求明确
+
+例如用户明确：
+
+```text
+明亮
+学术
+编辑式
+大留白
+不使用卡片堆叠
+```
+
+Host 将其结构化为：
+
+```text
+Candidate Deck Visual System
+```
+
+---
+
+## 7.3 无参考，也无明确视觉方向
+
+Host 提供：
+
+> **2–3 个具体视觉方向**
+
+并推荐其中一个。
+
+用户选择以后形成：
+
+```text
+Candidate Deck Visual System
+```
+
+不允许自动采用：
+
+```text
+academic → 蓝色论文模板
+business → 深色咨询模板
+education → 彩色卡片模板
+```
+
+这类僵化映射。
+
+---
+
+## 7.4 候选视觉系统必须经过真实图片验证
+
+固定生成 **3 张代表页**：
+
+1. Cover / 封面；
+2. Typical Body / 典型正文页；
+3. Complex Representative / 复杂或高难代表页。
+
+三张页面：
+
+> **必须属于同一个 Candidate Deck Visual System，而不是三个不同风格方案。**
+
+流程：
+
+```text
+Candidate Deck Visual System
+↓
+生成 3 张代表页
+↓
+Host + 用户检查真实图片
+```
+
+如果不满意：
+
+### 整体风格问题
+
+```text
+修改 Candidate Deck Visual System
+↓
+重新生成 3 张代表页
+```
+
+### 单页设计问题
+
+```text
+保持 Candidate Deck Visual System
+↓
+只修改对应 Slide Visual Design Spec
+↓
+只重新生成该页
+```
+
+通过后：
+
+```text
+Candidate Deck Visual System
+↓
+Validated Deck Visual System
+```
+
+这一步是 **Representative Design Gate**，用于锁定整套视觉系统。
+
+它不是 Stage 2 最后的正式视觉确认。
+
+---
+
+# 8. ④ Layout Authority
+
+第 ④ 项正式确定：
+
+> **Stage 1 Markdown Wireframe 是 Layout Authority。Stage 2 不再进行 Layout Routing。**
+
+因此不把下面链路作为 Stage 2 Core：
+
+```text
+Layout Bank
+↓
+assign_layouts()
+↓
+layout family routing
+```
+
+Stage 2 可以决定的是：
+
+> **同一个已确认布局拓扑具体“长什么样”。**
+
+例如 Stage 1 已经确定：
+
+```text
+A → B → C
+重点：B
+```
+
+Stage 2 可以设计成：
+
+```text
+连续迁移路径
+```
+
+也可以：
+
+```text
+渐进式节点
+```
+
+可以改变：
+
+- 节点造型；
+- 路径风格；
+- 颜色强调；
+- 留白；
+- 视觉运动；
+- 图片语言；
+- 材质与装饰。
+
+不能改变：
+
+```text
+A → B → C
+```
+
+为：
+
+```text
+A
+↓
+C
+↓
+B
+```
+
+也不能擅自从横向递进改成无关三栏卡片。
+
+---
+
+# 9. ⑤ 正式文字 Authority
+
+第 ⑤ 项正式确定：
+
+> **Stage 2 不允许自行生成新的正式页面文字。**
+
+需要出现在最终 PPT 上的：
+
+- 标题；
+- 短标签；
+- 阶段名；
+- 数字；
+- 单位；
+- 缩写；
+- 专名；
+- 图注；
+- 结论；
+
+都应在 Stage 1 生成并确认。
+
+Stage 2 可以：
+
+- 换行；
+- 分段；
+- 改排版；
+- 改字号层级；
+- 加粗；
+- 改颜色；
+- 从原句中拆分原始子串；
+- 高亮 Stage 1 已存在关键词。
+
+Stage 2 不可以：
+
+- 自创新 Label；
+- 改写；
+- 概括；
+- 自动缩写；
+- 修改数字；
+- 修改专名；
+- 增加解释；
+- 增加结论；
+- 改变因果关系；
+- 改变时间关系；
+- 改变递进关系。
+
+正式规则：
+
+```text
+Text Authority
+= Stage 1
+
+Semantic Authority
+= Stage 1 Content + Stage 1 Wireframe
+```
+
+图片模型不得拥有新的正式文本 Authority。
+
+---
+
+# 10. ⑥ Prompt 生成架构
+
+第 ⑥ 项正式确定：
+
+> **Host 负责设计，程序负责确定性编译 Prompt。**
+
+采用：
+
+```text
+Stage 1 Approved Content
++
+Markdown Wireframe
++
 Deck Visual System
-整套 PPT 视觉系统
+        ↓
+Host
+        ↓
+Slide Visual Design Spec
+        ↓
+Deterministic Prompt Compiler
+        ↓
+Final Image Prompt
+        ↓
+Image Model
 ```
-
-可能描述：
-
-- 视觉气质；
-- 色彩关系；
-- 字体层级关系；
-- 留白与密度；
-- 构图规律；
-- 图表 / 表格语言；
-- 插画 / 图片语言；
-- 页眉 / 页脚规律；
-- 反模式。
-
-具体 Schema、文件名：**TBD**。
 
 ---
 
-## 七、Observed / Inferred
+## 10.1 Host 的设计输出
 
-如果用户提供参考 PPT / 图片：
+Host 不直接自由写 Final Prompt，而是输出结构化的：
+
+> **Slide Visual Design Spec（单页视觉设计规格）**
+
+建议保持“小型结构字段 + 少量自由描述”，避免做成复杂 DSL。
+
+候选结构：
+
+```yaml
+slide_id: S06
+
+visual_objective: >
+  让观众直观看到三个教学阶段逐步完成知识迁移。
+
+composition_elaboration: >
+  保持 Stage 1 已确认的横向三阶段结构。
+  使用一条连续发展的视觉路径连接三个阶段，
+  不使用三个独立等宽卡片。
+
+visual_hierarchy:
+  - 第一阶段视觉权重较低
+  - 第二阶段为视觉中心
+  - 第三阶段向右展开，并连接最终结果
+
+main_visual: >
+  连续路径与三个阶段节点构成主体视觉。
+
+graphic_language: >
+  使用克制的几何形式与细线连接，
+  避免无意义图标和装饰性科技元素。
+
+whitespace: >
+  主体集中在中部，顶部与左右保留明显留白。
+
+important_overlap:
+  - title remains above main_visual
+
+constraints:
+  - 不改变 Stage 1 Wireframe
+  - 不新增任何页面文字
+  - 不修改阶段顺序
+```
+
+具体 Schema 可以在实现阶段收敛，但职责边界不变。
+
+---
+
+## 10.2 Prompt Compiler 的职责
+
+Prompt Compiler：
+
+> **只编译，不设计，不推理，不改写。**
+
+程序负责：
 
 ```text
-Observed
-= 可以直接观察到的视觉规律
-
-Inferred
-= 基于有限参考做出的合理推断
+校验 Slide Visual Design Spec
+↓
+读取 Stage 1 正式文字
+↓
+读取 Markdown Wireframe
+↓
+读取 Deck Visual System
+↓
+读取参考图片信息
+↓
+注入固定禁止项
+↓
+按固定结构生成 Final Prompt
+↓
+Prompt QA
 ```
 
-目的：
-
-- 不把推断伪装成用户明确要求；
-- 不过度拟合单页样本；
-- 让视觉决策可追溯。
-
-当前为 Candidate 规则。
-
----
-
-## 八、Slide Visual Design Spec — Candidate idea
-
-当前 Hypothesis：
-
-> Visual Designer 不直接自由写最终 Prompt，而先输出结构化单页视觉设计规格。
-
-可能包括：
-
-- 页面视觉目标；
-- 主要视觉焦点；
-- 内容区关系；
-- 构图家族；
-- 留白与内容密度；
-- 视觉层级；
-- 图片 / 插画需求；
-- 图表 / 流程需求；
-- 禁止项；
-- Stage 3 重建注意事项。
-
-具体字段：**TBD**。
-
----
-
-## 九、Composition Families — Candidate idea
-
-当前保留有限构图家族思路，例如：
+最终 Prompt 建议固定包含：
 
 ```text
-cover
-statement
-metric_hero
-quote
-flow
-comparison
-timeline
-matrix
-image_spread
-split_visual
-cards_grid
-table
-closing
+1. 任务身份
+2. 画布规格
+3. 页面目标
+4. 本页在整套 PPT 中的作用
+5. Stage 1 正式页面文字
+6. Stage 1 Markdown Wireframe / Layout Authority
+7. 本页 Slide Visual Design Spec
+8. Deck Visual System
+9. 必要 deck_context / local_context
+10. Reference Image Rules
+11. Cross-page Consistency Rules
+12. Reconstruction-aware Constraints
+13. Universal Prohibitions
+14. Output Requirements
 ```
-
-最终枚举：**TBD**。
-
-### 反卡片化
-
-`cards_grid` 不应成为默认构图。
-
-连续页面高度盒子化时，应在生图前或 Reviewer 阶段触发 Warning / Fail 候选。
 
 ---
 
-## 十、Style Intake — Candidate idea
+## 10.3 Final Prompt 是派生产物
 
-视觉方向优先级建议：
+正式确定：
+
+> **Final Prompt 不是 Source of Truth，不允许在 Compiler 之后再交给 Host 自由润色。**
+
+如果图片有问题：
 
 ```text
-1. 用户提供的参考 PPT / 样板页 / 图片
-2. 用户明确的视觉要求
-3. 根据内容提出专属视觉方向
-4. 信息不足时再询问用户
+视觉设计问题
+→ 修改 Slide Visual Design Spec
+
+整套风格问题
+→ 修改 Deck Visual System
+
+Prompt 编译遗漏
+→ 修改 Prompt Compiler
+
+图片模型执行问题
+→ Retry / Provider / Model 层处理
 ```
+
+禁止：
+
+```text
+生成图片失败
+→ 手工直接改 Final Prompt
+→ 留下不可追踪的 Prompt Patch
+```
+
+---
+
+# 11. ⑦ 面向 Stage 3 的重建感知设计
+
+第 ⑦ 项正式确定采用：
+
+> **Reconstruction-aware Hybrid（重建感知的混合设计）**
+
+核心原则：
+
+> **Stage 2 仍然以高质量视觉设计为主，但在不明显降低设计效果的前提下，为 Stage 3 保留必要的可编辑重建条件。**
+
+不是：
+
+```text
+Stage 2 完全不管 Stage 3
+```
+
+也不是：
+
+```text
+为了可编辑，
+Stage 2 只能使用简单 Shape + Text
+```
+
+---
+
+## 11.1 Rule 1 — 正式文字分离
+
+> **Stage 1 已确认的正式文字、数字和 Label，不应成为复杂生成视觉不可分割的一部分。**
 
 避免：
 
 ```text
-academic → 固定学术模板
-business → 固定商务模板
-education → 固定教育模板
+3D 插画内部直接烤入
+“32.6%”
+“Knowledge Transfer”
+“Phase 2”
 ```
 
-PPT 类型是内容组织维度，不等于最终视觉模板。
+因为 Stage 3 会被迫：
+
+```text
+OCR
+→ 擦字
+→ Inpaint
+→ 再放 Native Text
+```
+
+正式文字应优先保持为可独立识别的内容区域。
 
 ---
 
-## 十一、Prompt Compiler — Candidate idea
+## 11.2 Rule 2 — 复杂视觉边界清楚
 
-当前 Hypothesis：
+> **照片、插画、3D、纹理、复杂装饰等可以自由设计，但优先形成边界清楚、可独立保留的视觉对象或区域。**
+
+允许：
+
+- 3D；
+- Glow；
+- 复杂渐变；
+- Texture；
+- 插画；
+- 照片；
+- 杂志式视觉；
+- 高级构图；
+- 局部重叠。
+
+不要求这些元素全部转成 PowerPoint Shape。
+
+目标是：
+
+```text
+复杂视觉
+→ Stage 3 可作为独立 PNG / SVG / Image Asset
+
+正式内容
+→ Native Text / Shape / Chart
+```
+
+---
+
+## 11.3 Rule 3 — 语义结构保留
+
+对于：
+
+```text
+Chart
+Table
+Flow
+Timeline
+Connector
+Relationship Diagram
+```
+
+其：
+
+```text
+数据
+逻辑
+顺序
+关系
+```
+
+继续由 Stage 1 / Wireframe 保存。
+
+Stage 2 负责：
+
+> **视觉表现**
+
+Stage 3 负责：
+
+> **根据 Stage 1 结构 + Stage 2 Approved Design Preview 重建 Native Object。**
+
+例如：
+
+```text
+Stage 1 Data
++
+Stage 2 Chart Visual
+↓
+Stage 3
+Native Chart Reconstruction
+```
+
+而不是：
+
+```text
+Stage 2 PNG
+↓
+OCR 数字
+↓
+猜 Chart
+```
+
+---
+
+## 11.4 Rule 4 — 保留重建元数据
+
+Stage 2 不只向 Stage 3 交：
+
+```text
+slide_06.png
+```
+
+还必须保留：
 
 ```text
 Slide Visual Design Spec
-↓
-Prompt Compiler
-↓
-Image Prompt
 ```
 
-希望固定：
-
-- Prompt 结构；
-- Authority；
-- 禁止项；
-- Stage 3 重建要求；
-- 字段顺序。
-
-目标是降低不同页面自由 Prompt 造成的风格漂移。
-
----
-
-## 十二、Image Generation Engine — TBD
-
-图片模型与 Provider 尚未冻结。
-
-未来比较：
-
-- 图片专业度；
-- 参考图能力；
-- 跨页稳定性；
-- 复杂信息表达；
-- 文字区域可读性；
-- 失败率；
-- 速度；
-- 成本；
-- API 可控参数；
-- Provider 可替换性。
-
-不因为参考仓库使用某模型，就直接采用该模型。
-
----
-
-## 十三、Visual Designer Agent — Hypothesis
-
-当前研究倾向：
+Stage 3 输入应至少包括：
 
 ```text
-Host
-= 讲什么、怎么组织
-
-Visual Designer
-= 怎么设计才好看
+Stage 1 Approved Content
++
+Stage 1 Markdown Wireframe
++
+Approved Design Preview
++
+Slide Visual Design Spec
 ```
 
-但是否必须新增独立 Visual Designer Agent，仍需 Benchmark 证明。
+Authority 关系：
+
+```text
+Stage 1
+→ 文字 / 数据 / 逻辑 Authority
+
+Approved Design Preview
+→ 视觉 Authority
+
+Slide Visual Design Spec
+→ 辅助结构证据
+```
+
+Visual Spec 不得覆盖用户已经确认的设计图片。
 
 ---
 
-## 十四、Representative Design Gate
+## 11.5 Useful Editability
 
-Stage 2 Fail-fast 流程：
+Stage 3 的目标正式采用：
+
+> **Useful Editability（有用的可编辑性），而不是 Pixel Editability。**
+
+建议目标边界：
+
+| 元素 | Stage 3 目标 |
+|---|---|
+| 标题 / 正文 | Native Text |
+| 数字 / Label | Native Text |
+| Card / Panel / 基础几何 | Native Shape |
+| Arrow / Connector | Native Shape / Connector |
+| 简单流程图 | Native Shape + Connector |
+| Table | Native Table / Structured Objects |
+| 数据可恢复 Chart | Native Chart |
+| 标准 Icon | SVG / Shape |
+| 照片 | Independent Image Asset |
+| 复杂插画 | Independent Image Asset |
+| 3D / Texture | Raster / SVG Asset |
+| 复杂装饰 | Local Raster / Asset |
+| 整页设计图 | 不作为正常最终重建方案 |
+
+禁止正常最终交付退化为：
 
 ```text
-视觉系统
-↓
-3 张代表页
-↓
+整页 PNG
++
+少量可编辑文字
+```
+
+然后声称页面已经“可编辑”。
+
+---
+
+# 12. Stage 2 Core 最终流程
+
+①～⑦ 确认后，Stage 2 Core 固定为：
+
+```text
+Stage 1 Approved Content + Markdown Wireframe
+        ↓
+检查视觉输入
+        ↓
+Candidate Deck Visual System
+        ↓
+Host Visual Design Elaboration
+        ↓
+Slide Visual Design Spec
+        ↓
+Deterministic Prompt Compiler
+        ↓
+Final Image Prompt
+        ↓
+Image Model
+        ↓
+Generated Slide Image
+        ↓
+Host Visual Review
+        ↓
 Representative Design Gate
+        ↓
+Validated Deck Visual System
+        ↓
+剩余页面 Visual Specs
+        ↓
+批量 Prompt Compile + Image Generation
+        ↓
+Full-deck Visual Review
+        ↓
+第二次正式用户确认
+        ↓
+Approved Design Preview
+        +
+Slide Visual Design Specs
+        +
+Stage 1 Authority
+        ↓
+Stage 3
+```
+
+---
+
+# 13. 代表页验证与整套页面生成
+
+## 13.1 Representative Design Gate
+
+固定：
+
+```text
+Cover
+Typical Body
+Complex Representative
+```
+
+共 **3 页**。
+
+这三页用于验证：
+
+- 风格是否正确；
+- 跨页是否一致；
+- 图片模型能否实现设计意图；
+- 页面是否出现明显模板感；
+- 是否存在 Card Spam；
+- 是否存在伪文字；
+- 是否符合 Stage 1 Layout Authority；
+- 是否具备基本 reconstruction friendliness。
+
+---
+
+## 13.2 代表页通过以后
+
+才允许：
+
+```text
+Validated Deck Visual System
 ↓
-通过后再生成整套
+Full-deck Generation
 ```
 
-代表页建议：
+剩余页面：
 
-- 封面；
-- 普通正文；
-- 复杂信息页。
-
-它：
-
-- 只校准视觉方向；
-- 不是正式 Approval；
-- 不产生 `Approved Design Preview`；
-- 不能直接进入 Stage 3。
+- 可以按 4–6 页批量由 Host 输出 Visual Specs；
+- Prompt Compiler 批量确定性编译；
+- 已通过页面尽量缓存；
+- 单页失败只重新处理失败页；
+- 不因一页失败重生整个 Deck。
 
 ---
 
-## 十五、批量生成策略 — Hypothesis
+# 14. Visual Review 的职责
 
-代表页通过后：
+Stage 2 Visual Review 检查真实图片，而不是只看 Prompt。
+
+至少检查：
 
 ```text
-共享 Deck Visual System（Candidate）
-+
-共享视觉参考（Candidate；具体形式可能是 Style Anchor）
-+
-共享 Stage 1 Approved Content
-↓
-有限页面级并行
+视觉专业度
+构图
+信息层级
+留白与节奏
+内容表达是否正确
+Page Role 是否匹配
+卡片化 / 模板感
+跨页一致性
+伪文字 / 错字 / 数字错误
+Stage 1 Wireframe 是否被破坏
+Stage 3 Reconstruction Friendliness
 ```
 
-并发数：**TBD**。
+文字错误需区分：
 
-这里的 `Style Anchor` 只是候选设计机制，不恢复旧 ADR-038/P3 的 Artifact、Schema 或 State 合同。
+### Minor visual glyph issue
 
-目标：
+如果只是图片中文字轻微 Glyph 错误，而 Stage 1 Authority 完整：
 
-- 保持一致性；
-- 减少等待时间；
-- 失败页局部重生成；
-- 避免整套返工。
+> 可以记录为图片层问题，不自动修改 Stage 1。
+
+### Serious semantic error
+
+例如：
+
+```text
+数字改变
+专名改变
+新增随机 Label
+结论改变
+```
+
+应判为 Serious Failure。
 
 ---
 
-## 十六、Visual Reviewer — Candidate role
+# 15. Retry、缓存与成本控制
 
-Reviewer 研究应覆盖：
+Stage 2 必须是有界执行流程。
 
-### 单页
+## 15.1 Retry
 
-- 专业感；
-- 构图；
-- 层级；
-- 留白；
-- 视觉焦点；
-- 页面类型匹配；
-- 是否卡片化。
+不得无限循环。
 
-### 整套
+例如：
 
-- 跨页一致；
-- 构图多样；
-- 后半段漂移；
-- 图表 / 流程 / 图片页是否保持同一视觉语言。
+```text
+max_generation_attempts = 3
+```
 
-### Stage 3 兼容
-
-- 正式文字区域是否清楚；
-- 复杂视觉是否可独立提取；
-- 主视觉边界是否清楚；
-- 是否存在过度缠绕和难重建光效。
-
-实现方式和阈值：**TBD**。
+具体值可在 Runtime 实现阶段确定，但必须存在明确上限。
 
 ---
 
-## 十七、辅助参考项目
+## 15.2 Cache
 
-### SlideSpeak
-
-定位：
+如果：
 
 ```text
-Quality Engineering Reference
+Cover   PASS
+Body    PASS
+Complex FAIL
 ```
 
-参考：
-
-- Style Intake；
-- 构图家族；
-- 跨页多样性；
-- Prompt 编译；
-- 生图前质量 Gate。
-
-不引入其完整 TypeScript / HTML Runtime。
-
-### Design Image Studio
-
-定位：
+只重新生成：
 
 ```text
-Prompt / Image Engine Reference
+Complex
 ```
 
-参考：
+不得默认把三页全部重跑。
 
-- 结构化设计信息 → Prompt；
-- Provider；
-- 参考图；
-- 重试；
-- 成本；
-- Fallback；
-- 调用日志。
-
-Benchmark 前不绑定其特定 Provider。
-
-### Codex PPT
-
-定位：
-
-```text
-Product Flow Reference
-```
-
-只参考：
-
-```text
-设计图
-→ QA
-→ 用户确认
-→ Approved Design Preview
-→ Editable Reconstruction
-```
-
-不作为已选 Runtime。
-
-这里的 `Approved Design Preview` 仅表示未来经第二次正式确认的全套设计图，不指向已删除的旧 P3/P5 Runtime Artifact。
+整套 PPT 同理。
 
 ---
 
-## 十八、明确不采用
+## 15.3 Fail-fast
 
-当前不采用：
+视觉系统尚未通过 3 页代表页：
 
-1. Future Slide + SlideSpeak + Design Image Studio + Codex PPT 的大型 Runtime 拼装；
-2. Stage 2 重新规划 Stage 1 Storyline；
-3. Stage 2 静默改写正式文字；
-4. 所有页面默认卡片网格；
-5. 未通过代表页 Gate 就批量生成；
-6. Benchmark 前锁死图片模型；
-7. Benchmark 前锁死 Anchor；
-8. 代表页通过后直接标为 `Approved Design Preview`；
-9. Benchmark 前编写 Stage 2 Runtime Implementation Plan。
+> 不允许直接生成整套 PPT。
+
+避免把错误视觉方向扩散到 20 页以后再返工。
 
 ---
 
-## 十九、Benchmark 总原则
+# 16. Stage 2 Benchmark Gate
 
-Benchmark 分两轮：
+在修改正式 Runtime / Accepted ADR 前，先用真实 Stage 1 输出验证 Stage 2。
 
-```text
-Round A
-验证设计流程是否真正比 Baseline 好
+## Round A — 验证 Prompt Pipeline
 
-Round B
-在已选流程下比较图片模型
-```
+固定：
 
-不能把 Pipeline 价值和模型能力混在一起。
-
----
-
-## 二十、Round A：Baseline vs Candidate Pipeline
-
-固定同一个图片模型。
+- 同一 Stage 1 内容；
+- 同一 Markdown Wireframe；
+- 同一图片模型；
+- 同一尺寸；
+- 同一参考图片；
+- 能固定的 API 参数全部固定。
 
 ### Baseline
 
 ```text
+Stage 1
+↓
 简单直接 Prompt
-→ 固定图片模型
+↓
+同一图片模型
 ```
 
 ### Candidate
 
 ```text
-Structured Design System
-+
-Structured Page Prompt
-→ 同一个图片模型
+Stage 1
+↓
+Host Visual Design Spec
+↓
+Deterministic Prompt Compiler
+↓
+同一图片模型
 ```
-
-固定：
-
-- Stage 1 内容；
-- 页面；
-- 图片模型；
-- Provider；
-- 尺寸；
-- 参考图；
-- API 所暴露的全部可控生成参数。
-
-如果模型不暴露 seed / sampling 等参数，则通过稳定性测试评估不可控随机性。
 
 ---
 
-## 二十一、Round A 的 Fail-fast 顺序
-
-### A1：3 张代表页
-
-只测：
-
-- Cover；
-- Body；
-- Complex。
-
-如果 Candidate 没有明显优于 Baseline：
+## A1 — 3 张代表页
 
 ```text
-Round A = Failed
+Cover
+Body
+Complex
 ```
 
-直接停止。
+A1 不通过：
 
-### A2：8～10 页连续 Deck
+> 停止，不跑整套。
 
-只有 A1 通过才执行。
+---
+
+## A2 — 8–10 页连续 PPT
 
 检查：
 
-- 跨页一致；
-- 构图多样；
-- 后半段漂移；
-- 卡片化；
-- 复杂页表现。
-
-### A3：稳定性
-
-只有 A2 通过才执行。
-
-选 1～2 张关键页，各重复生成 3 次。
-
-不重复完整 8～10 页 Deck 三次。
+- 跨页一致性；
+- 页面多样性；
+- 风格漂移；
+- Cardization；
+- Prompt Pipeline 是否稳定。
 
 ---
 
-## 二十二、Round B：图片模型比较
+## A3 — 稳定性
 
-### B1：3 模型 × 3 页
+选择 1–2 张关键页，各重新生成 3 次。
 
-固定已经通过 Round A 的设计流程。
+如果图片模型没有公开 Seed / Sampling：
 
-候选：
+> 不假装确定性，只记录实际稳定性。
+
+---
+
+## Round B — 图片模型比较
+
+只有 Round A 证明 Prompt Pipeline 有价值以后，才比较图片模型。
+
+例如：
 
 ```text
-Model A
-Model B
-Model C
+Model A / B / C
+×
+同样 3 页
 ```
 
-具体型号：**TBD**。
+再对 Top 1–2 跑 8–10 页。
 
-淘汰明显较差模型。
+避免同时改变：
 
-### B2：Top 1～2 × 8～10 页 Deck
+```text
+Prompt Pipeline
++
+Image Model
+```
 
-比较：
-
-- 跨页一致性；
-- 后半段漂移；
-- 复杂页；
-- 失败率；
-- 耗时；
-- 成本；
-- Provider 可用性。
-
-### B3：Top Model 稳定性
-
-对最终候选模型选择 1～2 张关键页重复 3 次。
+导致无法判断效果来自哪里。
 
 ---
 
-## 二十三、评分维度
+# 17. Benchmark 评分维度
 
 建议总分 100：
 
-| 项目 | 权重 |
+| 维度 | 分值 |
 |---|---:|
-| 第一眼专业感 | 15 |
-| 构图质量 | 15 |
+| 第一眼专业度 | 15 |
+| 构图 | 15 |
 | 信息层级 | 10 |
-| 留白与视觉节奏 | 10 |
+| 留白与节奏 | 10 |
 | 内容表达正确性 | 10 |
-| 页面类型匹配度 | 10 |
-| AI 模板感 / 卡片味控制 | 10 |
-| 与视觉系统一致性 | 10 |
-| Stage 3 重建友好性 | 10 |
+| Page Role 匹配 | 10 |
+| AI 模板感 / Card 化控制 | 10 |
+| 跨页视觉系统一致性 | 10 |
+| Stage 3 重建友好度 | 10 |
 
-分数不自动替代人工判断。
-
----
-
-## 二十四、必须记录的失败类型
-
-- 文字乱码；
-- 错字；
-- 伪文本；
-- 改数字；
-- 改专名；
-- 编造图表；
-- 主视觉过度抢占；
-- 层级混乱；
-- 页面过空；
-- 页面过满；
-- 卡片化严重；
-- 连续构图重复；
-- 风格漂移；
-- 复杂流程画错；
-- 重建边界不清；
-- 生成失败；
-- Provider / API 错误。
-
----
-
-## 二十五、文字错误怎么判
-
-### 可接受的生图文字瑕疵
-
-如果：
-
-- 文字区域位置正确；
-- 层级正确；
-- 行数和版面合理；
-- 只是个别字形错误；
-
-不应直接判整页视觉失败，因为 Stage 3 正式文字来自 Stage 1。
-
-### 严重内容错误
-
-如果模型：
-
-- 改数字；
-- 改专名；
-- 新增不存在结论；
-- 把正文变成随机标签；
-- 使关键信息区域无法识别；
-
-应视为严重问题。
-
----
-
-## 二十六、Reviewer Agreement
-
-主要定义为：
-
-```text
-Visual Reviewer 判定
-vs
-人工基准判定
-```
-
-建议从 Benchmark 图片中取约 10～20 张代表图，由人工先形成：
-
-```text
-Pass / Fail / Borderline
-```
-
-再比较 Reviewer 是否能识别：
-
-- 卡片化；
-- 风格漂移；
-- 构图问题；
-- 信息层级失败；
-- Stage 3 重建风险。
-
-Reviewer 模型与阈值：**TBD**。
-
----
-
-## 二十七、成本记录
-
-至少记录：
+同时记录：
 
 ```text
 Provider
 Model
-Page count
-Generation calls
-Successful calls
-Failed calls
+Page Count
+Calls
+Success / Failure
 Regenerations
-Average latency
-Total latency
-Estimated / actual cost
-Reference-image usage
+Latency
+Cost
+Reference Image Usage
 ```
 
-判断：
-
-```text
-质量提升
-÷
-额外成本
-```
-
-是否值得成为主路线。
-
----
-
-## 二十八、Benchmark 结果
-
-最终只允许：
+Benchmark Result 只允许：
 
 ```text
 Passed
@@ -760,140 +1267,161 @@ Failed
 Inconclusive
 ```
 
-### Passed
-
-说明：
-
-- Candidate Pipeline 相比 Baseline 有可解释改善；
-- 连续 Deck 可保持视觉一致；
-- 稳定性可接受；
-- 至少一个模型满足质量 / 成本要求；
-- Reviewer 与人工判断可用；
-- Stage 3 重建友好性可接受。
-
-### Failed
-
-关键质量或稳定性不达标。
-
-### Inconclusive
-
-证据不足或实验条件不可靠。
-
----
-
-## 二十九、新 ADR 门禁
-
 只有：
 
 ```text
-Benchmark Decision = Passed
+Passed
 ```
 
-才能进入：
+才允许进入新的 Proposal ADR 与正式 Runtime 迁移。
+
+---
+
+# 18. 明确不采用的 Stage 2 设计
+
+当前不采用：
 
 ```text
-起草新 ADR
+独立 Visual Designer Agent
 ```
 
-`Failed` / `Inconclusive`：
+不采用：
 
 ```text
-继续研究
-↓
-不修改 Runtime
-↓
-不替换当前入口
+Stage 2 Layout Router
+```
+
+不采用：
+
+```text
+每页由大模型自由写 Final Prompt
+```
+
+不采用：
+
+```text
+Prompt Compiler 后再让 LLM polish Prompt
+```
+
+不采用：
+
+```text
+Stage 2 自动重写正式内容以适应图片
+```
+
+不采用：
+
+```text
+为了 Stage 3 禁止所有复杂视觉
+```
+
+不采用：
+
+```text
+整页 Raster 作为正常“可编辑”交付策略
 ```
 
 ---
 
-## 三十、Decision Record
+# 19. 当前外部项目的参考角色
 
-Benchmark 完成后直接填写本节：
+Stage 2 不照搬任何一个项目，而是按职责吸收成熟做法。
 
-```text
-Benchmark Decision
+## Prompt / 视觉设计侧
 
-Result:
-TBD — Passed / Failed / Inconclusive
+### Future Slide
 
-Anchor Candidate:
-Future Slide — Candidate
+主要借鉴：
 
-Selected Pipeline:
-TBD
+> Host 应该考虑哪些视觉设计问题。
 
-Primary Image Model:
-TBD
+包括：
 
-Fallback Image Model:
-TBD
+- visual intent；
+- hierarchy；
+- main visual；
+- anti-card；
+- anti-generic；
+- composition quality。
 
-Evidence:
-TBD
+### `ningzimu/codex-ppt-skill`
 
-Known Limitations:
-TBD
+主要借鉴：
 
-Reviewer Agreement:
-TBD
+> Host 做设计以后，由程序如何确定性打包 Prompt。
 
-Cost Summary:
-TBD
+包括：
 
-Eligible for ADR Proposal:
-No
-```
+- self-contained page job；
+- deck_context；
+- local_context；
+- fixed prompt sections；
+- worker execution boundary。
 
-只有 `Result: Passed` 时，最后一项才能改为：
+### `JuneYaooo/gpt-image2-ppt-skills`
 
-```text
-Eligible for ADR Proposal: Yes
-```
+主要借鉴：
 
----
+- deterministic Prompt Compiler；
+- prepare-only；
+- prompt artifact；
+- metadata；
+- batch execution。
 
-## 三十一、当前状态
+不采用其 Layout Routing 作为当前 Stage 2 Core。
 
-```text
-Round A1 — Not run
-Round A2 — Not run
-Round A3 — Not run
-Round B1 — Not run
-Round B2 — Not run
-Round B3 — Not run
+### Design Image Studio
 
-Overall Decision — Inconclusive / Not evaluated
-Eligible for ADR Proposal — No
-```
+主要借鉴：
+
+> 设计信息与 Final Prompt 分层。
 
 ---
 
-## 三十二、Stage 2 通过后新增什么
+## Reconstruction-aware 侧
 
-如果最终：
-
-```text
-Benchmark Decision = Passed
-```
-
-再新增：
+源码研究表明，多数成熟重建路线收敛到：
 
 ```text
-04-stage2-design.md
+Native Text
++
+Native Semantic Structure
++
+Bounded Complex Visual Assets
 ```
 
-只记录最终冻结内容：
+重点参考方向包括：
 
-- 是否使用独立 Visual Designer；
-- Deck Visual System；
-- Slide Visual Design Spec；
-- Prompt Compiler；
-- 主图片模型 / Fallback；
-- Representative Design Gate；
-- 批量生成策略；
-- Visual Reviewer；
-- 第二次正式确认；
-- Stage 3 Handoff。
+- `ningzimu/image-to-editable-ppt-skill`
+- `Kevinyyy1/image-to-editable-pptx-v2`
+- `Hasasasa/html-to-editable-pptx`
+- `jacksonqian1/visual-to-editable-ppt`
+- `w1163222589-coder/slide-image-to-editable-pptx`
 
-迁移和 `Main Mode / Fast Mode` 则由后续 ADR 决定，不再维护独立的 `target-architecture-and-migration.md`。
+共同证据支持：
+
+> **复杂视觉无需强制 Native，但正式文字与重要语义结构应尽量与复杂视觉资产分离。**
+
+---
+
+# 20. Stage 2 当前冻结决策总表
+
+| # | 架构问题 | 最终决策 |
+|---|---|---|
+| ① | Stage 2 到哪里结束 | 到真实图片生成、视觉审核与整套设计图正式确认 |
+| ② | 谁负责视觉设计 | Host Agent |
+| ③ | 视觉风格怎么确定 | Reference-first；必要时 2–3 个方向；3 张代表页真实图片验证后锁定 |
+| ④ | Layout 谁决定 | Stage 1 Markdown Wireframe 是 Layout Authority |
+| ⑤ | Stage 2 能否改正式文字 | 不能；短 Label 等必须在 Stage 1 确认 |
+| ⑥ | Final Prompt 怎么产生 | Host → Slide Visual Design Spec → Deterministic Prompt Compiler |
+| ⑦ | 如何照顾 Stage 3 | Reconstruction-aware Hybrid；视觉优先，同时分离正式内容、保留语义结构与重建元数据 |
+
+---
+
+# 21. 一句话版本
+
+Stage 2 可以最终概括成：
+
+> **Stage 1 决定“讲什么、怎么组织”；Host 决定“这一页具体怎么设计”；程序负责“守 Authority、确定性编译并执行 Prompt”；图片模型负责“真正画出来”；真实图片负责验证设计是否成立；Stage 2 同时保留少量重建友好约束，使 Stage 3 能在不牺牲视觉质量的情况下完成 Useful Editability。**
+
+

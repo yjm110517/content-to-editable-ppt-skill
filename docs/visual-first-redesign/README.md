@@ -1,6 +1,6 @@
 # 视觉优先三阶段重构：研究文档导航
 
-> **Status**：Research / Proposal（研究与提案）
+> **Status**：Final Guidance + Research / Benchmark Pending（目标指导已确认，研究与 Benchmark 待执行）
 > **Document type**：Navigation & Status（导航与状态）
 > **Authority**：非运行权威，仅说明研究状态、阅读顺序和文档边界
 > **Current runtime relationship**：不改变当前正式产品、Runtime、入口或 Accepted ADR
@@ -93,7 +93,7 @@ README 等用户说明
    Stage 1 最终目标设计。
 
 3. [`03-stage2-research-and-decision.md`](03-stage2-research-and-decision.md)
-   Stage 2 候选技术、Benchmark、决策门禁和当前结论。
+   Stage 2 已确认目标指导、真实图片验证、Benchmark、决策门禁和当前结论。
 
 4. [`references/external-project-and-source-review.md`](references/external-project-and-source-review.md)
    外部 GitHub 项目、源码与许可证证据。
@@ -112,9 +112,9 @@ README 等用户说明
 
 原因：
 
-- Stage 2 Anchor 尚未通过 Benchmark；
-- 图片模型尚未冻结；
-- Visual Designer / Prompt Compiler / Reviewer 仍有未验证假设；
+- Stage 2 的目标职责边界已经确认，但尚未通过真实图片 Benchmark；
+- 图片模型、Provider、自动 Reviewer 实现和通过阈值尚未冻结；
+- 不在 Benchmark 前编写 Runtime Implementation Plan 或改写当前入口；
 - 迁移和 `Main Mode / Fast Mode` 最终定位应该由未来新 ADR 决定。
 
 因此当前保持：

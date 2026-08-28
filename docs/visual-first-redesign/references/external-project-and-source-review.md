@@ -368,13 +368,13 @@ AGPL-3.0 项目默认：
 Repository: bytonylee/future-slide
 License: TBD in current source set
 Source Commit SHA: TBD before implementation
-Current status: Candidate
+Current status: Research reference; not a selected Anchor
 Reuse level: TBD after Benchmark
 ```
 
 #### 项目级观察
 
-当前 Stage 2 主 Anchor Candidate。
+当前 Stage 2 的视觉设计研究参考，不是已选 Anchor。
 
 研究关注：
 
@@ -509,7 +509,7 @@ Editable Reconstruction
 | 内容与设计如何分开 | Presenton | Authority 隔离 |
 | Markdown 线框怎么保存 | Slidev | Markdown + Frontmatter |
 | Stage 1 应做到什么粒度 | PPTist | 精确坐标作为边界反例 |
-| Stage 2 跨页视觉系统 | Future Slide | Candidate |
+| Stage 2 跨页视觉系统 | Future Slide | Research reference; adoption requires Benchmark |
 | Stage 2 构图与质量规则 | SlideSpeak | Reference |
 | Prompt / Provider 如何分层 | Design Image Studio | Reference |
 | 设计图如何成为 Stage 3 视觉目标 | Codex PPT | Product-flow reference |
@@ -542,7 +542,7 @@ Stage 1：
 
 Stage 2：
 
-> Future Slide 只是 Anchor Candidate；其他项目只是参考。真正采用什么必须由 Benchmark 决定。
+> Future Slide 与其他项目均为研究参考；真正采用什么必须由 Benchmark 决定。
 
 因此当前最重要原则：
 
