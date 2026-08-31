@@ -40,6 +40,7 @@ SCHEMA_FILES = {
     "deck_build_request": "deck-build-request.schema.json",
     "powerpoint_roundtrip_report": "powerpoint-roundtrip-report.schema.json",
     "reviewer_model_identity": "reviewer-model-identity.schema.json",
+    "reconstruction_plan": "reconstruction-plan.schema.json",
 }
 
 SUPPORTED_SCHEMA_VERSIONS = {
@@ -54,6 +55,7 @@ SUPPORTED_SCHEMA_VERSIONS = {
     "deck_build_request": {"1.0"},
     "powerpoint_roundtrip_report": {"1.0"},
     "reviewer_model_identity": {"1.0"},
+    "reconstruction_plan": {"1.0"},
     "asset_manifest": {"1.3", "1.4"},
 }
 
@@ -188,6 +190,29 @@ def validate_semantics(kind: str, document: dict[str, Any]) -> None:
         policy = document["review_policy"]
         if policy["warning_floor_score"] > policy["pass_score"]:
             failures.append(error("$.review_policy.warning_floor_score", "must not exceed pass_score"))
+    elif kind == "reconstruction_plan":
+        elements = document["elements"]
+        _unique(elements, "id", "$.elements", failures)
+        element_ids = {item["id"] for item in elements}
+        supported = {"native_text", "native_shape", "native_connector", "raster_asset"}
+        for index, item in enumerate(elements):
+            base = f"$.elements[{index}]"
+            geometry = item["geometry"]
+            if geometry["x"] + geometry["width"] > 1 or geometry["y"] + geometry["height"] > 1:
+                failures.append(error(base + ".geometry", "normalized geometry exceeds page bounds", "geometry_out_of_bounds"))
+            representation = item["representation"]
+            if representation not in supported:
+                failures.append(error(base + ".representation", f"P1 does not support {representation}", "unsupported_representation"))
+            if representation == "native_connector":
+                for field in ("from_id", "to_id"):
+                    if item[field] not in element_ids:
+                        failures.append(error(base + f".{field}", "unknown connection element id", "unknown_reference"))
+                    elif item[field] == item["id"]:
+                        failures.append(error(base + f".{field}", "connector cannot reference itself", "self_reference"))
+            if representation == "raster_asset":
+                source_region = item["asset_request"]["source_region"]
+                if source_region["x"] + source_region["width"] > 1 or source_region["y"] + source_region["height"] > 1:
+                    failures.append(error(base + ".asset_request.source_region", "normalized source region exceeds image bounds", "geometry_out_of_bounds"))
     elif kind == "layout":
         elements = document["elements"]
         _unique(elements, "id", "$.elements", failures)
