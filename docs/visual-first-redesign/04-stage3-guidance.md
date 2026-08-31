@@ -68,7 +68,7 @@ Conditional Deck-level Visual Review
 Stage 3 必须：
 
 - 保留 Stage 1 已确认的正式文字、数字、数据和逻辑关系；
-- 以 Stage 1 Wireframe 作为页面 topology / region relationship / reading direction 的结构 Authority；
+- 以 Stage 1 Approved Structural / Topology Authority（Approved Markdown Wireframe + Approved Machine-readable Semantic Structure）作为页面 topology / region relationship / reading direction 的结构 Authority；
 - 以用户确认后的最终设计图作为已确认结构范围内的最终视觉实现 Authority；
 - 复用现有 Reconstruction-aware Hybrid 原则决定 Native / SVG / Raster；
 - 将复杂视觉作为独立 Asset，而不是整页栅格化；
@@ -107,10 +107,10 @@ Stage 3 不允许：
 |---|---|
 | 正式文字、数字、单位、专名、结论 | Stage 1 Approved Content |
 | Chart / Table 原始数据 | Stage 1 Structured Data |
-| 页面 topology、区域关系、阅读方向、流程关系 | Stage 1 Wireframe |
+| 页面 topology、区域关系、阅读方向、流程关系 | Stage 1 Approved Structural / Topology Authority（Approved Markdown Wireframe + Approved Machine-readable Semantic Structure） |
 | 最终位置、比例、留白、颜色、字体视觉、阴影、Overlap、视觉层级 | 用户确认后的最终设计图 |
 | 图片中难以稳定判断的设计意图 | Stage 2 Visual Design Spec |
-| Native / SVG / Raster 决策 | Existing Reconstruction Policy（当前为 `element-classification.md`） |
+| Native / SVG / Raster 决策 | Visual-first Reconstruction Policy：继承当前 `element-classification.md` 中兼容的通用分类原则，并由本 Guidance / Reconstruction Plan Contract 补充 Native Chart、Native Table、Safe Crop 等目标规则 |
 
 冲突处理：
 
@@ -121,17 +121,20 @@ Final Design 中的文字 ≠ Stage 1 Content
 Final Design 中的数据 ≠ Stage 1 Structured Data
 → Stage 1 Structured Data
 
-Wireframe 与 Final Design 只是视觉细化差异
-→ topology 听 Wireframe，realized geometry 听 Final Design
+Structural / Topology Authority 与 Final Design 只是视觉细化差异
+→ topology 听 Approved Structural / Topology Authority，realized geometry 听 Final Design
 
-Wireframe 与 Final Design 出现真实 topology 冲突
+Approved Markdown Wireframe 与 Approved Machine-readable Semantic Structure 不一致
+→ Handoff invalid，返回 Stage 1
+
+Structural / Topology Authority 与 Final Design 出现真实 topology 冲突
 → Handoff invalid，返回 Stage 2
 
 Visual Design Spec 与 Final Design 冲突
 → Final Design 优先
 
 Final Design 中连接关系不清
-→ 使用 Wireframe 已确认 relation
+→ 使用 Machine-readable Semantic Structure 已确认 relation
 ```
 
 一句话：
@@ -177,7 +180,7 @@ relations:
     to: step_3
 ```
 
-Stage 1 仍可保留 Markdown / ASCII Wireframe 供人阅读；机器可读字段只服务跨阶段稳定传递。
+Markdown / ASCII Wireframe 是面向人的结构表示；Machine-readable Semantic Structure 是 Stage 2 / Stage 3 确定性 Handoff 使用的机器表示。两者必须语义一致；机器可读字段服务跨阶段稳定传递。
 
 ## 4.2 Stage 2 最小机器可读字段
 

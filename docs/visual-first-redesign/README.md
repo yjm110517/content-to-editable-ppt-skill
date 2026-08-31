@@ -19,8 +19,10 @@
 ```text
 Stage 1
 内容、大纲、Markdown 线框
++ 机器可读语义结构
++ 必要结构化数据
 ↓
-第一次正式确认：内容权威
+第一次正式确认：内容 / 结构 / 数据权威
 
 Stage 2
 视觉系统
@@ -41,7 +43,7 @@ Stage 3
 
 其中：
 
-- 第一次正式确认冻结内容与页面组织；
+- 第一次正式确认冻结正式内容、页面结构 / 拓扑及必要结构化数据；
 - `Representative Design Gate` 只是 Stage 2 内部 Fail-fast 校准点，不是正式 Approval；
 - 只有全套设计图完成第二次正式确认后，才成为 `Approved Design Preview`；
 - Stage 3 负责高保真重建，不重新设计。

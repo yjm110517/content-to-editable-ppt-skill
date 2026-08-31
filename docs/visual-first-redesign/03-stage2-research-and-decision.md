@@ -192,7 +192,7 @@ Stage 1 Markdown Wireframe 是：
 最终落点：独立迁移
 ```
 
-Stage 2 不重新选择 Layout，也不重新规划页面拓扑。
+Stage 2 不重新选择或改变 Stage 1 已确认的页面结构与语义拓扑；但可在该结构约束内决定最终视觉构图实现。
 
 ---
 
@@ -292,7 +292,7 @@ Visual Designer Agent
 宿主代理不负责：
 
 - 重新规划 Storyline；
-- 重新决定 Layout；
+- 重新决定 Stage 1 已确认的页面结构与拓扑；
 - 修改 Stage 1 正式内容；
 - 自行新增正式页面文字；
 - 自由书写最终 Prompt。
@@ -639,7 +639,7 @@ important_overlap:
   - title remains above main_visual
 
 constraints:
-  - 不改变 Stage 1 Wireframe
+  - 不改变 Stage 1 已确认的结构、区域归属与语义拓扑
   - 不新增任何页面文字
   - 不修改阶段顺序
 ```
