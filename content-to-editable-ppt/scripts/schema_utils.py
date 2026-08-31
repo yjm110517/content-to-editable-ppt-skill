@@ -41,6 +41,9 @@ SCHEMA_FILES = {
     "powerpoint_roundtrip_report": "powerpoint-roundtrip-report.schema.json",
     "reviewer_model_identity": "reviewer-model-identity.schema.json",
     "reconstruction_plan": "reconstruction-plan.schema.json",
+    "stage1_authority": "stage1-authority.schema.json",
+    "stage2_handoff": "stage2-handoff.schema.json",
+    "reconstruction_handoff": "reconstruction-handoff.schema.json",
 }
 
 SUPPORTED_SCHEMA_VERSIONS = {
@@ -56,6 +59,9 @@ SUPPORTED_SCHEMA_VERSIONS = {
     "powerpoint_roundtrip_report": {"1.0"},
     "reviewer_model_identity": {"1.0"},
     "reconstruction_plan": {"1.0"},
+    "stage1_authority": {"1.0"},
+    "stage2_handoff": {"1.0"},
+    "reconstruction_handoff": {"1.0"},
     "asset_manifest": {"1.3", "1.4"},
 }
 
@@ -113,10 +119,10 @@ def validate_schema(kind: str, document: dict[str, Any], schema_dir: Path) -> No
 
 
 def is_safe_relative_path(value: str, *, filename_only: bool = False) -> bool:
-    if not value or "\\" in value or "\x00" in value:
+    if not value or "\\" in value or ":" in value or "\x00" in value:
         return False
     candidate = PurePosixPath(value)
-    if candidate.is_absolute() or ".." in candidate.parts or "." in candidate.parts:
+    if not candidate.parts or candidate.is_absolute() or ".." in candidate.parts or "." in candidate.parts:
         return False
     if filename_only and len(candidate.parts) != 1:
         return False
@@ -147,6 +153,113 @@ def _unique(items: list[dict[str, Any]], key: str, base: str, errors: list[dict[
 
 def _region_ok(region: dict[str, Any]) -> bool:
     return region["x"] + region["w"] <= 1 and region["y"] + region["h"] <= 1
+
+
+def _validate_stage1_authority(document: dict[str, Any], failures: list[dict[str, str]]) -> None:
+    slides = document["slides"]
+    _unique(slides, "slide_id", "$.slides", failures)
+    _unique(slides, "order", "$.slides", failures)
+    orders = sorted(slide["order"] for slide in slides)
+    if orders != list(range(1, len(slides) + 1)):
+        failures.append(error("$.slides", "slide order must be unique and contiguous from 1", "invalid_slide_order"))
+
+    for slide_index, slide in enumerate(slides):
+        base = f"$.slides[{slide_index}]"
+        if not is_safe_relative_path(slide["wireframe"]["path"]):
+            failures.append(error(base + ".wireframe.path", "wireframe path must be a safe relative path", "unsafe_path"))
+
+        text_items = slide["text_items"]
+        objects = slide["objects"]
+        structured_data = slide["structured_data"]
+        structure = slide["semantic_structure"]
+        _unique(text_items, "id", base + ".text_items", failures)
+        _unique(objects, "id", base + ".objects", failures)
+        _unique(structured_data, "id", base + ".structured_data", failures)
+        _unique(structure["regions"], "id", base + ".semantic_structure.regions", failures)
+        _unique(structure["relations"], "id", base + ".semantic_structure.relations", failures)
+
+        text_ids = {item["id"] for item in text_items}
+        object_ids = {item["id"] for item in objects}
+        data_by_id = {item["id"]: item for item in structured_data}
+        relations_by_id = {item["id"]: item for item in structure["relations"]}
+
+        for object_index, item in enumerate(objects):
+            item_base = f"{base}.objects[{object_index}]"
+            if item["kind"] == "text" and item["content_ref"] not in text_ids:
+                failures.append(error(item_base + ".content_ref", f"unknown content_ref: {item['content_ref']}", "unknown_content_ref"))
+            if item["kind"] in {"chart", "table"}:
+                data = data_by_id.get(item["data_ref"])
+                if data is None or data["kind"] != item["kind"]:
+                    failures.append(error(item_base + ".data_ref", f"unknown or incompatible data_ref: {item['data_ref']}", "unknown_data_ref"))
+            if item["kind"] == "connector" and item["relation_ref"] not in relations_by_id:
+                failures.append(error(item_base + ".relation_ref", f"unknown relation_ref: {item['relation_ref']}", "unknown_relation_ref"))
+
+        for region_index, region in enumerate(structure["regions"]):
+            for member_index, member in enumerate(region["members"]):
+                if member not in object_ids:
+                    failures.append(error(
+                        f"{base}.semantic_structure.regions[{region_index}].members[{member_index}]",
+                        f"unknown object reference: {member}",
+                        "unknown_reference",
+                    ))
+
+        seen_reading: set[str] = set()
+        for order_index, object_id in enumerate(structure["reading_order"]):
+            path = f"{base}.semantic_structure.reading_order[{order_index}]"
+            if object_id in seen_reading:
+                failures.append(error(path, f"duplicate reading order object: {object_id}", "duplicate_reference"))
+            elif object_id not in object_ids:
+                failures.append(error(path, f"unknown object reference: {object_id}", "unknown_reference"))
+            seen_reading.add(object_id)
+
+        for relation_index, relation in enumerate(structure["relations"]):
+            relation_base = f"{base}.semantic_structure.relations[{relation_index}]"
+            if relation["from_id"] == relation["to_id"]:
+                failures.append(error(relation_base, "relation cannot reference the same object twice", "self_reference"))
+            for field in ("from_id", "to_id"):
+                if relation[field] not in object_ids:
+                    failures.append(error(relation_base + f".{field}", f"unknown object reference: {relation[field]}", "unknown_reference"))
+
+        for data_index, data in enumerate(structured_data):
+            data_base = f"{base}.structured_data[{data_index}]"
+            if data["kind"] == "chart":
+                category_count = len(data["categories"])
+                for series_index, series in enumerate(data["series"]):
+                    if len(series["values"]) != category_count:
+                        failures.append(error(
+                            f"{data_base}.series[{series_index}].values",
+                            "chart series length must match categories length",
+                            "structured_data_shape",
+                        ))
+            else:
+                column_count = len(data["columns"])
+                for row_index, row in enumerate(data["rows"]):
+                    if len(row) != column_count:
+                        failures.append(error(
+                            f"{data_base}.rows[{row_index}]",
+                            "table row length must match columns length",
+                            "structured_data_shape",
+                        ))
+
+
+def _validate_stage2_handoff(document: dict[str, Any], failures: list[dict[str, str]]) -> None:
+    slides = document["slides"]
+    _unique(slides, "slide_id", "$.slides", failures)
+    for slide_index, slide in enumerate(slides):
+        base = f"$.slides[{slide_index}]"
+        for field in ("approved_design", "visual_spec"):
+            if not is_safe_relative_path(slide[field]["path"]):
+                failures.append(error(base + f".{field}.path", f"{field} path must be a safe relative path", "unsafe_path"))
+        if not slide["visual_spec"]["path"].lower().endswith(".json"):
+            failures.append(error(base + ".visual_spec.path", "visual spec must use a .json file", "invalid_visual_spec"))
+
+        visual_objects = slide["visual_objects"]
+        _unique(visual_objects, "id", base + ".visual_objects", failures)
+        for object_index, item in enumerate(visual_objects):
+            for overlap_index, overlap_id in enumerate(item["overlaps_with"]):
+                path = f"{base}.visual_objects[{object_index}].overlaps_with[{overlap_index}]"
+                if overlap_id == item["id"]:
+                    failures.append(error(path, "visual object cannot overlap itself", "self_reference"))
 
 
 def _validate_review_issues(document: dict[str, Any], failures: list[dict[str, str]]) -> None:
@@ -190,6 +303,14 @@ def validate_semantics(kind: str, document: dict[str, Any]) -> None:
         policy = document["review_policy"]
         if policy["warning_floor_score"] > policy["pass_score"]:
             failures.append(error("$.review_policy.warning_floor_score", "must not exceed pass_score"))
+    elif kind == "stage1_authority":
+        _validate_stage1_authority(document, failures)
+    elif kind == "stage2_handoff":
+        _validate_stage2_handoff(document, failures)
+    elif kind == "reconstruction_handoff":
+        # The projection has no additional single-document semantics beyond its
+        # strict schema. Its references are inherited from validated authorities.
+        pass
     elif kind == "reconstruction_plan":
         elements = document["elements"]
         _unique(elements, "id", "$.elements", failures)

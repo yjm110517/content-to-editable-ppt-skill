@@ -1,0 +1,283 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "stage1-authority.schema.json",
+  "title": "Stage 1 Approved Authority",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["schema_version", "status", "deck_id", "brief", "slides"],
+  "properties": {
+    "schema_version": {"const": "1.0"},
+    "status": {"const": "approved"},
+    "deck_id": {"$ref": "#/$defs/id"},
+    "brief": {"$ref": "#/$defs/brief"},
+    "slides": {
+      "type": "array",
+      "minItems": 1,
+      "items": {"$ref": "#/$defs/slide"}
+    }
+  },
+  "$defs": {
+    "id": {
+      "type": "string",
+      "pattern": "^[A-Za-z0-9][A-Za-z0-9._-]*$"
+    },
+    "sha256": {
+      "type": "string",
+      "pattern": "^[0-9a-f]{64}$"
+    },
+    "brief": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["topic", "audience", "objective", "presentation_type", "language"],
+      "properties": {
+        "topic": {"type": "string", "minLength": 1},
+        "audience": {"type": "string", "minLength": 1},
+        "objective": {"type": "string", "minLength": 1},
+        "presentation_type": {"type": "string", "minLength": 1},
+        "language": {"type": "string", "minLength": 1}
+      }
+    },
+    "artifactRef": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["path", "sha256"],
+      "properties": {
+        "path": {"type": "string", "minLength": 1},
+        "sha256": {"$ref": "#/$defs/sha256"}
+      }
+    },
+    "textItem": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["id", "role", "text"],
+      "properties": {
+        "id": {"$ref": "#/$defs/id"},
+        "role": {"type": "string", "minLength": 1},
+        "text": {"type": "string", "minLength": 1}
+      }
+    },
+    "objectBase": {
+      "type": "object",
+      "required": ["id", "kind", "role"],
+      "properties": {
+        "id": {"$ref": "#/$defs/id"},
+        "kind": {"enum": ["text", "shape", "connector", "chart", "table", "visual_placeholder"]},
+        "role": {"type": "string", "minLength": 1}
+      }
+    },
+    "textObject": {
+      "allOf": [
+        {"$ref": "#/$defs/objectBase"},
+        {
+          "type": "object",
+          "required": ["content_ref"],
+          "properties": {
+            "kind": {"const": "text"},
+            "content_ref": {"$ref": "#/$defs/id"}
+          }
+        }
+      ],
+      "unevaluatedProperties": false
+    },
+    "shapeObject": {
+      "allOf": [
+        {"$ref": "#/$defs/objectBase"},
+        {"type": "object", "properties": {"kind": {"const": "shape"}}}
+      ],
+      "unevaluatedProperties": false
+    },
+    "connectorObject": {
+      "allOf": [
+        {"$ref": "#/$defs/objectBase"},
+        {
+          "type": "object",
+          "required": ["relation_ref"],
+          "properties": {
+            "kind": {"const": "connector"},
+            "relation_ref": {"$ref": "#/$defs/id"}
+          }
+        }
+      ],
+      "unevaluatedProperties": false
+    },
+    "chartObject": {
+      "allOf": [
+        {"$ref": "#/$defs/objectBase"},
+        {
+          "type": "object",
+          "required": ["data_ref"],
+          "properties": {
+            "kind": {"const": "chart"},
+            "data_ref": {"$ref": "#/$defs/id"}
+          }
+        }
+      ],
+      "unevaluatedProperties": false
+    },
+    "tableObject": {
+      "allOf": [
+        {"$ref": "#/$defs/objectBase"},
+        {
+          "type": "object",
+          "required": ["data_ref"],
+          "properties": {
+            "kind": {"const": "table"},
+            "data_ref": {"$ref": "#/$defs/id"}
+          }
+        }
+      ],
+      "unevaluatedProperties": false
+    },
+    "visualPlaceholderObject": {
+      "allOf": [
+        {"$ref": "#/$defs/objectBase"},
+        {"type": "object", "properties": {"kind": {"const": "visual_placeholder"}}}
+      ],
+      "unevaluatedProperties": false
+    },
+    "semanticObject": {
+      "oneOf": [
+        {"$ref": "#/$defs/textObject"},
+        {"$ref": "#/$defs/shapeObject"},
+        {"$ref": "#/$defs/connectorObject"},
+        {"$ref": "#/$defs/chartObject"},
+        {"$ref": "#/$defs/tableObject"},
+        {"$ref": "#/$defs/visualPlaceholderObject"}
+      ]
+    },
+    "region": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["id", "role", "members"],
+      "properties": {
+        "id": {"$ref": "#/$defs/id"},
+        "role": {"type": "string", "minLength": 1},
+        "members": {
+          "type": "array",
+          "minItems": 1,
+          "uniqueItems": true,
+          "items": {"$ref": "#/$defs/id"}
+        }
+      }
+    },
+    "relation": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["id", "kind", "from_id", "to_id"],
+      "properties": {
+        "id": {"$ref": "#/$defs/id"},
+        "kind": {"type": "string", "minLength": 1},
+        "from_id": {"$ref": "#/$defs/id"},
+        "to_id": {"$ref": "#/$defs/id"}
+      }
+    },
+    "semanticStructure": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["regions", "reading_order", "relations"],
+      "properties": {
+        "regions": {"type": "array", "items": {"$ref": "#/$defs/region"}},
+        "reading_order": {
+          "type": "array",
+          "uniqueItems": true,
+          "items": {"$ref": "#/$defs/id"}
+        },
+        "relations": {"type": "array", "items": {"$ref": "#/$defs/relation"}}
+      }
+    },
+    "chartData": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["id", "kind", "categories", "series"],
+      "properties": {
+        "id": {"$ref": "#/$defs/id"},
+        "kind": {"const": "chart"},
+        "categories": {
+          "type": "array",
+          "minItems": 1,
+          "items": {"type": ["string", "number"]}
+        },
+        "series": {
+          "type": "array",
+          "minItems": 1,
+          "items": {
+            "type": "object",
+            "additionalProperties": false,
+            "required": ["name", "values"],
+            "properties": {
+              "name": {"type": "string", "minLength": 1},
+              "values": {
+                "type": "array",
+                "minItems": 1,
+                "items": {"type": "number"}
+              }
+            }
+          }
+        }
+      }
+    },
+    "tableCell": {"type": ["string", "number", "boolean", "null"]},
+    "tableData": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["id", "kind", "columns", "rows"],
+      "properties": {
+        "id": {"$ref": "#/$defs/id"},
+        "kind": {"const": "table"},
+        "columns": {
+          "type": "array",
+          "minItems": 1,
+          "items": {"type": "string", "minLength": 1}
+        },
+        "rows": {
+          "type": "array",
+          "items": {
+            "type": "array",
+            "minItems": 1,
+            "items": {"$ref": "#/$defs/tableCell"}
+          }
+        }
+      }
+    },
+    "structuredData": {
+      "oneOf": [
+        {"$ref": "#/$defs/chartData"},
+        {"$ref": "#/$defs/tableData"}
+      ]
+    },
+    "slide": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["slide_id", "order", "section", "role", "key_message", "source_refs", "visual_need", "wireframe", "text_items", "objects", "semantic_structure", "structured_data"],
+      "properties": {
+        "slide_id": {"$ref": "#/$defs/id"},
+        "order": {"type": "integer", "minimum": 1},
+        "section": {"type": "string"},
+        "role": {"type": "string", "minLength": 1},
+        "key_message": {"type": "string", "minLength": 1},
+        "source_refs": {
+          "type": "array",
+          "uniqueItems": true,
+          "items": {"type": "string", "minLength": 1}
+        },
+        "visual_need": {"type": "string", "minLength": 1},
+        "wireframe": {"$ref": "#/$defs/artifactRef"},
+        "text_items": {
+          "type": "array",
+          "minItems": 1,
+          "items": {"$ref": "#/$defs/textItem"}
+        },
+        "objects": {
+          "type": "array",
+          "minItems": 1,
+          "items": {"$ref": "#/$defs/semanticObject"}
+        },
+        "semantic_structure": {"$ref": "#/$defs/semanticStructure"},
+        "structured_data": {
+          "type": "array",
+          "items": {"$ref": "#/$defs/structuredData"}
+        }
+      }
+    }
+  }
+}

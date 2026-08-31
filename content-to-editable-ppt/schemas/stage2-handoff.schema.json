@@ -1,0 +1,78 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "stage2-handoff.schema.json",
+  "title": "Stage 2 Approved Handoff",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["schema_version", "status", "deck_id", "stage1_authority_sha256", "slides"],
+  "properties": {
+    "schema_version": {"const": "1.0"},
+    "status": {"const": "approved"},
+    "deck_id": {"$ref": "#/$defs/id"},
+    "stage1_authority_sha256": {"$ref": "#/$defs/sha256"},
+    "slides": {
+      "type": "array",
+      "minItems": 1,
+      "items": {"$ref": "#/$defs/slide"}
+    }
+  },
+  "$defs": {
+    "id": {
+      "type": "string",
+      "pattern": "^[A-Za-z0-9][A-Za-z0-9._-]*$"
+    },
+    "sha256": {
+      "type": "string",
+      "pattern": "^[0-9a-f]{64}$"
+    },
+    "artifactRef": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["path", "sha256"],
+      "properties": {
+        "path": {"type": "string", "minLength": 1},
+        "sha256": {"$ref": "#/$defs/sha256"}
+      }
+    },
+    "handling": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["independent_crop", "independent_positioning", "z_order_sensitive"],
+      "properties": {
+        "independent_crop": {"type": "boolean"},
+        "independent_positioning": {"type": "boolean"},
+        "z_order_sensitive": {"type": "boolean"}
+      }
+    },
+    "visualObject": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["id", "role", "description", "handling", "overlaps_with"],
+      "properties": {
+        "id": {"$ref": "#/$defs/id"},
+        "role": {"type": "string", "minLength": 1},
+        "description": {"type": "string", "minLength": 1},
+        "handling": {"$ref": "#/$defs/handling"},
+        "overlaps_with": {
+          "type": "array",
+          "uniqueItems": true,
+          "items": {"$ref": "#/$defs/id"}
+        }
+      }
+    },
+    "slide": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["slide_id", "approved_design", "visual_spec", "visual_objects"],
+      "properties": {
+        "slide_id": {"$ref": "#/$defs/id"},
+        "approved_design": {"$ref": "#/$defs/artifactRef"},
+        "visual_spec": {"$ref": "#/$defs/artifactRef"},
+        "visual_objects": {
+          "type": "array",
+          "items": {"$ref": "#/$defs/visualObject"}
+        }
+      }
+    }
+  }
+}
