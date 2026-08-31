@@ -103,7 +103,30 @@ README 等用户说明
 
 ---
 
-## 4. Benchmark 前的文档边界
+## 4. 代理职责
+
+| 角色 | 类型 | 覆盖阶段 | 职责 |
+|---|---|---|---|
+| 宿主代理 | 主代理 | Stage 1–3 | 用户交互、Stage 1 全流程、Stage 2 视觉设计与编排、Stage 3 调度 |
+| 布局规划代理（Layout Planner Agent） | 专业 Agent | Stage 3 | 已知对象的视觉位置对齐与重建方式决策；第一版一次调用完成这两个逻辑任务 |
+| 视觉审核代理（Visual Reviewer Agent） | 专业 Agent | Stage 3 | 独立审核重建后的视觉 Fidelity |
+
+Stage 1 不新增大纲规划代理、线稿规划代理或 Stage 1 审核代理；Stage 2 不新增独立 Visual Designer Agent。宿主代理是 Skill 的执行主体，不属于被调用的专业子代理。
+
+### 非 Agent 组件
+
+| 组件 | 类型 / 职责 |
+|---|---|
+| 图片生成模型 | 图片生成工具，不是 Agent |
+| Prompt Compiler | 确定性程序，编译 Prompt，不设计或改写内容 |
+| Handoff / Context Compiler | 确定性程序，整理已结构化的上游事实，不重新理解自由文本 |
+| PPT Builder / Shared Builder | 确定性程序，构建单页或整套 PPT |
+| Structural QA / Deck QA | 确定性程序，验证编辑性、结构和交付完整性 |
+| PowerPoint Renderer | PowerPoint 运行环境，用于渲染、打开与 Roundtrip 检查 |
+
+---
+
+## 5. Benchmark 前的文档边界
 
 Benchmark 前允许继续维护 Stage 1～3 的 **Target Guidance / Pre-ADR Working Guidance**，用于把未来三阶段路线的职责、Authority、跨阶段 Handoff 和关键设计决策记录清楚。
 
@@ -153,7 +176,7 @@ Stage 2 Benchmark Passed 后，再根据证据决定是否新增 / 冻结正式 
 
 ---
 
-## 5. 与历史文档的关系
+## 6. 与历史文档的关系
 
 仓库中的旧 Architecture、Specification、Contract、Testing 和 `docs/plans/p1`～`p5` 文档记录精简前的 P1～P5 多页体系，其中部分概念与本目录重叠，但已明确标记为历史或由 ADR-043 取代。
 

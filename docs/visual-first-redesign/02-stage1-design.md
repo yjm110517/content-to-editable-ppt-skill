@@ -6,7 +6,7 @@
 > **Current runtime relationship**：本轮不创建 Runtime Artifact、不创建 Schema、不修改现有 [`run.py`](../../content-to-editable-ppt/scripts/run.py) 或 [`run_pipeline.py`](../../content-to-editable-ppt/scripts/run_pipeline.py) 流程
 > **Depends on**：[`01-product-requirements.md`](01-product-requirements.md)
 > **Next decision gate**：Stage 2 Benchmark `Passed` → 新 ADR Accepted → Implementation Plan
-> **Last updated**：2026-08-28
+> **Last updated**：2026-08-31
 
 ---
 
@@ -21,7 +21,7 @@ Stage 1 的核心任务：
 ```text
 用户意图 / 文件
 ↓
-Host Agent
+宿主代理
 ↓
 Presentation Brief
 ↓
@@ -37,6 +37,8 @@ Structured Outline
 ↓
 Markdown Wireframe
 ↓
+机器可读语义结构
+↓
 确定性校验
 ↓
 Host 语义自检
@@ -46,9 +48,9 @@ Host 语义自检
 
 ---
 
-## 2. Stage 1 由 Host Agent 完成
+## 2. Stage 1 由宿主代理统一完成
 
-Stage 1 v1 固定由实际运行 Skill 的主 Agent 负责，例如 Codex 或 Claude Code。
+Stage 1 v1 固定由实际运行 Skill 的宿主代理统一完成，例如 Codex 或 Claude Code。大纲规划与页面线稿规划是宿主代理在同一语义上下文中连续完成的任务阶段，不是两个独立 Agent 调用。
 
 Host 负责：
 
@@ -60,6 +62,7 @@ Host 负责：
 - 生成大纲；
 - 生成正式内容；
 - 生成 Markdown 线框；
+- 形成机器可读的语义结构、元素关系和必要的结构化数据；
 - 做一次语义自检；
 - 与用户完成第一次正式确认。
 
@@ -71,7 +74,13 @@ Wireframe Planner Agent
 Stage 1 Reviewer Agent
 ```
 
-只有未来真实测试持续出现超长论文、多文档、30+ 页复杂 PPT 等问题时，再评估可选 Specialist。
+只有未来真实 Benchmark 持续证明超长材料、超长 Deck 或上下文压力已导致 Stage 1 质量下降时，才评估可选 Specialist。
+
+### 2.1 为什么 Stage 1 不拆专业 Agent
+
+Stage 1 的大纲、正式内容和页面线稿具有强上下文连续性。用户在大纲确认过程中的修改会直接影响后续页面线稿，因此 v1 优先由宿主代理保持同一语义上下文连续完成。
+
+不为角色拆分本身增加 Agent 调用。只有真实 Benchmark 持续证明 Stage 1 的质量或上下文容量出现问题时，才评估可选的 Stage 1 Specialist。
 
 ---
 
@@ -82,11 +91,15 @@ Presentation Brief
 Structured Outline
 Approved Content
 Markdown Wireframe
+机器可读语义结构
+结构化数据
 Validation Result
 Approval
 ```
 
 当前只定义概念和行为，不冻结 Runtime 文件名或 Schema。
+
+为支持后续 Stage 2 与 Stage 3 的稳定 Handoff，宿主代理产生的已确认成果应至少保留 stable content IDs、region IDs 与 membership、confirmed relations / topology，以及出现 Chart / Table 时的结构化数据。Markdown / ASCII Wireframe 继续保留给人阅读；机器可读字段只服务跨阶段的确定性传递，不代表当前正式 Schema 已经新增。
 
 这些概念尚未映射到当前 [`deck-build-request.schema.json`](../../content-to-editable-ppt/schemas/deck-build-request.schema.json)。当前多页 Host 仍直接负责一次确认后的页面方案和精确坐标；未来 Stage 1 则有意停在内容与粗略线框边界，把最终视觉设计交给尚待验证的 Stage 2。
 

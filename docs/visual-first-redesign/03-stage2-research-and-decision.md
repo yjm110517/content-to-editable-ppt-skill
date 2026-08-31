@@ -2,7 +2,7 @@
 
 > **Status**：Final Guidance / 已确认架构指导  
 > **Document type**：Stage 2 Guidance（Stage 2 指导）  
-> **Last updated**：2026-08-28  
+> **Last updated**：2026-08-31  
 > **Scope**：定义 Stage 2 的目标流程、职责边界、输入输出、Prompt 生成方式、真实图片验证方式，以及面向 Stage 3 的重建友好约束。  
 > **Authority note**：本文件用于指导后续原型、Benchmark 与实现；在新的 Proposal ADR 被验证并正式 Accepted 之前，不覆盖当前 Accepted ADR、正式 `SKILL.md` 或现有 Runtime。  
 
@@ -22,6 +22,10 @@ Stage 2 的目标是：
 Stage 1 Approved Content
 +
 Stage 1 Markdown Wireframe
++
+Stage 1 Machine-readable Semantic Structure
++
+Stage 1 Structured Data
         ↓
 Candidate Deck Visual System
         ↓
@@ -89,7 +93,7 @@ External Evidence
 
 # 3. Stage 2 输入
 
-Stage 2 必须消费 Stage 1 已正式确认的成果。
+Stage 2 必须消费 Stage 1 已正式确认的成果。这些成果均由 Stage 1 宿主代理产生并经用户第一次确认。Stage 2 不关心 Stage 1 内部是否经历了大纲或线稿任务，也不消费所谓 Outline Planner 或 Wireframe Planner 的独立产物。
 
 ## 3.1 整套 PPT 级输入
 
@@ -298,6 +302,8 @@ Host 不负责：
 - 修改 Stage 1 正式内容；
 - 自行新增正式页面文字；
 - 自由书写最终 Prompt。
+
+图片生成模型负责生成设计图片，但不是 Agent；Prompt Compiler、上下文整理、图片调用和缓存均属于确定性程序或工具边界。Stage 2 的视觉审核由宿主代理组织，不能把图片模型称为设计 Agent。
 
 ---
 
@@ -1409,7 +1415,7 @@ Bounded Complex Visual Assets
 | # | 架构问题 | 最终决策 |
 |---|---|---|
 | ① | Stage 2 到哪里结束 | 到真实图片生成、视觉审核与整套设计图正式确认 |
-| ② | 谁负责视觉设计 | Host Agent |
+| ② | 谁负责视觉设计 | 宿主代理（Host Agent） |
 | ③ | 视觉风格怎么确定 | Reference-first；必要时 2–3 个方向；3 张代表页真实图片验证后锁定 |
 | ④ | Layout 谁决定 | Stage 1 Markdown Wireframe 是 Layout Authority |
 | ⑤ | Stage 2 能否改正式文字 | 不能；短 Label 等必须在 Stage 1 确认 |
@@ -1423,5 +1429,4 @@ Bounded Complex Visual Assets
 Stage 2 可以最终概括成：
 
 > **Stage 1 决定“讲什么、怎么组织”；Host 决定“这一页具体怎么设计”；程序负责“守 Authority、确定性编译并执行 Prompt”；图片模型负责“真正画出来”；真实图片负责验证设计是否成立；Stage 2 同时保留少量重建友好约束，使 Stage 3 能在不牺牲视觉质量的情况下完成 Useful Editability。**
-
 

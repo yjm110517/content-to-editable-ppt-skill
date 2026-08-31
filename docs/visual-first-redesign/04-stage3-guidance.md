@@ -22,6 +22,8 @@ Stage 3 是 reconstruction，不是 redesign。
 ```text
 Stage 1 Approved Content
 + Stage 1 Wireframe
++ Stage 1 Machine-readable Semantic Structure
++ Stage 1 Structured Data
 + Stage 2 Visual Design Spec
         ↓
 Cross-stage Handoff Preparation
@@ -34,7 +36,7 @@ Reconstruction Context（候选持久化形式）
         +
 Existing Reconstruction Policy
         ↓
-Planner Agent
+布局规划代理（Layout Planner Agent）
         ↓
 Canonical Reconstruction Plan
         ↓
@@ -44,7 +46,7 @@ Existing Single-Slide Reconstruction Runtime
         ↓
 Page Structural / Editability QA
         ↓
-Page Visual Review
+视觉审核代理（Visual Reviewer Agent）
         ↓
 Accepted Page Plan
 
@@ -276,11 +278,11 @@ Plan
 
 ---
 
-# 6. Planner Agent Contract
+# 6. 布局规划代理（Layout Planner Agent）Contract
 
 ## 6.1 Planner 输入模型
 
-Planner Agent 应接收：
+布局规划代理应接收：
 
 ```text
 用户确认后的最终设计图
@@ -310,7 +312,7 @@ Prompt 不应发展成 Mega Prompt。
 
 只需要明确：
 
-1. 你是 Stage 3 Reconstruction Planner；
+1. 你是 Stage 3 布局规划代理（Layout Planner Agent）；
 2. Reconstruction，不是 Redesign；
 3. Final Design 是视觉参考；
 4. Context 是 canonical content / data / topology 的事实来源；
@@ -324,7 +326,7 @@ Prompt 不应发展成 Mega Prompt。
 
 # 7. Canonical Reconstruction Plan
 
-Planner 的正式输出原则上应收敛为：
+布局规划代理的正式输出原则上应收敛为：
 
 > **一个 Canonical Reconstruction Plan。**
 
@@ -642,7 +644,7 @@ header structure
 
 # 13. Deterministic Boundary
 
-Planner 只负责产生 Canonical Reconstruction Plan。
+布局规划代理只负责产生 Canonical Reconstruction Plan。其内部包含“视觉位置对齐”和“重建方式决策”两个逻辑任务；第一版默认一次 Agent 调用完成，它们不代表两个独立 Agent。
 
 Agent 输出后进入确定性边界：
 
@@ -680,6 +682,8 @@ Existing Runtime Artifacts
 
 # 14. Page Reconstruction Workflow
 
+布局规划代理不从图片重新发现已知事实。Stage 1 的语义结构、元素关系和结构化数据，以及 Stage 2 的视觉对象信息和重建提示，必须先经过 Handoff Preparation 进入 Reconstruction Context。
+
 每页独立执行：
 
 ```text
@@ -687,7 +691,7 @@ Final Design
 +
 Reconstruction Context
 ↓
-Planner Agent
+布局规划代理
 ↓
 Canonical Reconstruction Plan
 ↓
@@ -701,7 +705,7 @@ Render
 ↓
 Structural / Editability QA
 ↓
-Visual Reviewer
+视觉审核代理
 ↓
 PASS
 ```
@@ -716,7 +720,7 @@ Structural / Editability Failure
 → Targeted Plan / Builder Fix
 
 Visual Fidelity Failure
-→ Targeted Planner Revision / Patch
+→ Targeted 布局规划代理 Revision / Patch
 
 Unsafe Crop
 → BLOCK and Return to Stage 2
@@ -894,7 +898,7 @@ Asset Processing
 PPT Build
 PowerPoint Render
 Structural QA
-Visual Reviewer
+视觉审核代理
 Targeted Patch / Recovery
 Shared Slide Builder
 Multi-page Build / Delivery QA 基础
@@ -904,7 +908,7 @@ Stage 3 新增职责集中在：
 
 ```text
 Cross-stage Handoff Preparation
-Planner Context
+布局规划上下文
 Canonical Reconstruction Plan
 Plan Validation / Compilation
 Accepted Page Plan Record
@@ -923,7 +927,7 @@ Native Chart 全链一致性修复
 
 当前仓库已有：
 
-- Single-Slide Planner / Reconstruction workflow；
+- Single-Slide Layout Planner / Reconstruction workflow；
 - Crop / SVG 资产链；
 - shared slide builder；
 - Text / Shape / Line / Image build；
@@ -955,6 +959,8 @@ Conditional Deck Visual Review trigger
 ```
 
 这些不能在本 Guidance 中描述为“已经实现”。
+
+现有运行时的 `planner` 角色已由 `role_id: layout-planner` 表达布局规划职责，`reviewer` 角色已是独立视觉审核职责。Visual-first 后续不新增 Outline Planner、Wireframe Planner、Visual Grounding Agent 或独立 Reconstruction Agent；宿主代理只调度这两个专业 Agent，并保持确定性构建、渲染、QA 与打包在程序边界内。
 
 ---
 
@@ -1094,7 +1100,7 @@ Implementation Plan
 
 | # | 决策 | 已确认方案 |
 |---|---|---|
-| ① | Planner 输入 | 上游已知事实先形成机器可读 Reconstruction Context；再与最终设计图、固定 Planner Prompt、现有 Reconstruction Policy 和 Output Schema 一起输入 Planner Agent |
+| ① | 布局规划代理输入 | 上游已知事实先形成机器可读 Reconstruction Context；再与最终设计图、固定 Planner Prompt、现有 Reconstruction Policy 和 Output Schema 一起输入布局规划代理 |
 | ② | 复杂视觉 | 从用户确认后的最终设计图 Safe Crop；不重新生图；无法安全裁切则返回 Stage 2 |
 | ③ | Final Deck Assembly | Accepted Page Plans + 已验证 immutable assets → Shared Builder → One Final PPTX |
 | ④ | Chart / Table | Chart → Native PowerPoint Chart；Table → Native PowerPoint Table；Stage 1 必须保留 authoritative structured data，Stage 2 必须遵守 Native compatibility constraint |
@@ -1115,7 +1121,7 @@ Stage 3 的核心不是再建一套 PPT Runtime，而是：
 → 上游结构化并确定性传递，不让 Agent 重新猜
 
 需要视觉判断
-→ Planner Agent
+→ 布局规划代理
 
 能够确定性验证 / 转换 / 执行
 → Runtime
@@ -1138,4 +1144,3 @@ Chart / Table
 ```
 
 本 Guidance 可以作为 Stage 3 目标设计的工作基线，但在 Stage 2 Benchmark 与新 ADR 通过之前，不构成 Runtime Implementation Authority。
-
