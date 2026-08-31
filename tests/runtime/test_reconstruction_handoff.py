@@ -112,6 +112,20 @@ class ReconstructionHandoffTests(unittest.TestCase):
                 validate_schema("reconstruction_handoff", candidate, SCHEMA_DIR)
             self.assertEqual("schema_error", raised.exception.errors[0]["code"])
 
+    def test_reconstruction_handoff_rejects_unsafe_approved_design_paths(self) -> None:
+        with tempfile.TemporaryDirectory() as temporary:
+            args = materializer_args(Path(temporary), SCHEMA_DIR, sha256_file)
+            outputs = materialize_handoff(args)
+            base = json.loads(Path(outputs["reconstruction_handoff"]).read_text(encoding="utf-8"))
+            for path in ("../source.png", "C:/source.png", "file://source.png", "https://example.com/source.png"):
+                with self.subTest(path=path):
+                    candidate = copy.deepcopy(base)
+                    candidate["stage2"]["approved_design"] = path
+                    validate_schema("reconstruction_handoff", candidate, SCHEMA_DIR)
+                    with self.assertRaises(ContractError) as raised:
+                        validate_semantics("reconstruction_handoff", candidate)
+                    self.assertEqual("unsafe_path", raised.exception.errors[0]["code"])
+
     def test_default_collision_and_force(self) -> None:
         with tempfile.TemporaryDirectory() as temporary:
             args = materializer_args(Path(temporary), SCHEMA_DIR, sha256_file)
@@ -143,6 +157,18 @@ class ReconstructionHandoffTests(unittest.TestCase):
             self.assertEqual("stage1_authority_stale", raised.exception.detail["code"])
             for name in ("source-content.json", "source.png", "wireframe.md", "visual-spec.json", "reconstruction-handoff.json"):
                 self.assertFalse((args.work_root / name).exists())
+
+    def test_authority_staleness_precedes_external_file_evidence(self) -> None:
+        with tempfile.TemporaryDirectory() as temporary:
+            root = Path(temporary)
+            args = materializer_args(root, SCHEMA_DIR, sha256_file)
+            stage2 = json.loads(args.stage2_handoff.read_text(encoding="utf-8"))
+            stage2["stage1_authority_sha256"] = "f" * 64
+            args.stage2_handoff.write_text(json.dumps(stage2), encoding="utf-8")
+            (root / "stage2" / "designs" / "S01.png").unlink()
+            with self.assertRaises(AssetError) as raised:
+                materialize_handoff(args)
+            self.assertEqual("stage1_authority_stale", raised.exception.detail["code"])
 
     def test_approved_file_hash_changes_are_blocked(self) -> None:
         mutations = (

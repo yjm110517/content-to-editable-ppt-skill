@@ -308,9 +308,13 @@ def validate_semantics(kind: str, document: dict[str, Any]) -> None:
     elif kind == "stage2_handoff":
         _validate_stage2_handoff(document, failures)
     elif kind == "reconstruction_handoff":
-        # The projection has no additional single-document semantics beyond its
-        # strict schema. Its references are inherited from validated authorities.
-        pass
+        approved_design = document["stage2"]["approved_design"]
+        if not is_safe_relative_path(approved_design):
+            failures.append(error(
+                "$.stage2.approved_design",
+                "approved design must be a safe work-root-relative path",
+                "unsafe_path",
+            ))
     elif kind == "reconstruction_plan":
         elements = document["elements"]
         _unique(elements, "id", "$.elements", failures)

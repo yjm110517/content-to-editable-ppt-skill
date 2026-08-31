@@ -163,11 +163,11 @@ def materialize_handoff(args: argparse.Namespace) -> dict[str, str]:
 
     stage1_sha256 = sha256_file(stage1_path)
     stage2_sha256 = sha256_file(stage2_path)
-    evidence = _collect_evidence(stage1_path, stage1, stage2_path, stage2)
     try:
         validate_cross_stage(stage1, stage2, stage1_sha256)
     except ContractError as exc:
         raise _contract_asset_error(exc) from exc
+    evidence = _collect_evidence(stage1_path, stage1, stage2_path, stage2)
     if args.slide_id not in evidence:
         raise AssetError(f"unknown slide_id: {args.slide_id}", path="$.slide_id", code="unknown_slide")
 
