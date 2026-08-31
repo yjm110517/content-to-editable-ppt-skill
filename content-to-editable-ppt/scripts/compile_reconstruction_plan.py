@@ -9,7 +9,7 @@ from PIL import Image
 
 from asset_common import AssetError, atomic_write_json, failure, load_contract, resolve_under, success
 from reconstruction_plan import compile_reconstruction_plan
-from schema_utils import ContractError, load_json
+from schema_utils import ContractError, load_json, validate_schema, validate_semantics
 from shared_validator import validate_documents
 
 
@@ -49,6 +49,20 @@ def _source_size(path: Path) -> dict[str, int]:
     return {"width_px": width, "height_px": height}
 
 
+def _load_reconstruction_plan(path: Path, schema_dir: Path) -> dict:
+    if not path.is_file():
+        raise AssetError("input file does not exist", path=str(path), code="missing_input", exit_code=3)
+    try:
+        document = load_json(path)
+        validate_schema("reconstruction_plan", document, schema_dir)
+        validate_semantics("reconstruction_plan", document)
+        return document
+    except (json.JSONDecodeError, ContractError) as exc:
+        if isinstance(exc, ContractError):
+            raise _contract_asset_error(exc) from exc
+        raise AssetError(str(exc), path=str(path), code="invalid_json") from exc
+
+
 def compile_to_iteration(args: argparse.Namespace) -> dict[str, str]:
     iteration_dir = args.iteration_dir.resolve()
     if not iteration_dir.is_dir():
@@ -73,7 +87,7 @@ def compile_to_iteration(args: argparse.Namespace) -> dict[str, str]:
         raise AssetError("plan must remain inside work root", path=str(plan_path), code="path_escape") from exc
 
     request = load_contract("request", request_path, args.schema_dir)
-    plan = load_contract("reconstruction_plan", plan_path, args.schema_dir)
+    plan = _load_reconstruction_plan(plan_path, args.schema_dir)
     if plan["page"]["iteration"] != iteration:
         raise AssetError("plan iteration does not match iteration directory", path="$.page.iteration", code="iteration_mismatch")
     content = load_json(expected_content)

@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import copy
+import re
 from decimal import Decimal, ROUND_HALF_UP
 from typing import Any, TypedDict
 
@@ -8,6 +9,7 @@ from schema_utils import ContractError, error
 
 
 ASPECT_TOLERANCE = Decimal("0.05")
+SLIDE_RATIO_TOLERANCE = Decimal("0.0001")
 
 
 class SourceMetadata(TypedDict):
@@ -86,6 +88,26 @@ def _authority_index(content_authority: dict[str, Any]) -> dict[str, str]:
     return result
 
 
+def _validate_slide_ratio(request: dict[str, Any], slide: dict[str, Any]) -> None:
+    match = re.fullmatch(r"\s*(\d+)\s*:\s*(\d+)\s*", request["output_ratio"])
+    if not match:
+        return
+    request_width, request_height = (Decimal(value) for value in match.groups())
+    if request_width <= 0 or request_height <= 0:
+        return
+    request_ratio = request_width / request_height
+    slide_ratio = _decimal(slide["width_in"]) / _decimal(slide["height_in"])
+    relative_error = abs(slide_ratio - request_ratio) / request_ratio
+    if relative_error > SLIDE_RATIO_TOLERANCE:
+        raise ContractError([
+            error(
+                "$.slide",
+                f"slide ratio {slide_ratio:.6f} does not match request output_ratio {request['output_ratio']}",
+                "slide_ratio_mismatch",
+            )
+        ])
+
+
 def compile_reconstruction_plan(
     plan: dict[str, Any],
     content_authority: dict[str, Any],
@@ -118,6 +140,7 @@ def compile_reconstruction_plan(
         raise ContractError(failures)
 
     slide = plan["slide"]
+    _validate_slide_ratio(request, slide)
     layout_elements: list[dict[str, Any]] = []
     crops: list[dict[str, Any]] = []
     assets: list[dict[str, Any]] = []

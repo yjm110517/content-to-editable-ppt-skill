@@ -109,12 +109,21 @@ class ReconstructionPlanCompilerTests(unittest.TestCase):
         raster = candidate["elements"][-1]
         raster["geometry"] = {"coordinate_space": "normalized", "x": 0, "y": 0, "width": 1, "height": 1}
         raster["asset_request"]["source_region"] = {"coordinate_space": "normalized", "x": 0, "y": 0, "width": 1, "height": 1}
+        square_request = request()
+        square_request["output_ratio"] = "1:1"
         for width in (104, 105):
             with self.subTest(width=width):
-                compile_reconstruction_plan(candidate, authority(), request(), {"width_px": width, "height_px": 100})
+                compile_reconstruction_plan(candidate, authority(), square_request, {"width_px": width, "height_px": 100})
         with self.assertRaises(ContractError) as raised:
-            compile_reconstruction_plan(candidate, authority(), request(), {"width_px": 106, "height_px": 100})
+            compile_reconstruction_plan(candidate, authority(), square_request, {"width_px": 106, "height_px": 100})
         self.assertEqual("asset_aspect_mismatch", raised.exception.errors[0]["code"])
+
+    def test_request_output_ratio_must_match_slide_ratio(self) -> None:
+        candidate = plan()
+        candidate["slide"].update({"width_in": 10, "height_in": 10})
+        with self.assertRaises(ContractError) as raised:
+            self._compile(candidate)
+        self.assertEqual("slide_ratio_mismatch", raised.exception.errors[0]["code"])
 
     def test_serialized_outputs_are_byte_deterministic(self) -> None:
         first = self._compile()
@@ -156,6 +165,27 @@ class ReconstructionPlanCompilerTests(unittest.TestCase):
             self.assertEqual("asset_aspect_mismatch", raised.exception.detail["code"])
             for name in ("layout.json", "crops.json", "asset_manifest.json"):
                 self.assertFalse((args.iteration_dir / name).exists())
+
+    def test_cli_preserves_reconstruction_plan_error_code(self) -> None:
+        with tempfile.TemporaryDirectory() as temporary:
+            work, args = self._work_root(Path(temporary))
+            candidate = plan()
+            candidate["elements"][0] = {
+                "id": "chart", "role": "chart", "representation": "native_chart",
+                "geometry": {"coordinate_space": "normalized", "x": 0.1, "y": 0.1, "width": 0.4, "height": 0.3}, "z_index": 1,
+            }
+            args.plan.write_text(json.dumps(candidate), encoding="utf-8")
+            completed = subprocess.run(
+                [
+                    sys.executable, str(SCRIPTS / "compile_reconstruction_plan.py"), "--plan", str(args.plan),
+                    "--content", str(work / "source-content.json"), "--iteration-dir", str(args.iteration_dir),
+                    "--schema-dir", str(SCHEMA_DIR),
+                ],
+                cwd=ROOT, capture_output=True, text=True, encoding="utf-8", errors="replace", timeout=30,
+            )
+            payload = json.loads(completed.stdout)
+            self.assertEqual(4, completed.returncode)
+            self.assertEqual("unsupported_representation", payload["error"]["category"])
 
     @unittest.skipUnless(os.environ.get("IVT_RUN_POWERPOINT_SMOKE") == "1", "set IVT_RUN_POWERPOINT_SMOKE=1 to run PowerPoint smoke")
     def test_powerpoint_single_page_smoke(self) -> None:
