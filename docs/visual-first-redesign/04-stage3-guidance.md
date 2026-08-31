@@ -5,7 +5,7 @@
 > **Last updated**：2026-08-31  
 > **Runtime authority**：非运行权威；不覆盖 Accepted ADR、正式 `SKILL.md`、现有 Runtime 或当前 Schema。  
 > **Decision dependency**：Stage 2 真实图片 Benchmark 仍是进入新 ADR / Implementation 的前置 Gate。  
-> **Scope**：冻结 Stage 3 的职责、Authority、Planner 输入模型、对象重建原则、单页验收、Final Deck Assembly 与最终 QA；不冻结具体 CLI、函数、最终 JSON Schema 或实现算法。
+> **Scope**：冻结 Stage 3 的职责、Authority、布局规划代理输入模型、对象重建原则、单页验收、Final Deck Assembly 与最终 QA；不冻结具体 CLI、函数、最终 JSON Schema 或实现算法。
 
 ---
 
@@ -20,35 +20,29 @@ Stage 3 是 reconstruction，不是 redesign。
 目标链路：
 
 ```text
-Stage 1 Approved Content
-+ Stage 1 Wireframe
-+ Stage 1 Machine-readable Semantic Structure
-+ Stage 1 Structured Data
-+ Stage 2 Visual Design Spec
-        ↓
-Cross-stage Handoff Preparation
-        ↓
-Reconstruction Context（候选持久化形式）
-        +
+Stage 1 已确认语义结构
++
+Stage 1 正式内容与结构化数据
++
+Stage 2 视觉对象信息 / 重建提示
++
 用户确认后的最终设计图
-        +
-固定 Planner Prompt
-        +
-Existing Reconstruction Policy
         ↓
 布局规划代理（Layout Planner Agent）
+        ├─ 逻辑任务 1：视觉位置对齐
+        └─ 逻辑任务 2：重建方式决策
         ↓
-Canonical Reconstruction Plan
+统一重建计划
         ↓
-Deterministic Validation / Compilation
+确定性校验 / 编译
         ↓
-Existing Single-Slide Reconstruction Runtime
+PPT 构建
         ↓
-Page Structural / Editability QA
+确定性结构 / 可编辑性 QA
         ↓
 视觉审核代理（Visual Reviewer Agent）
         ↓
-Accepted Page Plan
+Accepted Page
 
 所有 Accepted Page Plans
         ↓
@@ -234,11 +228,11 @@ Combine
 
 # 5. Reconstruction Context
 
-`Reconstruction Context` 是一个 Stage 3 Planner-facing 的候选中间事实包。
+`Reconstruction Context` 是一个面向 Stage 3 布局规划代理的候选中间事实包。
 
 它的职责只有一个：
 
-> **保存 Planner 不应该重新从最终设计图猜测的已知事实。**
+> **保存布局规划代理不应该重新从最终设计图猜测的已知事实。**
 
 建议最小语义结构：
 
@@ -267,7 +261,7 @@ reconstruction_hints
 Context
 = 已知事实
 
-Planner
+布局规划代理
 = 重建决策
 
 Plan
@@ -278,9 +272,11 @@ Plan
 
 ---
 
-# 6. 布局规划代理（Layout Planner Agent）Contract
+# 6. 布局规划代理（Layout Planner Agent）
 
-## 6.1 Planner 输入模型
+布局规划代理是 Stage 3 负责页面视觉理解与重建规划的专业代理。它不从最终设计图重新发现正式内容、数据或已确认语义关系，而是在 Stage 1 / Stage 2 已提供的已知对象基础上，完成视觉位置对齐和重建方式决策。
+
+## 6.1 布局规划代理输入
 
 布局规划代理应接收：
 
@@ -289,7 +285,7 @@ Plan
 +
 Reconstruction Context
 +
-固定 Planner Prompt
+固定布局规划 Prompt
 +
 Existing Reconstruction Policy
 +
@@ -302,11 +298,11 @@ Output Schema
 |---|---|
 | Final Design | 最终视觉参考 |
 | Reconstruction Context | 已确认内容、数据、结构、关系和必要设计提示 |
-| Planner Prompt | 定义任务、边界、Authority 使用规则 |
+| 布局规划 Prompt | 定义任务、边界、Authority 使用规则 |
 | Existing Reconstruction Policy | 定义 Native / SVG / Raster 决策 |
 | Output Schema | 约束 Canonical Reconstruction Plan |
 
-## 6.2 Planner Prompt 只负责少量稳定规则
+## 6.2 布局规划 Prompt 只负责少量稳定规则
 
 Prompt 不应发展成 Mega Prompt。
 
@@ -324,11 +320,11 @@ Prompt 不应发展成 Mega Prompt。
 
 ---
 
-# 7. Canonical Reconstruction Plan
+# 7. 统一重建计划
 
 布局规划代理的正式输出原则上应收敛为：
 
-> **一个 Canonical Reconstruction Plan。**
+> **一个统一重建计划（Canonical Reconstruction Plan）。**
 
 它至少应能表达：
 
@@ -345,7 +341,26 @@ relations
 asset instructions
 ```
 
-这样 Agent 不需要直接维护多份彼此引用的 Runtime Artifact。
+v1 使用一个统一重建计划，同时记录对象的视觉位置对齐结果和重建方式；不拆分 `grounding.json`、独立重建计划或其他中间 Agent 产物。最终 Schema、字段名和文件名尚未冻结。
+
+概念示例：
+
+```yaml
+- id: phase_1
+  visual_region:
+    box_px: [180, 320, 320, 180]
+    z_index: 20
+  representation:
+    type: native_text_and_shape
+
+- id: hero_illustration
+  visual_region:
+    box_px: [1120, 170, 590, 620]
+    z_index: 10
+  representation:
+    type: raster_asset
+    source: approved_design
+```
 
 现有：
 
@@ -359,11 +374,69 @@ asset_manifest.json
 
 最终 Plan 文件名、字段和 Schema 不在本 Guidance 中冻结；`reconstruction-plan.json` 只是当前候选形式。
 
+## 7.1 逻辑任务一：视觉位置对齐
+
+输入：
+
+```text
+已知语义对象
++
+Stage 2 新增视觉对象
++
+用户确认后的最终设计图
+```
+
+布局规划代理确定每个已知对象对应的视觉区域、实际位置、尺寸、视觉边界、前后层级、重叠关系和必要的视觉分组。它不得重新发明正式对象、重新猜 Stage 1 已确认关系、修改正式文字或修改正式数据。
+
+尤其是，Stage 1 已经确定的流程、层级与连接关系不由布局规划代理重新推断；布局规划代理只判断这些关系在最终设计图中的视觉实现方式。
+
+## 7.2 逻辑任务二：重建方式决策
+
+完成视觉位置对齐后，布局规划代理对每个已知对象决定：
+
+```text
+正式文字 → PowerPoint 原生文字
+基础形状 / 卡片 → PowerPoint 原生形状
+连接线 / 箭头 → PowerPoint 原生连接线
+图表 → PowerPoint 原生图表
+表格 → PowerPoint 原生表格
+可恢复平面矢量 → Native / SVG
+复杂插画 / 照片 / 3D / 纹理 → 从最终设计图安全裁切
+```
+
+该决策必须遵守既有 Reconstruction-aware Hybrid Policy 与 Chart / Table 的原生语义要求。
+
+## 7.3 两个逻辑任务不等于两个 Agent
+
+“视觉位置对齐”和“重建方式决策”是同一个布局规划代理内部连续完成的两个逻辑任务。Stage 3 v1 默认由一次布局规划代理调用完成两个任务，并产生一个统一重建计划。
+
+本 Guidance 不创建 Visual Grounding Agent、Reconstruction Agent 或其他额外专业 Agent。是否未来拆分成多次 Agent 调用，只能由真实 Benchmark 证据决定。
+
+## 7.4 视觉位置对齐完整性 Gate
+
+```text
+Stage 1 Required Semantic Objects
+↓
+布局规划代理输出
+↓
+逐一验证是否完成视觉位置对齐
+```
+
+如果存在 required object 未对齐：
+
+```text
+grounding_incomplete
+↓
+BLOCK / Review
+```
+
+不得默认为“图片里可能没有，所以忽略”。Stage 1 所需的语义对象必须在统一重建计划中具有明确的视觉位置对齐结果或经过可追溯的阻断处理。
+
 ---
 
 # 8. Coordinate Policy
 
-Planner 的视觉几何建议使用：
+布局规划代理的视觉几何建议使用：
 
 > **最终设计图原始 Pixel Coordinate Space。**
 
@@ -377,7 +450,7 @@ box_px = [x, y, width, height]
 
 原因：
 
-- Planner 直接面对的就是最终设计图；
+- 布局规划代理直接面对的就是最终设计图；
 - 减少 Agent 自己做单位换算；
 - 更容易 Debug；
 - QA 结果更容易映射回 Final Design。
@@ -437,7 +510,7 @@ Table rasterization
 ```text
 Final Design
 ↓
-Planner 标记 Complex Visual
+布局规划代理标记 Complex Visual
 ↓
 Safe Crop Check
 ↓
@@ -687,15 +760,21 @@ Existing Runtime Artifacts
 每页独立执行：
 
 ```text
-Final Design
+Stage 1 已确认语义事实
 +
+Stage 2 视觉对象信息 / 重建提示
++
+用户确认后的最终设计图
+        ↓
+Handoff Preparation
+        ↓
 Reconstruction Context
 ↓
 布局规划代理
 ↓
-Canonical Reconstruction Plan
+统一重建计划
 ↓
-Deterministic Validation / Compilation
+确定性校验 / 编译
 ↓
 Asset Crop
 ↓
@@ -730,7 +809,40 @@ Unsafe Crop
 
 ---
 
-# 15. Accepted Page Plan
+# 15. 视觉审核代理（Visual Reviewer Agent）
+
+视觉审核代理是 Stage 3 的独立专业审核角色。它在确定性结构 / 可编辑性 QA 通过后运行，独立比较用户确认后的最终设计图与 PowerPoint 实际渲染结果：
+
+```text
+用户确认后的最终设计图
++
+PowerPoint 实际渲染图
++
+确定性结构 / 可编辑性 QA 结果
++
+必要的已确认语义关系
+        ↓
+视觉审核代理
+        ↓
+视觉一致性审核结果
+```
+
+它检查布局、位置、尺寸、间距、视觉层级、重叠关系、连接线视觉表现、字体视觉、颜色、阴影、透明度、复杂资产裁切与整体视觉一致性。
+
+它不负责重新设计页面、修改正式文字或数据、重新定义语义关系，或直接修改 PPT。
+
+视觉审核代理必须与当前页面的布局规划代理使用独立上下文；不得继承布局规划代理的推理上下文，也不得因为布局规划代理已选择某种实现方式而默认接受该方案。这继承现有单页 Runtime 的 fresh-context `planner` / `reviewer` 机制。
+
+Stage 3 v1 的独立专业 Agent 仅有：
+
+1. 布局规划代理；
+2. 视觉审核代理。
+
+本 Guidance 不新增 Visual Grounding Agent、Reconstruction Agent、Asset Agent、Chart Agent、Table Agent 或 Deck Reviewer Agent。整套 Deck 的视觉审核默认不新增独立 Agent，只在明确风险、正式 Release 或 Field Validation 时按既有决定条件触发。
+
+---
+
+# 16. Accepted Page Plan
 
 已确认决策：
 
@@ -772,7 +884,7 @@ Final Build 时重新 Crop 成 asset-v2
 
 ---
 
-# 16. Final Deck Assembly
+# 17. Final Deck Assembly
 
 已确认决策：
 
@@ -810,13 +922,13 @@ COM Merge / PPTX Merge
 
 ---
 
-# 17. Final Deck QA
+# 18. Final Deck QA
 
 已确认决策：
 
 > **必跑低成本 Deterministic Deck QA；Deck-level Visual Review 只在明确风险时触发。**
 
-## 17.1 必跑 Deterministic Deck QA
+## 18.1 必跑 Deterministic Deck QA
 
 至少检查：
 
@@ -832,7 +944,7 @@ COM Merge / PPTX Merge
 - 无明显越界 / 溢出；
 - Accepted Page 未丢失。
 
-## 17.2 Final Build Drift Check
+## 18.2 Final Build Drift Check
 
 为了避免每次都重新做整套视觉 Agent Review，建议增加低成本比较：
 
@@ -857,7 +969,7 @@ vs
 
 具体图像差异算法与阈值在 Implementation 阶段冻结。
 
-## 17.3 Conditional Deck-level Visual Review
+## 18.3 Conditional Deck-level Visual Review
 
 只在以下情况触发：
 
@@ -883,7 +995,7 @@ Delivery
 
 ---
 
-# 18. 与当前 Runtime 的复用关系
+# 19. 与当前 Runtime 的复用关系
 
 Stage 3 不新建第三套 Reconstruction Runtime。
 
@@ -919,26 +1031,26 @@ Native Chart 全链一致性修复
 
 ---
 
-# 19. Current Capability 与 Target Capability 必须分开
+# 20. Current Capability 与 Target Capability 必须分开
 
 本 Guidance 描写的是目标 Stage 3。
 
-## 19.1 当前可复用基础
+## 20.1 当前可复用基础
 
 当前仓库已有：
 
-- Single-Slide Layout Planner / Reconstruction workflow；
+- Single-Slide 布局规划 / Reconstruction workflow；
 - Crop / SVG 资产链；
 - shared slide builder；
 - Text / Shape / Line / Image build；
 - Native Chart builder 基础；
 - PowerPoint Render；
 - Structural QA；
-- Visual Reviewer；
+- 现有 Runtime 的 Visual Reviewer；
 - Recovery / Review Gate；
 - Multi-page direct build 与 Deck QA 基础。
 
-## 19.2 后续 Implementation 需要补齐 / 核验
+## 20.2 后续 Implementation 需要补齐 / 核验
 
 包括但不限于：
 
@@ -947,12 +1059,12 @@ Stage 1 machine-readable topology handoff
 Stage 1 authoritative Chart / Table structured data contract
 Stage 2 stable visual object IDs / reconstruction hints
 Stage 2 Native Chart / Table compatibility constraints
-Planner Stage 3 input contract
+布局规划代理的 Stage 3 输入合同
 Canonical Reconstruction Plan contract
 Plan validation / compilation
 Accepted Page asset immutability
 Native Table first-class Builder / Schema / QA
-Native Chart Planner / QA / Contract 一致性
+Native Chart 布局规划 / QA / Contract 一致性
 Final Shared Build 对 Accepted Page Plans 的消费
 Final Build Drift Check
 Conditional Deck Visual Review trigger
@@ -964,7 +1076,7 @@ Conditional Deck Visual Review trigger
 
 ---
 
-# 20. Hard Failure / Block Rules
+# 21. Hard Failure / Block Rules
 
 Stage 3 不通过静默降低编辑性来“假装成功”。
 
@@ -993,11 +1105,11 @@ PowerPoint Roundtrip 失败
 
 ---
 
-# 21. Stage 3 成功标准
+# 22. Stage 3 成功标准
 
 Stage 3 必须同时满足：
 
-## 21.1 Content Integrity
+## 22.1 Content Integrity
 
 ```text
 Stage 1 Canonical Content / Data
@@ -1005,7 +1117,7 @@ Stage 1 Canonical Content / Data
 Final PPT 中正式内容 / 数据
 ```
 
-## 21.2 Useful Editability
+## 22.2 Useful Editability
 
 ```text
 Text → Native Text
@@ -1017,7 +1129,7 @@ Complex Visual → Independent validated Asset
 
 不存在 Whole-slide Raster Hack。
 
-## 21.3 Visual Fidelity
+## 22.3 Visual Fidelity
 
 ```text
 Rendered Page
@@ -1041,7 +1153,7 @@ Rendered Page
 - 比例失真；
 - 关键视觉丢失。
 
-## 21.4 Final Deck Validity
+## 22.4 Final Deck Validity
 
 最终 Deck：
 
@@ -1055,12 +1167,12 @@ Rendered Page
 
 ---
 
-# 22. 本 Guidance 不冻结的实现细节
+# 23. 本 Guidance 不冻结的实现细节
 
 暂不冻结：
 
 ```text
-完整 planner.md 文案
+完整 `planner.md` 文案
 Few-shot 示例
 Reconstruction Context 最终文件名 / JSON Schema
 Canonical Reconstruction Plan 最终文件名 / JSON Schema
@@ -1074,7 +1186,7 @@ Cache Key
 COM Lock
 Native Chart 具体样式映射
 Native Table 具体样式映射
-Deck Visual Reviewer Prompt
+Deck 视觉审核 Prompt
 Trigger 数值阈值
 ```
 
@@ -1096,11 +1208,11 @@ Implementation Plan
 
 ---
 
-# 23. 已确认决策摘要
+# 24. 已确认决策摘要
 
 | # | 决策 | 已确认方案 |
 |---|---|---|
-| ① | 布局规划代理输入 | 上游已知事实先形成机器可读 Reconstruction Context；再与最终设计图、固定 Planner Prompt、现有 Reconstruction Policy 和 Output Schema 一起输入布局规划代理 |
+| ① | 布局规划代理输入 | 上游已知事实先形成机器可读 Reconstruction Context；再与最终设计图、固定布局规划 Prompt、现有 Reconstruction Policy 和 Output Schema 一起输入布局规划代理 |
 | ② | 复杂视觉 | 从用户确认后的最终设计图 Safe Crop；不重新生图；无法安全裁切则返回 Stage 2 |
 | ③ | Final Deck Assembly | Accepted Page Plans + 已验证 immutable assets → Shared Builder → One Final PPTX |
 | ④ | Chart / Table | Chart → Native PowerPoint Chart；Table → Native PowerPoint Table；Stage 1 必须保留 authoritative structured data，Stage 2 必须遵守 Native compatibility constraint |
@@ -1108,7 +1220,7 @@ Implementation Plan
 
 ---
 
-# 24. Guidance 结论
+# 25. Guidance 结论
 
 Stage 3 的核心不是再建一套 PPT Runtime，而是：
 

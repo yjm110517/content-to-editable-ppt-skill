@@ -14,7 +14,7 @@ Stage 2 的任务不是重新规划内容，也不是直接生成可编辑 Power
 
 Stage 2 的目标是：
 
-> **在 Stage 1 已确认的正式内容和 Markdown Wireframe 基础上，由 Host 完成视觉设计细化，再由程序确定性编译生图 Prompt，调用图片模型生成真实 PPT 设计图，并通过代表页与整套页面验证视觉效果。**
+> **在 Stage 1 已确认的正式内容、页面结构与 Markdown Wireframe 基础上，由宿主代理（Host Agent）完成视觉设计细化，再由程序确定性编译生图 Prompt，调用图片生成模型生成真实 PPT 设计图，并通过代表页与整套页面验证视觉效果。**
 
 最终链路：
 
@@ -29,7 +29,7 @@ Stage 1 Structured Data
         ↓
 Candidate Deck Visual System
         ↓
-Host Visual Design Elaboration
+宿主代理进行视觉设计细化
         ↓
 Slide Visual Design Spec
         ↓
@@ -37,17 +37,9 @@ Deterministic Prompt Compiler
         ↓
 Final Image Prompt
         ↓
-Image Model
+图片生成模型
         ↓
-Generated Slide Image
-        ↓
-Visual Review
-        ↓
-Representative Design Gate
-        ↓
-Validated Deck Visual System
-        ↓
-Full-deck Design Generation
+最终设计图
         ↓
 User Visual Approval
         ↓
@@ -273,7 +265,7 @@ Stage 2 不包括：
 
 第 ② 项正式确定：
 
-> **Stage 2 的视觉理解与视觉设计由 Host Agent 直接完成。**
+> **Stage 2 的视觉理解与视觉设计由宿主代理直接完成。**
 
 不新增独立：
 
@@ -281,9 +273,9 @@ Stage 2 不包括：
 Visual Designer Agent
 ```
 
-Host 是当前实际运行 Skill 的 Codex / Claude Code 等主 Agent。
+宿主代理是当前实际运行 Skill 的 Codex / Claude Code 等主 Agent。
 
-Host 在 Stage 2 负责：
+宿主代理在 Stage 2 负责：
 
 - 理解 Stage 1 内容；
 - 理解 Markdown Wireframe；
@@ -295,7 +287,7 @@ Host 在 Stage 2 负责：
 - 将整套视觉系统落实到当前页；
 - 输出结构化 `Slide Visual Design Spec`。
 
-Host 不负责：
+宿主代理不负责：
 
 - 重新规划 Storyline；
 - 重新决定 Layout；
@@ -303,7 +295,7 @@ Host 不负责：
 - 自行新增正式页面文字；
 - 自由书写最终 Prompt。
 
-图片生成模型负责生成设计图片，但不是 Agent；Prompt Compiler、上下文整理、图片调用和缓存均属于确定性程序或工具边界。Stage 2 的视觉审核由宿主代理组织，不能把图片模型称为设计 Agent。
+图片生成模型负责生成设计图片，但不是 Agent；Prompt Compiler、上下文整理、图片调用和缓存均属于确定性程序或工具边界。Stage 2 v1 不新增独立视觉设计代理，视觉审核由宿主代理组织，不能把图片模型称为设计 Agent。
 
 ---
 
@@ -324,7 +316,7 @@ Stage 1 已确认成果
 ## 7.1 有参考 PPT / 图片
 
 ```text
-Host 提取参考视觉规律
+宿主代理提取参考视觉规律
 ↓
 Candidate Deck Visual System
 ```
@@ -357,7 +349,7 @@ Candidate Deck Visual System
 不使用卡片堆叠
 ```
 
-Host 将其结构化为：
+宿主代理将其结构化为：
 
 ```text
 Candidate Deck Visual System
@@ -367,7 +359,7 @@ Candidate Deck Visual System
 
 ## 7.3 无参考，也无明确视觉方向
 
-Host 提供：
+宿主代理提供：
 
 > **2–3 个具体视觉方向**
 
@@ -410,7 +402,7 @@ Candidate Deck Visual System
 ↓
 生成 3 张代表页
 ↓
-Host + 用户检查真实图片
+宿主代理 + 用户检查真实图片
 ```
 
 如果不满意：
@@ -579,7 +571,7 @@ Semantic Authority
 
 第 ⑥ 项正式确定：
 
-> **Host 负责设计，程序负责确定性编译 Prompt。**
+> **宿主代理负责设计，程序负责确定性编译 Prompt。**
 
 采用：
 
@@ -590,7 +582,7 @@ Markdown Wireframe
 +
 Deck Visual System
         ↓
-Host
+宿主代理
         ↓
 Slide Visual Design Spec
         ↓
@@ -603,9 +595,9 @@ Image Model
 
 ---
 
-## 10.1 Host 的设计输出
+## 10.1 宿主代理的设计输出
 
-Host 不直接自由写 Final Prompt，而是输出结构化的：
+宿主代理不直接自由写 Final Prompt，而是输出结构化的：
 
 > **Slide Visual Design Spec（单页视觉设计规格）**
 
@@ -703,7 +695,7 @@ Prompt QA
 
 正式确定：
 
-> **Final Prompt 不是 Source of Truth，不允许在 Compiler 之后再交给 Host 自由润色。**
+> **Final Prompt 不是 Source of Truth，不允许在 Compiler 之后再交给宿主代理自由润色。**
 
 如果图片有问题：
 
@@ -908,6 +900,27 @@ Slide Visual Design Spec
 
 Visual Spec 不得覆盖用户已经确认的设计图片。
 
+图片生成只产生页面的视觉表示，不终止、不替换 Stage 1 已确认的语义结构。Stage 1 中的正式内容、稳定对象编号、区域关系、连接关系以及 Chart / Table 结构化数据，应继续作为独立 Authority 直接传递给 Stage 3。
+
+```text
+Stage 1 已确认内容 + 语义结构 + 结构化数据
+        │
+        ├──────────────────────────┐
+        │                          │
+        ↓                          │
+Stage 2 视觉设计                   │
+↓                                  │
+图片生成模型                       │
+↓                                  │
+用户确认最终设计图                 │
+        │                          │
+        └─────────────┬────────────┘
+                      ↓
+                   Stage 3
+```
+
+> 最终设计图是 Stage 3 的视觉标准，但不是 Stage 3 唯一的信息来源。
+
 ---
 
 ## 11.5 Useful Editability
@@ -957,7 +970,7 @@ Stage 1 Approved Content + Markdown Wireframe
         ↓
 Candidate Deck Visual System
         ↓
-Host Visual Design Elaboration
+宿主代理进行视觉设计细化
         ↓
 Slide Visual Design Spec
         ↓
@@ -969,7 +982,7 @@ Image Model
         ↓
 Generated Slide Image
         ↓
-Host Visual Review
+宿主代理组织视觉审核
         ↓
 Representative Design Gate
         ↓
@@ -1033,7 +1046,7 @@ Full-deck Generation
 
 剩余页面：
 
-- 可以按 4–6 页批量由 Host 输出 Visual Specs；
+- 可以按 4–6 页批量由宿主代理输出 Visual Specs；
 - Prompt Compiler 批量确定性编译；
 - 已通过页面尽量缓存；
 - 单页失败只重新处理失败页；
@@ -1164,7 +1177,7 @@ Stage 1
 ```text
 Stage 1
 ↓
-Host Visual Design Spec
+宿主代理 Visual Design Spec
 ↓
 Deterministic Prompt Compiler
 ↓
@@ -1339,7 +1352,7 @@ Stage 2 不照搬任何一个项目，而是按职责吸收成熟做法。
 
 主要借鉴：
 
-> Host 应该考虑哪些视觉设计问题。
+> 宿主代理应该考虑哪些视觉设计问题。
 
 包括：
 
@@ -1354,7 +1367,7 @@ Stage 2 不照搬任何一个项目，而是按职责吸收成熟做法。
 
 主要借鉴：
 
-> Host 做设计以后，由程序如何确定性打包 Prompt。
+> 宿主代理完成设计以后，由程序如何确定性打包 Prompt。
 
 包括：
 
@@ -1415,11 +1428,11 @@ Bounded Complex Visual Assets
 | # | 架构问题 | 最终决策 |
 |---|---|---|
 | ① | Stage 2 到哪里结束 | 到真实图片生成、视觉审核与整套设计图正式确认 |
-| ② | 谁负责视觉设计 | 宿主代理（Host Agent） |
+| ② | 谁负责视觉设计 | 宿主代理（Host Agent）；Stage 2 v1 不新增独立视觉设计代理 |
 | ③ | 视觉风格怎么确定 | Reference-first；必要时 2–3 个方向；3 张代表页真实图片验证后锁定 |
 | ④ | Layout 谁决定 | Stage 1 Markdown Wireframe 是 Layout Authority |
 | ⑤ | Stage 2 能否改正式文字 | 不能；短 Label 等必须在 Stage 1 确认 |
-| ⑥ | Final Prompt 怎么产生 | Host → Slide Visual Design Spec → Deterministic Prompt Compiler |
+| ⑥ | Final Prompt 怎么产生 | 宿主代理 → Slide Visual Design Spec → Deterministic Prompt Compiler |
 | ⑦ | 如何照顾 Stage 3 | Reconstruction-aware Hybrid；视觉优先，同时分离正式内容、保留语义结构与重建元数据 |
 
 ---
@@ -1428,5 +1441,4 @@ Bounded Complex Visual Assets
 
 Stage 2 可以最终概括成：
 
-> **Stage 1 决定“讲什么、怎么组织”；Host 决定“这一页具体怎么设计”；程序负责“守 Authority、确定性编译并执行 Prompt”；图片模型负责“真正画出来”；真实图片负责验证设计是否成立；Stage 2 同时保留少量重建友好约束，使 Stage 3 能在不牺牲视觉质量的情况下完成 Useful Editability。**
-
+> **Stage 1 决定“讲什么、怎么组织”；宿主代理决定“这一页具体怎么设计”；程序负责“守 Authority、确定性编译并执行 Prompt”；图片模型负责“真正画出来”；真实图片负责验证设计是否成立；Stage 2 同时保留少量重建友好约束，使 Stage 3 能在不牺牲视觉质量的情况下完成 Useful Editability。**

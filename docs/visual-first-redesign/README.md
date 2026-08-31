@@ -96,22 +96,31 @@ README 等用户说明
    Stage 2 已确认目标指导、真实图片验证、Benchmark、决策门禁和当前结论。
 
 4. [`04-stage3-guidance.md`](04-stage3-guidance.md)
-   Stage 3 的 Pre-ADR Target Guidance：定义重建职责、Authority、Planner 输入模型、Native Chart / Table、Accepted Page Plan、Shared Builder 与最终 QA；不构成 Runtime Implementation Authority。
+   Stage 3 的 Pre-ADR Target Guidance：定义重建职责、Authority、布局规划代理输入模型、Native Chart / Table、Accepted Page Plan、Shared Builder 与最终 QA；不构成 Runtime Implementation Authority。
 
 5. [`references/external-project-and-source-review.md`](references/external-project-and-source-review.md)
    外部 GitHub 项目、源码与许可证证据。
 
 ---
 
-## 4. 代理职责
+## 4. Agent 角色
 
-| 角色 | 类型 | 覆盖阶段 | 职责 |
-|---|---|---|---|
-| 宿主代理 | 主代理 | Stage 1–3 | 用户交互、Stage 1 全流程、Stage 2 视觉设计与编排、Stage 3 调度 |
-| 布局规划代理（Layout Planner Agent） | 专业 Agent | Stage 3 | 已知对象的视觉位置对齐与重建方式决策；第一版一次调用完成这两个逻辑任务 |
-| 视觉审核代理（Visual Reviewer Agent） | 专业 Agent | Stage 3 | 独立审核重建后的视觉 Fidelity |
+### 宿主代理
 
-Stage 1 不新增大纲规划代理、线稿规划代理或 Stage 1 审核代理；Stage 2 不新增独立 Visual Designer Agent。宿主代理是 Skill 的执行主体，不属于被调用的专业子代理。
+宿主代理是整个 Skill 的执行与编排主体，负责：
+
+- Stage 1 全流程；
+- Stage 2 视觉设计细化与图片生成流程编排；
+- Stage 3 专业 Agent、确定性 Runtime 与用户确认流程的调度。
+
+Stage 1 不新增大纲规划代理、线稿规划代理或 Stage 1 审核代理；Stage 2 v1 不新增独立视觉设计代理。宿主代理不是被调用的专业子代理。
+
+### Stage 3 专业代理
+
+Stage 3 v1 只保留两个独立专业 Agent：
+
+1. **布局规划代理（Layout Planner Agent）**：已知对象视觉位置对齐与重建方式决策；第一版一次调用完成这两个逻辑任务。
+2. **视觉审核代理（Visual Reviewer Agent）**：独立比较最终设计图与 PowerPoint 实际渲染结果，并与布局规划代理保持独立上下文。
 
 ### 非 Agent 组件
 
@@ -123,6 +132,7 @@ Stage 1 不新增大纲规划代理、线稿规划代理或 Stage 1 审核代理
 | PPT Builder / Shared Builder | 确定性程序，构建单页或整套 PPT |
 | Structural QA / Deck QA | 确定性程序，验证编辑性、结构和交付完整性 |
 | PowerPoint Renderer | PowerPoint 运行环境，用于渲染、打开与 Roundtrip 检查 |
+| 确定性 Patch / Recovery 工具 | 确定性程序，不是 Agent |
 
 ---
 
@@ -150,7 +160,7 @@ Benchmark 前允许继续维护 Stage 1～3 的 **Target Guidance / Pre-ADR Work
 原因：
 
 - Stage 2 尚未通过真实图片 Benchmark；
-- 图片模型、Provider、自动 Reviewer 实现和通过阈值尚未冻结；
+- 图片模型、Provider、自动视觉审核实现和通过阈值尚未冻结；
 - 不在 Benchmark 前编写 Runtime Implementation Plan 或改写当前入口；
 - 迁移和 `Main Mode / Fast Mode` 最终定位应由未来新 ADR 决定。
 

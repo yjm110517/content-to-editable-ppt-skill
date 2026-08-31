@@ -21,38 +21,36 @@ Stage 1 的核心任务：
 ```text
 用户意图 / 文件
 ↓
-宿主代理
+宿主代理（Host Agent）
+↓
+理解用户要求与材料
 ↓
 Presentation Brief
 ↓
-PPT 类型
+确定叙事策略与 Storyline
 ↓
-Narrative Strategy
+生成整套大纲
 ↓
-Storyline
+用户确认 / 修订大纲
 ↓
-Structured Outline
-↓
-逐页正式内容
+生成逐页正式内容
 ↓
 Markdown Wireframe
 ↓
 机器可读语义结构
 ↓
-确定性校验
+语义自检 / 确定性校验
 ↓
-Host 语义自检
-↓
-第一次正式确认
+用户确认 Stage 1
 ```
 
 ---
 
 ## 2. Stage 1 由宿主代理统一完成
 
-Stage 1 v1 固定由实际运行 Skill 的宿主代理统一完成，例如 Codex 或 Claude Code。大纲规划与页面线稿规划是宿主代理在同一语义上下文中连续完成的任务阶段，不是两个独立 Agent 调用。
+Stage 1 v1 固定由实际运行 Skill 的宿主代理连续完成，例如 Codex 或 Claude Code。Stage 1 不拆分独立的大纲规划代理、线稿规划代理或 Stage 1 审核代理。大纲规划与页面线稿规划是宿主代理在 Stage 1 内连续完成的任务阶段，而不是独立 Agent 调用。
 
-Host 负责：
+宿主代理负责：
 
 - 理解用户；
 - 读取材料；
@@ -74,13 +72,11 @@ Wireframe Planner Agent
 Stage 1 Reviewer Agent
 ```
 
-只有未来真实 Benchmark 持续证明超长材料、超长 Deck 或上下文压力已导致 Stage 1 质量下降时，才评估可选 Specialist。
-
 ### 2.1 为什么 Stage 1 不拆专业 Agent
 
-Stage 1 的大纲、正式内容和页面线稿具有强上下文连续性。用户在大纲确认过程中的修改会直接影响后续页面线稿，因此 v1 优先由宿主代理保持同一语义上下文连续完成。
+Stage 1 的大纲、正式内容、页面结构和线稿具有强上下文连续性。用户在大纲确认过程中的修改会直接影响后续页面线稿，因此 v1 优先由宿主代理保持同一语义上下文连续完成。
 
-不为角色拆分本身增加 Agent 调用。只有真实 Benchmark 持续证明 Stage 1 的质量或上下文容量出现问题时，才评估可选的 Stage 1 Specialist。
+v1 不为角色拆分本身增加额外 Agent 调用。只有未来真实 Benchmark 证明宿主代理在超长材料、超长 Deck 或上下文压力下持续出现质量问题时，才重新评估独立 Stage 1 Specialist。
 
 ---
 
@@ -101,7 +97,7 @@ Approval
 
 为支持后续 Stage 2 与 Stage 3 的稳定 Handoff，宿主代理产生的已确认成果应至少保留 stable content IDs、region IDs 与 membership、confirmed relations / topology，以及出现 Chart / Table 时的结构化数据。Markdown / ASCII Wireframe 继续保留给人阅读；机器可读字段只服务跨阶段的确定性传递，不代表当前正式 Schema 已经新增。
 
-这些概念尚未映射到当前 [`deck-build-request.schema.json`](../../content-to-editable-ppt/schemas/deck-build-request.schema.json)。当前多页 Host 仍直接负责一次确认后的页面方案和精确坐标；未来 Stage 1 则有意停在内容与粗略线框边界，把最终视觉设计交给尚待验证的 Stage 2。
+这些概念尚未映射到当前 [`deck-build-request.schema.json`](../../content-to-editable-ppt/schemas/deck-build-request.schema.json)。当前多页宿主仍直接负责一次确认后的页面方案和精确坐标；未来 Stage 1 则有意停在内容与粗略线框边界，把最终视觉设计交给尚待验证的 Stage 2。
 
 ---
 
@@ -462,7 +458,7 @@ content_overload_candidate
 
 ---
 
-## 16. Host 语义自检
+## 16. 宿主代理语义自检
 
 固定检查一次：
 
@@ -486,7 +482,7 @@ Stage 1 候选
 ↓
 确定性校验
 ↓
-Host 语义自检
+宿主代理语义自检
 ↓
 用户审阅
 ↓
@@ -518,7 +514,7 @@ Approved Markdown Wireframe
 
 当前已经收敛：
 
-- Host 负责 Stage 1；
+- 宿主代理负责 Stage 1；
 - 不新增 Outline Agent；
 - 有 Presentation Brief；
 - PPT 类型与 Storyline 分离；
@@ -527,7 +523,7 @@ Approved Markdown Wireframe
 - Markdown + Frontmatter + ASCII 线框；
 - Stage 1 不输出精确坐标；
 - 结构由确定性 Validator 检查；
-- 语义由 Host 做一次自检；
+- 语义由宿主代理做一次自检；
 - 用户确认后形成内容 Authority。
 
 ---
