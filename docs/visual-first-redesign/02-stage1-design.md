@@ -496,7 +496,11 @@ Approved Presentation Brief
 Approved Outline
 Approved Content
 Approved Markdown Wireframe
+Approved Machine-readable Semantic Structure
+Approved Structured Data
 ```
+
+其中，Approved Machine-readable Semantic Structure 保存稳定对象编号、region / membership、已确认 relations / topology、阅读顺序与连接关系；Approved Structured Data 保存后续 Native Chart / Native Table 所需的 authoritative structured data。Markdown / ASCII Wireframe 继续作为面向用户的结构表示，机器可读语义结构和结构化数据作为 Stage 2 / Stage 3 的跨阶段 Authority；三者必须保持语义一致，不允许用户确认后由后续阶段重新解释或覆盖。
 
 对于超长或高不确定任务，可以增加早期 Outline 预览作为 Fail-fast，但它不改变“两次正式确认”的产品定义。
 
@@ -524,7 +528,7 @@ Approved Markdown Wireframe
 - Stage 1 不输出精确坐标；
 - 结构由确定性 Validator 检查；
 - 语义由宿主代理做一次自检；
-- 用户确认后形成内容 Authority。
+- 用户确认后形成正式内容、语义结构与结构化数据 Authority。
 
 ---
 

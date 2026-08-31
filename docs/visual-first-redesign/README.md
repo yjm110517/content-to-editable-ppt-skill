@@ -96,10 +96,28 @@ README 等用户说明
    Stage 2 已确认目标指导、真实图片验证、Benchmark、决策门禁和当前结论。
 
 4. [`04-stage3-guidance.md`](04-stage3-guidance.md)
-   Stage 3 的 Pre-ADR Target Guidance：定义重建职责、Authority、布局规划代理输入模型、Native Chart / Table、Accepted Page Plan、Shared Builder 与最终 QA；不构成 Runtime Implementation Authority。
+   Stage 3 的总体 Pre-ADR Target Guidance：定义重建职责、Authority、跨阶段 Handoff、Native Chart / Table、Accepted Page Plan、Shared Builder 与最终 QA；不构成 Runtime Implementation Authority。
 
-5. [`references/external-project-and-source-review.md`](references/external-project-and-source-review.md)
+5. [`layout-planner-prompt-contract.md`](layout-planner-prompt-contract.md)
+   布局规划代理任务合同：定义输入、Authority、初次规划、定向修订、视觉位置对齐与重建方式决策。
+
+6. [`visual-reviewer-prompt-contract.md`](visual-reviewer-prompt-contract.md)
+   视觉审核代理任务合同：定义独立审核上下文、视觉审核维度、四级判定结果与定向修订接口。
+
+7. [`stage3-reconstruction-plan-contract.md`](stage3-reconstruction-plan-contract.md)
+   Stage 3 统一重建计划合同：定义 Canonical Reconstruction Plan、Revision Patch、Accepted Page Plan 以及与确定性 Runtime 的接口边界。
+
+8. [`references/external-project-and-source-review.md`](references/external-project-and-source-review.md)
    外部 GitHub 项目、源码与许可证证据。
+
+### Stage 3 文档职责边界
+
+- `04-stage3-guidance.md`：Stage 3 总体设计与跨阶段规则；
+- `layout-planner-prompt-contract.md`：Layout Planner 专属任务规则；
+- `visual-reviewer-prompt-contract.md`：Visual Reviewer 专属审核规则；
+- `stage3-reconstruction-plan-contract.md`：Canonical Reconstruction Plan、Revision Patch 与 Accepted Page Plan 的专属 Artifact 合同。
+
+总体 Guidance 不重复复制三个 Contract 的完整细节；专属规则以对应 Contract 为准。
 
 ---
 

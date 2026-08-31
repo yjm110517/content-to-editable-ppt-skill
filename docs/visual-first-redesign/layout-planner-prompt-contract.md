@@ -3,7 +3,8 @@
 > **Status**：Working Guidance / Pre-ADR Prompt Contract  
 > **Document type**：Stage 3 Agent Contract  
 > **Applies to**：布局规划代理（Layout Planner Agent）  
-> **Repository baseline**：`8122f32 docs: refine visual-first agent architecture`  
+> **Design baseline before contract drafting**：`8122f32 docs: refine visual-first agent architecture`
+> **First repository commit containing this contract**：`03d66aa docs: add stage 3 prompt contracts`
 > **Last updated**：2026-08-31  
 > **Runtime authority**：非运行权威；不覆盖当前正式 `planner.md`、Agent YAML、Schema、Runtime 或 Accepted ADR。  
 > **Decision dependency**：只有在 Stage 2 Benchmark 通过并进入后续 ADR / Implementation 后，才允许据此修改正式 Prompt 与 Runtime。
@@ -142,6 +143,18 @@ Stage 2 不必为每个小装饰编号；但大型 3D 人物、产品图、重�
 | 单对象 | 位置、尺寸、裁切或单个图表比例明显不对 |
 | 局部分组 | 卡片与连接线、人物与卡片遮挡、局部布局失衡 |
 | 整页重新规划 | 整体构图失败、大量对象错误且无法局部修复；仅为最后手段 |
+
+### 定向修订输出
+
+定向修订默认输出 **Revision Patch**，而非重写整个 Canonical Reconstruction Plan。它只表达 base plan version、target element IDs、允许修改字段、必要关联对象修改、revision reason 与对应 Visual Review issue reference：
+
+```text
+Canonical Plan vN + Revision Patch
+        ↓
+Patch Validation → Deterministic Apply → Canonical Plan vN+1
+```
+
+只有整体构图失败并明确进入整页重新规划时，才允许生成完整新页面规划。详细 Artifact 语义以 [`stage3-reconstruction-plan-contract.md`](stage3-reconstruction-plan-contract.md) 为准。
 
 任何修订均必须重新经过确定性编译、PPT 构建、结构 / 可编辑性 QA 与视觉审核。最大修订次数由后续 Runtime 冻结。
 

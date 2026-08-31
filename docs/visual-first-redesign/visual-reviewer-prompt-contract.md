@@ -3,7 +3,8 @@
 > **Status**：Working Guidance / Pre-ADR Prompt Contract  
 > **Document type**：Stage 3 Agent Contract  
 > **Applies to**：视觉审核代理（Visual Reviewer Agent）  
-> **Repository baseline**：`8122f32 docs: refine visual-first agent architecture`  
+> **Design baseline before contract drafting**：`8122f32 docs: refine visual-first agent architecture`
+> **First repository commit containing this contract**：`03d66aa docs: add stage 3 prompt contracts`
 > **Last updated**：2026-08-31  
 > **Runtime authority**：非运行权威；不覆盖当前正式 `visual_reviewer.md`、Agent YAML、Schema、Runtime 或 Accepted ADR。  
 > **Decision dependency**：只有在 Stage 2 Benchmark 通过并进入后续 ADR / Implementation 后，才允许据此修改正式 Prompt 与 Runtime。
@@ -1037,4 +1038,3 @@ Visual-first Stage 3 的视觉审核代理不应是一个“重新设计页面�
 它应是一个独立、边界明确的视觉质量判定器：
 
 > **在 Fresh Context 下，只基于用户确认后的最终设计图、当前 PowerPoint 渲染图、确定性生成的审核上下文投影和 QA Evidence，判断页面是否达到可交付水平；轻微差异直接接受，明显局部问题精确定位后交给布局规划代理定向修订，上游冲突或无法合理修复的问题明确阻断。**
-

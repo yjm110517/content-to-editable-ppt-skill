@@ -3,7 +3,8 @@
 > **Status**：Working Guidance / Pre-ADR Contract  
 > **Document type**：Stage 3 Canonical Artifact Contract  
 > **Applies to**：Canonical Reconstruction Plan / Revision Patch / Stage 3 deterministic compiler  
-> **Repository baseline**：`8122f32 docs: refine visual-first agent architecture`  
+> **Design baseline before contract drafting**：`8122f32 docs: refine visual-first agent architecture`
+> **First repository commit containing this contract**：`03d66aa docs: add stage 3 prompt contracts`
 > **Last updated**：2026-08-31  
 > **Runtime authority**：非运行权威；不覆盖当前 `layout.json`、`crops.json`、`asset_manifest.json`、正式 Schema、Runtime 或 Accepted ADR。  
 > **Decision dependency**：只有在 Stage 2 Benchmark 通过并进入后续 ADR / Implementation 后，才允许据此修改正式 Schema、Compiler 与 Runtime。
@@ -1597,4 +1598,3 @@ Canonical Reconstruction Plan 应成为 Visual-first Stage 3 中连接 Agent Rea
 它的职责不是保存所有原始内容，也不是直接描述底层 PPTX 实现，而是：
 
 > **用稳定 ID、权威引用、近似几何、主要视觉样式、重建方式、视觉关系、资产请求、修订状态和 provenance，完整表达“这一页应如何被重建”，并让后续编译、构建、审核、定向修订和 Final Deck 重建都围绕同一份规范化计划运行。**
-

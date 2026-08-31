@@ -348,14 +348,14 @@ v1 使用一个统一重建计划，同时记录对象的视觉位置对齐结�
 ```yaml
 - id: phase_1
   visual_region:
-    box_px: [180, 320, 320, 180]
+    geometry: { x: 0.10, y: 0.18, width: 0.18, height: 0.10 }
     z_index: 20
   representation:
     type: native_text_and_shape
 
 - id: hero_illustration
   visual_region:
-    box_px: [1120, 170, 590, 620]
+    geometry: { x: 0.62, y: 0.09, width: 0.33, height: 0.34 }
     z_index: 10
   representation:
     type: raster_asset
@@ -846,6 +846,13 @@ Stage 3 v1 的独立专业 Agent 仅有：
 ---
 
 # 16. Accepted Page Plan
+
+术语区分：
+
+- **Accepted Page**：页面通过结构 / 可编辑性 QA 与视觉审核的状态；
+- **Accepted Page Plan**：该状态对应的冻结 assembly authority，包括 Accepted Canonical Plan、已验证 immutable assets 和对应 QA / Review Evidence。
+
+Shared Builder 消费的是 **Accepted Page Plans**，而不是临时单页 PPTX 或仅有状态标记的 Accepted Page；详细 Artifact 语义以 [`stage3-reconstruction-plan-contract.md`](stage3-reconstruction-plan-contract.md) 为准。
 
 已确认决策：
 

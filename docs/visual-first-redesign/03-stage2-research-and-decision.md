@@ -159,7 +159,9 @@ source_refs:
 
 Stage 1 Markdown Wireframe 是：
 
-> **单页 Layout Authority（布局权威）**
+> **单页 Structural / Topology Authority（结构与拓扑权威）**
+
+它冻结页面主要区域、内容归属、阅读方向、逻辑关系和结构拓扑，但不冻结最终视觉几何、比例、留白或视觉重心。
 
 目标级别是 **L2 结构线稿**。
 
@@ -439,11 +441,13 @@ Validated Deck Visual System
 
 ---
 
-# 8. ④ Layout Authority
+# 8. ④ Structural / Topology Authority
 
 第 ④ 项正式确定：
 
-> **Stage 1 Markdown Wireframe 是 Layout Authority。Stage 2 不再进行 Layout Routing。**
+> **Stage 1 Markdown Wireframe 是页面结构与拓扑权威。Stage 2 不重新选择页面语义拓扑，也不进行与 Stage 1 无关的 Layout Routing。**
+
+Stage 1 决定页面主要区域、内容区域归属、阅读方向、流程 / 连接 / 语义拓扑，以及主要视觉对象在结构中的作用。Stage 2 可在该结构约束内决定最终视觉构图实现、对象实际比例、留白、视觉重心、视觉层级、图形语言、材质与装饰。用户确认后的最终设计图成为 Stage 3 的最终视觉 Authority。
 
 因此不把下面链路作为 Stage 2 Core：
 
@@ -678,7 +682,7 @@ Prompt QA
 3. 页面目标
 4. 本页在整套 PPT 中的作用
 5. Stage 1 正式页面文字
-6. Stage 1 Markdown Wireframe / Layout Authority
+6. Stage 1 Markdown Wireframe / Structural-Topology Authority
 7. 本页 Slide Visual Design Spec
 8. Deck Visual System
 9. 必要 deck_context / local_context
@@ -902,6 +906,10 @@ Visual Spec 不得覆盖用户已经确认的设计图片。
 
 图片生成只产生页面的视觉表示，不终止、不替换 Stage 1 已确认的语义结构。Stage 1 中的正式内容、稳定对象编号、区域关系、连接关系以及 Chart / Table 结构化数据，应继续作为独立 Authority 直接传递给 Stage 3。
 
+### Stage 2 新增重要视觉对象的稳定编号
+
+Stage 2 新增且 Stage 3 需要独立处理的重要视觉对象，应分配稳定 `visual object ID`：包括需要独立裁切、定位 / 缩放、控制 z-order，或与正式文字、Chart、Table、Card 等重要重叠的对象（如大型人物插画、产品图、重要 3D Object 或大面积 Glow）。微小、低影响装饰不强制逐个编号。布局规划代理可有限补充低影响装饰，但不得借此重新发现或重解释整页语义结构。
+
 ```text
 Stage 1 已确认内容 + 语义结构 + 结构化数据
         │
@@ -938,11 +946,13 @@ Stage 3 的目标正式采用：
 | Card / Panel / 基础几何 | Native Shape |
 | Arrow / Connector | Native Shape / Connector |
 | 简单流程图 | Native Shape + Connector |
-| Table | Native Table / Structured Objects |
-| 数据可恢复 Chart | Native Chart |
+| Formal Table | Native PowerPoint Table |
+| Formal Chart | Native PowerPoint Chart |
 | 标准 Icon | SVG / Shape |
 | 照片 | Independent Image Asset |
 | 复杂插画 | Independent Image Asset |
+
+正式 Chart / Table 必须在 Stage 1 保留 authoritative structured data。Stage 2 不得批准最终设计明显无法由 Native PowerPoint Chart / Table 合理重建、但又要求 Stage 3 保持 Native editability 的方案；若数据缺失，必须返回 Stage 1 补齐，不允许 Stage 3 OCR、猜测或 Raster fallback。
 | 3D / Texture | Raster / SVG Asset |
 | 复杂装饰 | Local Raster / Asset |
 | 整页设计图 | 不作为正常最终重建方案 |
@@ -1029,7 +1039,7 @@ Complex Representative
 - 页面是否出现明显模板感；
 - 是否存在 Card Spam；
 - 是否存在伪文字；
-- 是否符合 Stage 1 Layout Authority；
+- 是否保持 Stage 1 已确认的结构与拓扑；
 - 是否具备基本 reconstruction friendliness。
 
 ---
@@ -1430,7 +1440,7 @@ Bounded Complex Visual Assets
 | ① | Stage 2 到哪里结束 | 到真实图片生成、视觉审核与整套设计图正式确认 |
 | ② | 谁负责视觉设计 | 宿主代理（Host Agent）；Stage 2 v1 不新增独立视觉设计代理 |
 | ③ | 视觉风格怎么确定 | Reference-first；必要时 2–3 个方向；3 张代表页真实图片验证后锁定 |
-| ④ | Layout 谁决定 | Stage 1 Markdown Wireframe 是 Layout Authority |
+| ④ | 页面结构与最终视觉分别由谁决定 | Stage 1 Markdown Wireframe 冻结结构与拓扑；Stage 2 在该约束内完成最终视觉构图，用户确认后的最终设计图成为 Stage 3 的视觉 Authority |
 | ⑤ | Stage 2 能否改正式文字 | 不能；短 Label 等必须在 Stage 1 确认 |
 | ⑥ | Final Prompt 怎么产生 | 宿主代理 → Slide Visual Design Spec → Deterministic Prompt Compiler |
 | ⑦ | 如何照顾 Stage 3 | Reconstruction-aware Hybrid；视觉优先，同时分离正式内容、保留语义结构与重建元数据 |
