@@ -6,7 +6,7 @@
 > **Current runtime relationship**：不改变当前正式产品、Runtime、入口或 Accepted ADR
 > **Depends on**：当前 [Accepted ADR / DECISIONS](../../DECISIONS.md)、正式 [SKILL.md](../../content-to-editable-ppt/SKILL.md)、当前 Runtime 契约
 > **Next decision gate**：完成 Stage 2 Benchmark；只有 `Passed` 才允许进入新 ADR
-> **Last updated**：2026-08-28
+> **Last updated**：2026-08-31
 
 ---
 
@@ -95,12 +95,26 @@ README 等用户说明
 3. [`03-stage2-research-and-decision.md`](03-stage2-research-and-decision.md)
    Stage 2 已确认目标指导、真实图片验证、Benchmark、决策门禁和当前结论。
 
-4. [`references/external-project-and-source-review.md`](references/external-project-and-source-review.md)
+4. [`04-stage3-guidance.md`](04-stage3-guidance.md)
+   Stage 3 的 Pre-ADR Target Guidance：定义重建职责、Authority、Planner 输入模型、Native Chart / Table、Accepted Page Plan、Shared Builder 与最终 QA；不构成 Runtime Implementation Authority。
+
+5. [`references/external-project-and-source-review.md`](references/external-project-and-source-review.md)
    外部 GitHub 项目、源码与许可证证据。
 
 ---
 
-## 4. 当前阶段不再新增目标架构文档
+## 4. Benchmark 前的文档边界
+
+Benchmark 前允许继续维护 Stage 1～3 的 **Target Guidance / Pre-ADR Working Guidance**，用于把未来三阶段路线的职责、Authority、跨阶段 Handoff 和关键设计决策记录清楚。
+
+但这些 Guidance：
+
+- 不修改 Runtime；
+- 不修改当前正式 Schema；
+- 不修改当前 Agent；
+- 不修改 Accepted ADR；
+- 不构成 Runtime Implementation Plan；
+- 不把 Visual-first 路线宣称为已实现或已 Accepted。
 
 原整理方案曾计划的：
 
@@ -112,17 +126,17 @@ README 等用户说明
 
 原因：
 
-- Stage 2 的目标职责边界已经确认，但尚未通过真实图片 Benchmark；
+- Stage 2 尚未通过真实图片 Benchmark；
 - 图片模型、Provider、自动 Reviewer 实现和通过阈值尚未冻结；
 - 不在 Benchmark 前编写 Runtime Implementation Plan 或改写当前入口；
-- 迁移和 `Main Mode / Fast Mode` 最终定位应该由未来新 ADR 决定。
+- 迁移和 `Main Mode / Fast Mode` 最终定位应由未来新 ADR 决定。
 
-因此当前保持：
+因此正式决策链仍保持：
 
 ```text
-研究
+研究 / Target Guidance
 ↓
-Benchmark
+Stage 2 Benchmark
 ↓
 Decision
 ↓
@@ -135,13 +149,7 @@ Passed？
         └─ Yes → 编写 Implementation Plan
 ```
 
-等 Stage 2 真正通过后，再新增：
-
-```text
-04-stage2-design.md
-```
-
-记录最终冻结的 Stage 2 设计。
+Stage 2 Benchmark Passed 后，再根据证据决定是否新增 / 冻结正式 Stage 2 Design 文档及后续 Implementation 文档。
 
 ---
 
