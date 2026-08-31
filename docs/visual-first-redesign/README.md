@@ -109,7 +109,10 @@ README 等用户说明
 7. [`stage3-reconstruction-plan-contract.md`](stage3-reconstruction-plan-contract.md)
    Stage 3 统一重建计划合同：定义 Canonical Reconstruction Plan、Revision Patch、Accepted Page Plan 以及与确定性 Runtime 的接口边界。
 
-8. [`references/external-project-and-source-review.md`](references/external-project-and-source-review.md)
+8. [`visual-first-code-refactor-plan.md`](visual-first-code-refactor-plan.md)
+   Visual-first 的 P1～P8 代码改造路线：从 Canonical Reconstruction Plan 基础设施逐步推进到正式 Skill 主流程切换。
+
+9. [`references/external-project-and-source-review.md`](references/external-project-and-source-review.md)
    外部 GitHub 项目、源码与许可证证据。
 
 ### Stage 3 文档职责边界
