@@ -788,8 +788,13 @@ Render
 Structural / Editability QA
 ↓
 视觉审核代理
-↓
-PASS
+        │
+        ├─ PASS / PASS_WITH_MINOR_DIFFERENCES
+        │    → Accepted Page
+        ├─ REVISION_REQUIRED
+        │    → Targeted Revision
+        └─ BLOCK
+             → Return Upstream
 ```
 
 失败分类：
@@ -819,16 +824,33 @@ Unsafe Crop
 ```text
 用户确认后的最终设计图
 +
-PowerPoint 实际渲染图
+PowerPoint 当前渲染图
 +
-确定性结构 / 可编辑性 QA 结果
+Deterministically Compiled Review Context
 +
-必要的已确认语义关系
+结构 / 可编辑性 QA Evidence
         ↓
-视觉审核代理
+Fresh Visual Reviewer
         ↓
-视觉一致性审核结果
+PASS
+/
+PASS_WITH_MINOR_DIFFERENCES
+/
+REVISION_REQUIRED
+/
+BLOCK
 ```
+
+Visual Reviewer 的完整输入、审核维度、四级判定结果与问题定位要求，以 [`visual-reviewer-prompt-contract.md`](visual-reviewer-prompt-contract.md) 为专属 Authority。
+
+本 Guidance 只保留以下总体原则：
+
+- Reviewer 必须使用与 Layout Planner 独立的 Fresh Context；
+- Review Context 由确定性 Context Compiler 从权威 Artifact 中投影生成，不由宿主代理或布局规划代理自由总结；
+- `PASS` 与 `PASS_WITH_MINOR_DIFFERENCES` 均形成 Accepted Page；
+- `REVISION_REQUIRED` 触发布局规划代理定向修订；
+- `BLOCK` 返回对应上游，不在 Stage 3 硬修；
+- Reviewer 不验证 Native editability，也不输出新的几何或 Reconstruction Plan。
 
 它检查布局、位置、尺寸、间距、视觉层级、重叠关系、连接线视觉表现、字体视觉、颜色、阴影、透明度、复杂资产裁切与整体视觉一致性。
 

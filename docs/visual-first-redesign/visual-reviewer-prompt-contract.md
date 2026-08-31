@@ -460,6 +460,15 @@ PASS
 → Accepted Page
 ```
 
+`Accepted Page` 表示页面审核状态。进入 Final Deck Assembly 前，该状态必须进一步绑定：
+
+- Accepted Canonical Reconstruction Plan；
+- validated immutable assets；
+- Structural / Editability QA Evidence；
+- Visual Review Evidence；
+
+从而形成 `Accepted Page Plan`。其完整 Artifact 定义以 [`stage3-reconstruction-plan-contract.md`](stage3-reconstruction-plan-contract.md) 为 Authority。
+
 不得再次调用 Layout Planner 进行自动修订。
 
 ---
