@@ -14,6 +14,7 @@ from reconstruction_plan import compile_reconstruction_plan
 from schema_utils import ContractError, load_json, validate_schema, validate_semantics
 from shared_validator import validate_documents
 from visual_first_planner import (
+    canonicalize_plan_for_runtime,
     content_authority_from_handoff,
     validate_block_against_handoff,
     validate_content_projection,
@@ -110,17 +111,22 @@ def _finalize_initial(
             "call_dir": str(args.call_dir),
         }
 
-    plan = response["artifacts"]["reconstruction_plan"]
+    candidate_plan = response["artifacts"]["reconstruction_plan"]
     try:
-        validate_schema("reconstruction_plan", plan, args.schema_dir)
-        validate_semantics("reconstruction_plan", plan)
+        # Candidate validation deliberately excludes the exact Runtime slide-size gate.
+        validate_schema("reconstruction_plan", candidate_plan, args.schema_dir)
+        validate_semantics("reconstruction_plan", candidate_plan)
         validate_plan_against_handoff(
-            plan,
+            candidate_plan,
             handoff,
             request,
             iteration=args.iteration,
             slide_id=slide_id,
         )
+        plan = canonicalize_plan_for_runtime(candidate_plan, request)
+        # Canonical validation runs again after deterministic Runtime normalization.
+        validate_schema("reconstruction_plan", plan, args.schema_dir)
+        validate_semantics("reconstruction_plan", plan)
         work_root = output.parent.parent
         projection_path = work_root / "source-content.json"
         if not projection_path.is_file():

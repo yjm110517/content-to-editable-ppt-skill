@@ -1,9 +1,10 @@
 from __future__ import annotations
 
+import copy
 from typing import Any
 
 from schema_utils import ContractError, error
-from slide_size import resolve_slide_size
+from slide_size import validate_slide_ratio_compatible
 
 
 def content_authority_from_handoff(handoff: dict[str, Any]) -> dict[str, Any]:
@@ -55,18 +56,20 @@ def validate_plan_against_handoff(
     slide_id: str,
 ) -> None:
     failures: list[dict[str, str]] = []
-    expected_size = resolve_slide_size(request["output_ratio"])
     if plan["page"]["id"] != slide_id or slide_id != handoff["slide_id"]:
         failures.append(error("$.page.id", "Plan, call, and Handoff slide IDs must match", "page_identity_mismatch"))
     if plan["page"]["iteration"] != iteration:
         failures.append(error("$.page.iteration", "Plan iteration does not match the call", "iteration_mismatch"))
     if plan["source"]["approved_design"] != handoff["stage2"]["approved_design"] or plan["source"]["approved_design"] != request["source_image"]:
         failures.append(error("$.source.approved_design", "Plan Approved Design must match Handoff and Request", "source_mismatch"))
-    if (
-        abs(float(plan["slide"]["width_in"]) - expected_size["width_in"]) > 0.000001
-        or abs(float(plan["slide"]["height_in"]) - expected_size["height_in"]) > 0.000001
-    ):
-        failures.append(error("$.slide", "Plan slide size does not match Runtime output-ratio policy", "slide_ratio_mismatch"))
+    try:
+        validate_slide_ratio_compatible(
+            request["output_ratio"],
+            plan["slide"]["width_in"],
+            plan["slide"]["height_in"],
+        )
+    except ContractError as exc:
+        failures.extend(exc.errors)
 
     elements = {item["id"]: item for item in plan["elements"]}
     authority_objects = {item["id"]: item for item in handoff["semantic_structure"]["objects"]}
@@ -130,3 +133,17 @@ def validate_plan_against_handoff(
 
     if failures:
         raise ContractError(failures)
+
+
+def canonicalize_plan_for_runtime(plan: dict[str, Any], request: dict[str, Any]) -> dict[str, Any]:
+    """Return a Canonical Plan without mutating the Planner's raw candidate."""
+
+    canonical = copy.deepcopy(plan)
+    expected = validate_slide_ratio_compatible(
+        request["output_ratio"],
+        plan["slide"]["width_in"],
+        plan["slide"]["height_in"],
+    )
+    canonical["slide"]["width_in"] = expected["width_in"]
+    canonical["slide"]["height_in"] = expected["height_in"]
+    return canonical
