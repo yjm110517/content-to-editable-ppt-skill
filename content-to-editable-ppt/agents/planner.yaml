@@ -1,6 +1,6 @@
 schema_version: "1.3"
 role_id: "layout-planner"
-role_version: "1.3.1"
+role_version: "1.4.0"
 context_policy: "fresh"
 prompt_file: "prompts/planner.md"
 output_schema: "../schemas/planner-response.schema.json"
@@ -17,12 +17,10 @@ input_profiles:
   initial:
     - "request.json"
     - "source.png"
-    - "source-content.json"
-    - "layout.schema.json"
-    - "crops.schema.json"
-    - "asset-manifest.schema.json"
+    - "reconstruction-handoff.json"
+    - "visual-spec.json"
+    - "reconstruction-plan.schema.json"
     - "element-classification.md"
-    - "ppt-build-contract.md"
     - "planner-response.schema.json"
   revision:
     - "request.json"

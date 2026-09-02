@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import argparse
+import json
 import os
 import shutil
 from pathlib import Path
@@ -18,8 +19,9 @@ from agent_common import (
     stage_directory,
 )
 from agent_request_evidence import input_manifest_entry
-from asset_common import AssetError, atomic_write_bytes, atomic_write_json, failure, load_contract, log_event, success
-from schema_utils import load_json
+from asset_common import AssetError, atomic_write_bytes, atomic_write_json, failure, load_contract, log_event, sha256_file, success
+from schema_utils import ContractError, load_json
+from slide_size import resolve_slide_size
 
 
 COMPONENT = "prepare_agent_call"
@@ -47,6 +49,8 @@ def parser() -> argparse.ArgumentParser:
     result.add_argument("--request", type=Path)
     result.add_argument("--source", type=Path)
     result.add_argument("--content-authority", type=Path)
+    result.add_argument("--reconstruction-handoff", type=Path)
+    result.add_argument("--slide-id")
     result.add_argument("--iteration-dir", type=Path)
     result.add_argument("--render", type=Path)
     result.add_argument("--layout", type=Path)
@@ -70,15 +74,14 @@ def parser() -> argparse.ArgumentParser:
 def _inputs(args: argparse.Namespace) -> dict[str, Path]:
     schema = args.schema_dir.resolve()
     if args.role == "planner" and args.mode == "initial":
-        if args.content_authority is None:
-            raise AssetError("Planner initial mode requires --content-authority", path="--content-authority", code="cli_error", exit_code=2)
+        if args.reconstruction_handoff is None:
+            raise AssetError("Planner initial mode requires --reconstruction-handoff", path="--reconstruction-handoff", code="cli_error", exit_code=2)
         return {
-            "request.json": args.request, "source.png": args.source, "source-content.json": args.content_authority,
-            "layout.schema.json": schema / "layout.schema.json",
-            "crops.schema.json": schema / "crops.schema.json",
-            "asset-manifest.schema.json": schema / "asset-manifest.schema.json",
+            "request.json": args.request, "source.png": args.source,
+            "reconstruction-handoff.json": args.reconstruction_handoff,
+            "visual-spec.json": args.work_root / "visual-spec.json",
+            "reconstruction-plan.schema.json": schema / "reconstruction-plan.schema.json",
             "element-classification.md": REFERENCE_DIR / "element-classification.md",
-            "ppt-build-contract.md": REFERENCE_DIR / "ppt-build-contract.md",
             "planner-response.schema.json": schema / "planner-response.schema.json",
         }
     if args.role == "planner" and args.mode == "revision":
@@ -122,17 +125,41 @@ def main() -> int:
             raise AssetError("Planner and Reviewer modes require --request and --source", path="$", code="cli_error", exit_code=2)
         request_path = args.request.resolve()
         request = load_contract("request", request_path, args.schema_dir)
+        resolve_slide_size(request["output_ratio"])
         task_id = request["task_id"]
         run_id = args.run_id or task_id
         if request_path.parent != work_root:
             raise AssetError("request must be directly inside work-root", path=str(request_path), code="path_escape")
         if args.source.resolve() != (work_root / request["source_image"]).resolve():
             raise AssetError("source does not match request source_image", path=str(args.source), code="input_mismatch")
-        if args.role == "planner":
+        if args.role == "planner" and args.mode == "revision":
             authority = args.content_authority.resolve() if args.content_authority else None
             if authority is None or authority.parent != work_root or authority.name != "source-content.json":
                 raise AssetError("Planner content authority must be work-root/source-content.json", path="--content-authority", code="path_escape")
             _validate_content_authority(authority)
+        if args.role == "planner" and args.mode == "initial":
+            if not args.slide_id:
+                raise AssetError("Planner initial mode requires --slide-id", path="--slide-id", code="cli_error", exit_code=2)
+            handoff_path = args.reconstruction_handoff.resolve() if args.reconstruction_handoff else None
+            expected_handoff = work_root / "reconstruction-handoff.json"
+            if handoff_path != expected_handoff or not expected_handoff.is_file():
+                raise AssetError("reconstruction handoff must be work-root/reconstruction-handoff.json", path="--reconstruction-handoff", code="path_escape")
+            handoff = load_contract("reconstruction_handoff", handoff_path, args.schema_dir)
+            if handoff["slide_id"] != args.slide_id:
+                raise AssetError("slide-id does not match reconstruction handoff", path="--slide-id", code="page_identity_mismatch", exit_code=9)
+            if handoff["stage2"]["approved_design"] != request["source_image"]:
+                raise AssetError("handoff Approved Design does not match request source_image", path="$.stage2.approved_design", code="source_mismatch")
+            if sha256_file(args.source.resolve()) != handoff["provenance"]["approved_design_sha256"]:
+                raise AssetError("Approved Design changed after Handoff materialization", path=str(args.source), code="approved_design_changed", exit_code=9)
+            visual_spec_path = work_root / handoff["stage2"]["visual_spec"]
+            if visual_spec_path != work_root / "visual-spec.json" or not visual_spec_path.is_file():
+                raise AssetError("visual spec must be work-root/visual-spec.json", path="$.stage2.visual_spec", code="missing_input", exit_code=3)
+            try:
+                load_json(visual_spec_path)
+            except (json.JSONDecodeError, UnicodeError, ContractError) as exc:
+                raise AssetError("visual spec must be a UTF-8 JSON object", path=str(visual_spec_path), code="invalid_visual_spec") from exc
+            if sha256_file(visual_spec_path) != handoff["provenance"]["visual_spec_sha256"]:
+                raise AssetError("Visual Spec changed after Handoff materialization", path=str(visual_spec_path), code="visual_spec_changed", exit_code=9)
         expected_output = expected_call_dir(work_root, args.iteration, args.role, args.call_id)
         if args.output_dir.resolve() != expected_output:
             raise AssetError("output-dir must match .agent-calls/<iteration>/<role>/<call-id>", path=str(args.output_dir), code="path_escape")
@@ -182,6 +209,8 @@ def main() -> int:
                 "selected_output_schema_sha256": schema_hash,
                 "inputs": entries,
             }
+            if args.role == "planner" and args.mode == "initial":
+                manifest["slide_id"] = args.slide_id
             atomic_write_json(stage / "call_manifest.json", manifest)
             os.replace(stage, expected_output)
         except Exception:

@@ -32,7 +32,7 @@ def _contract_asset_error(exc: ContractError) -> AssetError:
     return AssetError(detail["message"], path=detail["path"], code=detail["code"])
 
 
-def _source_size(path: Path) -> dict[str, int]:
+def read_source_metadata(path: Path) -> dict[str, int]:
     previous_limit = Image.MAX_IMAGE_PIXELS
     try:
         Image.MAX_IMAGE_PIXELS = 100_000_000
@@ -101,7 +101,7 @@ def compile_to_iteration(args: argparse.Namespace) -> dict[str, str]:
         raise AssetError("approved design does not exist", path=str(source), code="missing_input", exit_code=3)
 
     try:
-        artifacts = compile_reconstruction_plan(plan, content, request, _source_size(source))
+        artifacts = compile_reconstruction_plan(plan, content, request, read_source_metadata(source))
         paths = {kind: iteration_dir / name for kind, name in zip(("layout", "crops", "asset_manifest"), OUTPUT_NAMES)}
         validate_documents(artifacts, paths, profile="candidate", schema_dir=args.schema_dir)
     except ContractError as exc:

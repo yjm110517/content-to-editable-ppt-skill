@@ -1,15 +1,16 @@
 from __future__ import annotations
 
 import copy
-import re
 from decimal import Decimal, ROUND_HALF_UP
 from typing import Any, TypedDict
 
 from schema_utils import ContractError, error
+from slide_size import resolve_slide_size
 
 
 ASPECT_TOLERANCE = Decimal("0.05")
-SLIDE_RATIO_TOLERANCE = Decimal("0.0001")
+ASPECT_EPSILON = Decimal("0.000000001")
+SLIDE_SIZE_TOLERANCE = Decimal("0.000001")
 
 
 class SourceMetadata(TypedDict):
@@ -60,7 +61,7 @@ def _validate_aspect(box: list[int], geometry: dict[str, Any], slide: dict[str, 
     target_height = _decimal(geometry["height"]) * _decimal(slide["height_in"])
     target_aspect = target_width / target_height
     relative_error = abs(source_aspect - target_aspect) / target_aspect
-    if relative_error > ASPECT_TOLERANCE:
+    if relative_error > ASPECT_TOLERANCE + ASPECT_EPSILON:
         raise ContractError([error(path, f"source and placement aspect ratios differ by {relative_error:.6f}", "asset_aspect_mismatch")])
 
 
@@ -89,20 +90,17 @@ def _authority_index(content_authority: dict[str, Any]) -> dict[str, str]:
 
 
 def _validate_slide_ratio(request: dict[str, Any], slide: dict[str, Any]) -> None:
-    match = re.fullmatch(r"\s*(\d+)\s*:\s*(\d+)\s*", request["output_ratio"])
-    if not match:
-        return
-    request_width, request_height = (Decimal(value) for value in match.groups())
-    if request_width <= 0 or request_height <= 0:
-        return
-    request_ratio = request_width / request_height
-    slide_ratio = _decimal(slide["width_in"]) / _decimal(slide["height_in"])
-    relative_error = abs(slide_ratio - request_ratio) / request_ratio
-    if relative_error > SLIDE_RATIO_TOLERANCE:
+    expected = resolve_slide_size(request["output_ratio"])
+    width_error = abs(_decimal(slide["width_in"]) - _decimal(expected["width_in"]))
+    height_error = abs(_decimal(slide["height_in"]) - _decimal(expected["height_in"]))
+    if width_error > SLIDE_SIZE_TOLERANCE or height_error > SLIDE_SIZE_TOLERANCE:
         raise ContractError([
             error(
                 "$.slide",
-                f"slide ratio {slide_ratio:.6f} does not match request output_ratio {request['output_ratio']}",
+                (
+                    f"slide size {slide['width_in']} x {slide['height_in']} does not match "
+                    f"Runtime policy {expected['width_in']} x {expected['height_in']} for {request['output_ratio']}"
+                ),
                 "slide_ratio_mismatch",
             )
         ])

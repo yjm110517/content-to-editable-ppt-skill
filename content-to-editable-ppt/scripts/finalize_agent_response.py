@@ -3,25 +3,25 @@ from __future__ import annotations
 import argparse
 import json
 import os
-import re
 import shutil
 from pathlib import Path
 from typing import Any
 
 from agent_common import SCHEMA_DIR, load_call_bundle, provenance_entry, stage_directory
-from canonical_artifact import canonical_sha256
-from asset_common import AssetError, atomic_write_bytes, atomic_write_json, failure, load_contract, log_event, sha256_file, success
-from schema_utils import ContractError, cross_validate, is_safe_relative_path, load_json, validate_schema, validate_semantics
+from asset_common import AssetError, atomic_write_json, failure, load_contract, log_event, sha256_file, success
+from compile_reconstruction_plan import read_source_metadata
+from reconstruction_plan import compile_reconstruction_plan
+from schema_utils import ContractError, load_json, validate_schema, validate_semantics
 from shared_validator import validate_documents
-from text_identity import compare_authority
+from visual_first_planner import (
+    content_authority_from_handoff,
+    validate_block_against_handoff,
+    validate_content_projection,
+    validate_plan_against_handoff,
+)
 
 
 COMPONENT = "finalize_agent_response"
-MAX_SVG_BYTES = 1024 * 1024
-MAX_TOTAL_SVG_BYTES = 5 * 1024 * 1024
-BANNED_SVG = re.compile(r"(?:<script\b|<foreignobject\b|\bon[a-z]+\s*=|(?:href|src)\s*=\s*['\"](?:https?:|file:|data:)|base64)", re.IGNORECASE)
-
-
 def parser() -> argparse.ArgumentParser:
     result = argparse.ArgumentParser(description="Validate and atomically submit Planner or Reviewer output.")
     result.add_argument("--role", choices=("planner", "reviewer"), required=True)
@@ -79,140 +79,88 @@ def _validate_no_full_page_raster(layout: dict[str, Any], crops: dict[str, Any],
                 raise AssetError("full-page source raster cannot be used as a slide-sized image", path=f"layout.elements.{element['id']}", code="prompt_injection_guard")
 
 
-def _validate_representation_decisions(
-    response: dict[str, Any],
-    layout: dict[str, Any],
-    crops: dict[str, Any],
+def _first_contract_error(exc: ContractError) -> AssetError:
+    detail = exc.errors[0] if exc.errors else {"path": "$", "code": "contract_error", "message": str(exc)}
+    return AssetError(detail["message"], path=detail["path"], code=detail["code"])
+
+
+def _finalize_initial(
+    args: argparse.Namespace,
     manifest: dict[str, Any],
-) -> None:
-    elements = {item["id"]: item for item in layout["elements"]}
-    crop_ids = {item["id"] for item in crops["assets"]}
-    assets = {item["id"]: item for item in manifest["assets"]}
-    covered_image_ids: set[str] = set()
-
-    for index, decision in enumerate(response["representation_decisions"]):
-        base = f"$.representation_decisions[{index}]"
-        element_ids = set(decision["element_ids"])
-        asset_ids = set(decision["asset_ids"])
-        unknown_elements = element_ids - set(elements)
-        unknown_assets = asset_ids - set(assets)
-        if unknown_elements or unknown_assets:
-            raise AssetError(
-                "representation decision references an unknown element or asset",
-                path=base,
-                code="unknown_reference",
-            )
-
-        representation = decision["selected_representation"]
-        if representation == "native":
-            if any(elements[element_id]["type"] == "image" for element_id in element_ids):
-                raise AssetError(
-                    "native representation cannot target an image element",
-                    path=base + ".element_ids",
-                    code="representation_mismatch",
-                )
-            continue
-
-        target_elements = [elements[element_id] for element_id in element_ids]
-        if any(item["type"] != "image" for item in target_elements):
-            raise AssetError(
-                "asset representation must target image elements",
-                path=base + ".element_ids",
-                code="representation_mismatch",
-            )
-        referenced_assets = {item["asset_id"] for item in target_elements}
-        if referenced_assets != asset_ids:
-            raise AssetError(
-                "representation decision asset IDs must match its image elements",
-                path=base + ".asset_ids",
-                code="representation_mismatch",
-            )
-        covered_image_ids.update(element_ids)
-
-        for asset_id in asset_ids:
-            asset = assets[asset_id]
-            if representation == "crop":
-                if asset["type"] not in {"png", "jpeg"} or asset["source"] != "cropped" or asset_id not in crop_ids:
-                    raise AssetError(
-                        "crop representation requires a cropped PNG/JPEG manifest entry and crop specification",
-                        path=base + ".asset_ids",
-                        code="representation_mismatch",
-                    )
-            elif asset["type"] != "svg":
-                raise AssetError(
-                    "SVG representation requires an SVG manifest entry",
-                    path=base + ".asset_ids",
-                    code="representation_mismatch",
-                )
-            if asset["contains_text"] != decision["contains_readable_text"]:
-                raise AssetError(
-                    "representation text declaration must match the asset manifest",
-                    path=base + ".contains_readable_text",
-                    code="representation_mismatch",
-                )
-
-    image_ids = {item["id"] for item in layout["elements"] if item["type"] == "image"}
-    if image_ids != covered_image_ids:
-        raise AssetError(
-            "every image element must be covered by exactly one asset representation decision",
-            path="$.representation_decisions",
-            code="representation_inventory",
-        )
-
-
-def _finalize_initial(args: argparse.Namespace, response: dict[str, Any]) -> dict[str, Any]:
+    response: dict[str, Any],
+) -> dict[str, Any]:
     output = args.output_dir.resolve()
     if output.exists():
         raise AssetError("iteration already exists", path=str(output), code="output_conflict", exit_code=9)
-    request = _load_call_input(args.call_dir, "request.json")
-    artifacts = response["artifacts"]
-    layout, crops, asset_manifest = artifacts["layout"], artifacts["crops"], artifacts["asset_manifest"]
-    if layout.get("schema_version") != "1.4":
-        raise AssetError("new Planner candidates must use Layout schema 1.4", path="$.artifacts.layout.schema_version", code="content_identity")
-    documents = {"request": request, "layout": layout, "crops": crops, "asset_manifest": asset_manifest}
-    validate_documents(documents, {}, profile="candidate", schema_dir=args.schema_dir)
-    authority = _load_call_input(args.call_dir, "source-content.json")
-    content_report = compare_authority(authority, layout)
-    if content_report["status"] != "pass":
-        raise AssetError("Planner candidate does not reconstruct canonical content authority", path="$.artifacts.layout.elements", code="content_failure")
-    _validate_no_full_page_raster(layout, crops, asset_manifest)
-    _validate_representation_decisions(response, layout, crops, asset_manifest)
 
-    generated = response.get("generated_assets", [])
-    generated_by_id = {item["asset_id"]: item for item in generated}
-    manifest_by_id = {item["id"]: item for item in asset_manifest["assets"]}
-    total_size = 0
-    for asset_id, generated_asset in generated_by_id.items():
-        filename = generated_asset["filename"]
-        if not is_safe_relative_path(filename, filename_only=True) or not filename.lower().endswith(".svg"):
-            raise AssetError("unsafe generated SVG filename", path=filename, code="unsafe_path")
-        content = generated_asset["content"].encode("utf-8")
-        total_size += len(content)
-        if len(content) > MAX_SVG_BYTES or total_size > MAX_TOTAL_SVG_BYTES:
-            raise AssetError("generated SVG size limit exceeded", path=filename, code="asset_limit")
-        if BANNED_SVG.search(generated_asset["content"]):
-            raise AssetError("generated SVG contains a forbidden embedded resource or active content", path=filename, code="unsafe_svg")
-        item = manifest_by_id.get(asset_id)
-        if not item or item["type"] != "svg" or item["path"] != f"assets/{filename}":
-            raise AssetError("generated SVG does not match asset manifest", path=asset_id, code="asset_manifest_mismatch")
-        if item["source"] not in {"agent-generated", "locally-redrawn"} or item["security_status"] != "pending":
-            raise AssetError("generated SVG must be pending and Agent-generated or locally redrawn", path=asset_id, code="asset_manifest_mismatch")
-    declared_generated = {item["id"] for item in asset_manifest["assets"] if item["type"] == "svg" and item["source"] in {"agent-generated", "locally-redrawn"}}
-    if declared_generated != set(generated_by_id):
-        raise AssetError("generated SVG list and manifest declarations must match exactly", path="$.generated_assets", code="asset_manifest_mismatch")
+    request = _load_call_input(args.call_dir, "request.json")
+    handoff = _load_call_input(args.call_dir, "reconstruction-handoff.json")
+    slide_id = manifest.get("slide_id")
+    if not isinstance(slide_id, str) or not slide_id:
+        raise AssetError("Planner call manifest is missing slide_id", path="$.slide_id", code="call_bundle", exit_code=9)
+
+    if response["outcome"] == "block":
+        try:
+            validate_block_against_handoff(response["block"], handoff)
+        except ContractError as exc:
+            raise _first_contract_error(exc) from exc
+        return {
+            "planner_status": "blocked",
+            "block": response["block"],
+            "call_dir": str(args.call_dir),
+        }
+
+    plan = response["artifacts"]["reconstruction_plan"]
+    try:
+        validate_schema("reconstruction_plan", plan, args.schema_dir)
+        validate_semantics("reconstruction_plan", plan)
+        validate_plan_against_handoff(
+            plan,
+            handoff,
+            request,
+            iteration=args.iteration,
+            slide_id=slide_id,
+        )
+        work_root = output.parent.parent
+        projection_path = work_root / "source-content.json"
+        if not projection_path.is_file():
+            raise AssetError("source-content compatibility projection is missing", path=str(projection_path), code="missing_input", exit_code=3)
+        try:
+            projection = load_json(projection_path)
+        except (json.JSONDecodeError, UnicodeError, ContractError) as exc:
+            raise AssetError("source-content compatibility projection is invalid", path=str(projection_path), code="content_projection_mismatch") from exc
+        validate_content_projection(handoff, projection)
+        authority = content_authority_from_handoff(handoff)
+        source = work_root / request["source_image"]
+        artifacts = compile_reconstruction_plan(plan, authority, request, read_source_metadata(source))
+        paths = {
+            "layout": output / "layout.json",
+            "crops": output / "crops.json",
+            "asset_manifest": output / "asset_manifest.json",
+        }
+        validate_documents(artifacts, paths, profile="candidate", schema_dir=args.schema_dir)
+        _validate_no_full_page_raster(artifacts["layout"], artifacts["crops"], artifacts["asset_manifest"])
+    except ContractError as exc:
+        raise _first_contract_error(exc) from exc
 
     stage = stage_directory(output)
     try:
-        atomic_write_json(stage / "layout.json", layout)
-        atomic_write_json(stage / "crops.json", crops)
-        atomic_write_json(stage / "asset_manifest.json", asset_manifest)
-        for item in generated:
-            atomic_write_bytes(stage / "assets" / item["filename"], item["content"].encode("utf-8"))
+        atomic_write_json(stage / "reconstruction-plan.json", plan)
+        atomic_write_json(stage / "layout.json", artifacts["layout"])
+        atomic_write_json(stage / "crops.json", artifacts["crops"])
+        atomic_write_json(stage / "asset_manifest.json", artifacts["asset_manifest"])
         os.replace(stage, output)
     except Exception:
         shutil.rmtree(stage, ignore_errors=True)
         raise
-    return {"iteration_dir": str(output), "layout": str(output / "layout.json"), "crops": str(output / "crops.json"), "asset_manifest": str(output / "asset_manifest.json")}
+    return {
+        "planner_status": "planned",
+        "iteration_dir": str(output),
+        "reconstruction_plan": str(output / "reconstruction-plan.json"),
+        "layout": str(output / "layout.json"),
+        "crops": str(output / "crops.json"),
+        "asset_manifest": str(output / "asset_manifest.json"),
+    }
 
 
 def _verify_current_inputs(iteration_dir: Path, input_hashes: dict[str, str], names: list[str]) -> None:
@@ -225,6 +173,10 @@ def _verify_current_inputs(iteration_dir: Path, input_hashes: dict[str, str], na
 def _verify_work_inputs(call_dir: Path, work_root: Path, input_hashes: dict[str, str]) -> None:
     request_copy = _load_call_input(call_dir, "request.json")
     current = {"request.json": work_root / "request.json", "source.png": work_root / request_copy["source_image"]}
+    if "reconstruction-handoff.json" in input_hashes:
+        current["reconstruction-handoff.json"] = work_root / "reconstruction-handoff.json"
+    if "visual-spec.json" in input_hashes:
+        current["visual-spec.json"] = work_root / "visual-spec.json"
     for name, path in current.items():
         if not path.is_file() or sha256_file(path) != input_hashes[name]:
             raise AssetError("work input changed after Agent call", path=str(path), code="hash_conflict", exit_code=9)
@@ -387,7 +339,7 @@ def main() -> int:
         _validate_identity(response, manifest, args.iteration)
         _verify_work_inputs(args.call_dir, work_root, input_hashes)
         if args.role == "planner" and args.mode == "initial":
-            outputs = _finalize_initial(args, response)
+            outputs = _finalize_initial(args, manifest, response)
         elif args.role == "planner":
             outputs = _finalize_revision(args, manifest, response, input_hashes)
         else:

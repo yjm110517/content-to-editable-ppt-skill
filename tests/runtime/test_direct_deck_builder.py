@@ -17,6 +17,7 @@ SCRIPTS = ROOT / "content-to-editable-ppt" / "scripts"
 sys.path.insert(0, str(SCRIPTS))
 
 from tests.runtime.test_direct_deck_request import request
+from slide_size import resolve_slide_size
 
 
 class DirectDeckBuilderTests(unittest.TestCase):
@@ -37,6 +38,9 @@ class DirectDeckBuilderTests(unittest.TestCase):
             self.assertEqual(completed.returncode, 0, completed.stdout + completed.stderr)
             built = json.loads(report.read_text(encoding="utf-8")); self.assertEqual(built["slide_order"], ["S01", "S02"])
             presentation = Presentation(output); self.assertEqual(len(presentation.slides), 2)
+            expected_size = resolve_slide_size(value["output_ratio"])
+            self.assertAlmostEqual(expected_size["width_in"], presentation.slide_width / 914400, places=3)
+            self.assertAlmostEqual(expected_size["height_in"], presentation.slide_height / 914400, places=3)
             names = [[shape.name for shape in slide.shapes] for slide in presentation.slides]
             self.assertIn("ivt:TITLE", names[0]); self.assertIn("ivt:TITLE", names[1]); self.assertIn("ivt:CHART", names[1])
             with zipfile.ZipFile(output) as archive:

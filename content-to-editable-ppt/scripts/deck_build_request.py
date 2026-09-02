@@ -14,13 +14,10 @@ from PIL import Image
 from asset_common import AssetError
 from sanitize_svg import sanitize_bytes
 from schema_utils import ContractError, error, is_safe_relative_path, load_json, validate_schema
+from slide_size import DIMENSIONS, resolve_slide_size
 
 
 SCHEMA_DIR = Path(__file__).resolve().parents[1] / "schemas"
-DIMENSIONS = {
-    "16:9": {"width_in": 13.333, "height_in": 7.5, "width_px": 1600, "height_px": 900},
-    "4:3": {"width_in": 10.0, "height_in": 7.5, "width_px": 1200, "height_px": 900},
-}
 WINDOWS_RESERVED = {"CON", "PRN", "AUX", "NUL", *(f"COM{i}" for i in range(1, 10)), *(f"LPT{i}" for i in range(1, 10))}
 MEDIA_TYPES = {"image/png": ("png", ".png", "PNG"), "image/jpeg": ("jpeg", ".jpg", "JPEG"), "image/svg+xml": ("svg", ".svg", "SVG")}
 
@@ -80,7 +77,7 @@ def validate_request(document: dict[str, Any], schema_dir: Path = SCHEMA_DIR) ->
         failures.append(error("$.assets", "asset_id must be unique", "duplicate_asset_id"))
     known_assets = set(asset_ids)
     styles = document["styles"]
-    dimensions = DIMENSIONS[document["output_ratio"]]
+    dimensions = resolve_slide_size(document["output_ratio"])
     for slide_index, slide in enumerate(slides):
         base = f"$.slides[{slide_index}]"
         elements = slide["elements"]

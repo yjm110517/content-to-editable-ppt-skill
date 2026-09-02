@@ -105,17 +105,14 @@ class ReconstructionPlanCompilerTests(unittest.TestCase):
 
     def test_aspect_ratio_gate_is_inclusive_at_five_percent(self) -> None:
         candidate = plan()
-        candidate["slide"].update({"width_in": 1, "height_in": 1})
         raster = candidate["elements"][-1]
-        raster["geometry"] = {"coordinate_space": "normalized", "x": 0, "y": 0, "width": 1, "height": 1}
+        raster["geometry"] = {"coordinate_space": "normalized", "x": 0, "y": 0, "width": 7.5 / 13.333, "height": 1}
         raster["asset_request"]["source_region"] = {"coordinate_space": "normalized", "x": 0, "y": 0, "width": 1, "height": 1}
-        square_request = request()
-        square_request["output_ratio"] = "1:1"
         for width in (104, 105):
             with self.subTest(width=width):
-                compile_reconstruction_plan(candidate, authority(), square_request, {"width_px": width, "height_px": 100})
+                compile_reconstruction_plan(candidate, authority(), request(), {"width_px": width, "height_px": 100})
         with self.assertRaises(ContractError) as raised:
-            compile_reconstruction_plan(candidate, authority(), square_request, {"width_px": 106, "height_px": 100})
+            compile_reconstruction_plan(candidate, authority(), request(), {"width_px": 106, "height_px": 100})
         self.assertEqual("asset_aspect_mismatch", raised.exception.errors[0]["code"])
 
     def test_request_output_ratio_must_match_slide_ratio(self) -> None:

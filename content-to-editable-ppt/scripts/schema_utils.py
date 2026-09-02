@@ -62,6 +62,7 @@ SUPPORTED_SCHEMA_VERSIONS = {
     "stage1_authority": {"1.0"},
     "stage2_handoff": {"1.0"},
     "reconstruction_handoff": {"1.0"},
+    "planner_response": {"1.4"},
     "asset_manifest": {"1.3", "1.4"},
 }
 
@@ -504,47 +505,6 @@ def validate_semantics(kind: str, document: dict[str, Any]) -> None:
             failures.append(error("$.requested_model", "runtime-default calls cannot request a model"))
         if mode == "explicit" and requested is None:
             failures.append(error("$.requested_model", "explicit calls require a requested model"))
-    elif kind == "planner_response":
-        if document["mode"] == "initial":
-            assets = document.get("generated_assets", [])
-            _unique(assets, "asset_id", "$.generated_assets", failures)
-            _unique(assets, "filename", "$.generated_assets", failures)
-            decisions = document.get("representation_decisions", [])
-            _unique(decisions, "id", "$.representation_decisions", failures)
-            raster_signals = {
-                "inner_shadow",
-                "soft_shadow",
-                "three_dimensional",
-                "texture",
-                "photographic_detail",
-            }
-            for index, decision in enumerate(decisions):
-                base = f"$.representation_decisions[{index}]"
-                if not _region_ok(decision["source_region"]):
-                    failures.append(error(base + ".source_region", "normalized region exceeds source bounds"))
-                representation = decision["selected_representation"]
-                visual_kind = decision["visual_kind"]
-                signals = set(decision["complexity_signals"])
-                if visual_kind == "complex_icon" and representation == "native":
-                    failures.append(error(base + ".selected_representation", "complex source icons cannot be replaced by native placeholders"))
-                if visual_kind in {"photograph", "texture"} and representation != "crop":
-                    failures.append(error(base + ".selected_representation", f"{visual_kind} requires a source crop"))
-                if signals & raster_signals and representation != "crop":
-                    failures.append(error(base + ".selected_representation", "raster-dependent effects require a source crop"))
-                if representation == "native" and decision["fidelity_risk"] == "high":
-                    failures.append(error(base + ".fidelity_risk", "high-risk visuals cannot use native representation"))
-                if decision["contains_readable_text"] and visual_kind != "brand_mark":
-                    failures.append(error(base + ".contains_readable_text", "only an inseparable brand mark may retain readable text in an asset"))
-            total = 0
-            for index, item in enumerate(assets):
-                size = len(item["content"].encode("utf-8"))
-                total += size
-                if size > 1024 * 1024:
-                    failures.append(error(f"$.generated_assets[{index}].content", "generated SVG exceeds 1 MiB"))
-                if "\x00" in item["content"]:
-                    failures.append(error(f"$.generated_assets[{index}].content", "generated SVG contains NUL"))
-            if total > 5 * 1024 * 1024:
-                failures.append(error("$.generated_assets", "generated SVG assets exceed 5 MiB total"))
     elif kind == "review_evaluation":
         dimensions = [item["dimension"] for item in document["score_adjustments"]]
         if len(dimensions) != len(set(dimensions)):
