@@ -1,0 +1,70 @@
+P3 closure automated validation
+Implementation base: 4952b35
+Validation commit: 8efe182cbc8dc0e6c3da28e1459d9b8bf8921c2a
+Platform: Windows with Microsoft PowerPoint
+
+Command: python -m unittest tests.runtime.test_reconstruction_plan_compiler
+Start time: 2026-09-02T21:46:06.2595724+08:00
+End time: 2026-09-02T21:46:08.2779015+08:00
+Exit code: 0
+Result: PASS
+Tests: 11
+Skipped: 1 (PowerPoint smoke is explicitly enabled below)
+
+Command: python -m unittest tests.runtime.test_reconstruction_handoff
+Start time: 2026-09-02T21:46:08.2807849+08:00
+End time: 2026-09-02T21:46:10.5575919+08:00
+Exit code: 0
+Result: PASS
+Tests: 12
+Skipped: 0
+
+Command: python -m unittest tests.runtime.test_visual_first_planner
+Start time: 2026-09-02T21:46:10.5581965+08:00
+End time: 2026-09-02T21:46:11.4326246+08:00
+Exit code: 0
+Result: PASS
+Tests: 11
+Skipped: 0
+
+Command: python -m unittest tests.runtime.test_p3_planner_integration
+Start time: 2026-09-02T21:46:11.4331342+08:00
+End time: 2026-09-02T21:46:23.7261382+08:00
+Exit code: 0
+Result: PASS
+Tests: 7
+Skipped: 0
+
+Command: python -m unittest discover -s tests/runtime -p "test_*.py"
+Start time: 2026-09-02T21:46:23.7265993+08:00
+End time: 2026-09-02T21:46:40.0793912+08:00
+Exit code: 0
+Result: PASS
+Tests: 115
+Skipped: 1 (PowerPoint smoke is explicitly enabled below)
+
+Command: $env:IVT_RUN_POWERPOINT_SMOKE="1"; python -m unittest tests.runtime.test_reconstruction_plan_compiler.ReconstructionPlanCompilerTests.test_powerpoint_single_page_smoke
+Start time: 2026-09-02T21:47:04.4993441+08:00
+End time: 2026-09-02T21:47:17.3240149+08:00
+Exit code: 0
+Result: PASS
+Tests: 1
+Skipped: 0
+
+Live fixture: P3-LIVE-01 / AI 学习闭环
+Fresh context: PASS
+Raw Planner response modified: false
+Finalizer: PASS
+PowerPoint build: PASS
+PowerPoint render: PASS
+Structural QA: PASS
+Raster security status: passed
+
+Block fixture: P3-BLOCK-01 / chart-01
+Fresh context: PASS
+Outcome: BLOCK
+Code: unsupported_reconstruction
+Scope: objects
+Object IDs: chart-01
+Finalizer exit code: 0
+Iteration created: false

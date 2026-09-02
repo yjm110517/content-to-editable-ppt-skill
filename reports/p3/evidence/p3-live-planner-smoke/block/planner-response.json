@@ -1,0 +1,1 @@
+{"schema_version":"1.4","task_id":"p3-block-01","iteration":1,"mode":"initial","outcome":"block","block":{"code":"unsupported_reconstruction","scope":"objects","object_ids":["chart-01"],"message":"The Stage 1 object chart-01 requires Native Chart reconstruction, which P3 does not support."}}
