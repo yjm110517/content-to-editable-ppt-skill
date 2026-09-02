@@ -1,12 +1,13 @@
 # 视觉优先三阶段重构：研究文档导航
 
-> **Status**：Final Guidance + Research / Benchmark Pending（目标指导已确认，研究与 Benchmark 待执行）
+> **Status**：Final Guidance + P1～P3 Branch Implementation Complete（目标指导已确认，功能分支已完成 P1～P3）
 > **Document type**：Navigation & Status（导航与状态）
 > **Authority**：非运行权威，仅说明研究状态、阅读顺序和文档边界
 > **Current runtime relationship**：不改变当前正式产品、Runtime、入口或 Accepted ADR
 > **Depends on**：当前 [Accepted ADR / DECISIONS](../../DECISIONS.md)、正式 [SKILL.md](../../content-to-editable-ppt/SKILL.md)、当前 Runtime 契约
-> **Next decision gate**：完成 Stage 2 Benchmark；只有 `Passed` 才允许进入新 ADR
-> **Last updated**：2026-08-31
+> **Next implementation**：P4 Native Chart / Native Table / SVG 与 Builder、QA 能力补齐
+> **Formal cutover gate**：完成后续验证并通过新 ADR；在此之前不改变正式 Skill 主路径
+> **Last updated**：2026-09-02
 
 ---
 
@@ -66,14 +67,13 @@ README 等用户说明
 目标设计与研究文档
 ```
 
-因此本目录：
+因此本目录本身：
 
-- 不修改 Runtime；
-- 不修改 Schema；
-- 不修改 Agent；
 - 不修改 Accepted ADR；
-- 不把视觉优先路线宣称为已实现；
+- 不把功能分支实现宣称为已发布正式功能；
 - 不把当前 `run.py` 提前称为 `Fast Mode`。
+
+Visual-first 的 P1～P3 已在 `codex/visual-first-code-refactor` 分支完成代码实现和真实 PowerPoint 验收。该实现状态、提交、证据与接力入口见 [`implementation-status.md`](implementation-status.md)。
 
 本文档落库时（2026-08-28）的当前实现快照是：
 
@@ -88,31 +88,34 @@ README 等用户说明
 
 ## 3. 阅读顺序
 
-1. [`01-product-requirements.md`](01-product-requirements.md)
+1. [`implementation-status.md`](implementation-status.md)
+   当前代码实施进度、验证证据、正式产品边界和下一阶段接力说明。
+
+2. [`01-product-requirements.md`](01-product-requirements.md)
    产品最终要解决什么。
 
-2. [`02-stage1-design.md`](02-stage1-design.md)
+3. [`02-stage1-design.md`](02-stage1-design.md)
    Stage 1 最终目标设计。
 
-3. [`03-stage2-research-and-decision.md`](03-stage2-research-and-decision.md)
+4. [`03-stage2-research-and-decision.md`](03-stage2-research-and-decision.md)
    Stage 2 已确认目标指导、真实图片验证、Benchmark、决策门禁和当前结论。
 
-4. [`04-stage3-guidance.md`](04-stage3-guidance.md)
+5. [`04-stage3-guidance.md`](04-stage3-guidance.md)
    Stage 3 的总体 Pre-ADR Target Guidance：定义重建职责、Authority、跨阶段 Handoff、Native Chart / Table、Accepted Page Plan、Shared Builder 与最终 QA；不构成 Runtime Implementation Authority。
 
-5. [`layout-planner-prompt-contract.md`](layout-planner-prompt-contract.md)
+6. [`layout-planner-prompt-contract.md`](layout-planner-prompt-contract.md)
    布局规划代理任务合同：定义输入、Authority、初次规划、定向修订、视觉位置对齐与重建方式决策。
 
-6. [`visual-reviewer-prompt-contract.md`](visual-reviewer-prompt-contract.md)
+7. [`visual-reviewer-prompt-contract.md`](visual-reviewer-prompt-contract.md)
    视觉审核代理任务合同：定义独立审核上下文、视觉审核维度、四级判定结果与定向修订接口。
 
-7. [`stage3-reconstruction-plan-contract.md`](stage3-reconstruction-plan-contract.md)
+8. [`stage3-reconstruction-plan-contract.md`](stage3-reconstruction-plan-contract.md)
    Stage 3 统一重建计划合同：定义 Canonical Reconstruction Plan、Revision Patch、Accepted Page Plan 以及与确定性 Runtime 的接口边界。
 
-8. [`visual-first-code-refactor-plan.md`](visual-first-code-refactor-plan.md)
+9. [`visual-first-code-refactor-plan.md`](visual-first-code-refactor-plan.md)
    Visual-first 的 P1～P8 代码改造路线：从 Canonical Reconstruction Plan 基础设施逐步推进到正式 Skill 主流程切换。
 
-9. [`references/external-project-and-source-review.md`](references/external-project-and-source-review.md)
+10. [`references/external-project-and-source-review.md`](references/external-project-and-source-review.md)
    外部 GitHub 项目、源码与许可证证据。
 
 ### Stage 3 文档职责边界

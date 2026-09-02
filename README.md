@@ -60,6 +60,8 @@ python .\\content-to-editable-ppt\\scripts\\run.py --help
 
 [视觉优先三阶段重构研究](docs/visual-first-redesign/README.md)基于当前代码、两条 Runtime 路径和 ADR-042/043，整理下一阶段可能采用的产品方向、Stage 1 目标设计以及 Stage 2 Benchmark。该目录属于研究与提案，不改变当前入口、Runtime 行为或 Accepted ADR。
 
+Visual-first 代码改造目前已在 `codex/visual-first-code-refactor` 分支完成 P1～P3，下一阶段为 P4 Native Chart / Native Table / SVG 与 Builder、QA 能力补齐。分支实现尚未替代正式主路径；当前提交、验收证据和接力说明见 [实施状态](docs/visual-first-redesign/implementation-status.md)。
+
 ## 许可证与来源
 
 本项目采用 Apache License 2.0。继承代码的版权和来源说明保留在根目录及 Skill 目录内的 `LICENSE` 与 `NOTICE` 文件中。
