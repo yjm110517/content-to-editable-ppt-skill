@@ -153,12 +153,12 @@ class VisualFirstPlannerTests(unittest.TestCase):
             validate_plan_against_handoff(candidate, handoff(), request(), iteration=1, slide_id="S01")
         self.assertIn("grounding_incomplete", {item["code"] for item in raised.exception.errors})
 
-    def test_chart_requires_p4_instead_of_raster_fallback(self) -> None:
+    def test_chart_requires_a_same_id_native_chart_plan_element(self) -> None:
         current = handoff()
         current["semantic_structure"]["objects"].append({"id": "chart-01", "kind": "chart", "role": "evidence", "data_ref": "data-01"})
         with self.assertRaises(ContractError) as raised:
             validate_plan_against_handoff(plan(), current, request(), iteration=1, slide_id="S01")
-        self.assertIn("unsupported_reconstruction", {item["code"] for item in raised.exception.errors})
+        self.assertIn("grounding_incomplete", {item["code"] for item in raised.exception.errors})
 
     def test_candidate_ratio_precision_is_accepted_and_runtime_size_is_canonical(self) -> None:
         candidate = plan()

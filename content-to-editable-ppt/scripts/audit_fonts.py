@@ -88,6 +88,20 @@ def _expected_runs(build_summary: dict[str, Any]) -> dict[str, list[dict[str, An
     return values
 
 
+def _table_font_expectations(layout: dict[str, Any]) -> dict[str, dict[str, Any]]:
+    """Native tables carry cell runs, but are not text-layout elements.
+
+    Their font contract belongs to the table style, rather than the text
+    typography summary.  Audit every emitted table-cell run against it.
+    """
+
+    return {
+        f"ivt:{item['id']}": {"font_face": item["font_face"], "font_size_pt": item["font_size_pt"]}
+        for item in layout["elements"]
+        if item["type"] == "table"
+    }
+
+
 def _run_record(
     run: ET.Element,
     *,
@@ -149,6 +163,7 @@ def audit_fonts(args: argparse.Namespace) -> dict[str, Any]:
     if summary["hashes"]["output_pptx_sha256"] != sha256_file(args.ppt):
         raise AssetError("PPTX hash does not match build summary", path=str(args.ppt), code="hash_conflict", exit_code=9)
     expected_by_object = _expected_runs(summary)
+    table_font_by_object = _table_font_expectations(layout)
     installed = installed_font_names()
     warnings: list[str] = []
     if not installed:
@@ -181,7 +196,11 @@ def audit_fonts(args: argparse.Namespace) -> dict[str, Any]:
                                 if run.tag not in {f"{{{NS['a']}}}r", f"{{{NS['a']}}}fld"}:
                                     continue
                                 expected_items = expected_by_object.get(object_name, [])
-                                expected = expected_items[object_run_index] if object_run_index < len(expected_items) else None
+                                expected = (
+                                    table_font_by_object[object_name]
+                                    if container == "table_cell" and object_name in table_font_by_object
+                                    else expected_items[object_run_index] if object_run_index < len(expected_items) else None
+                                )
                                 records.append(_run_record(run, slide_index=slide_index, object_name=object_name, container=container, paragraph_index=paragraph_index, run_index=object_run_index, expected=expected, installed=installed))
                                 object_run_index += 1
                         seen_counts[object_name] = object_run_index
@@ -205,7 +224,7 @@ def audit_fonts(args: argparse.Namespace) -> dict[str, Any]:
                 "compliant": False,
                 "violations": ["MISSING_TEXT_RUN"],
             })
-    tracked_objects = set(expected_by_object)
+    tracked_objects = set(expected_by_object) | set(table_font_by_object)
     for record in records:
         if record["object_name"] not in tracked_objects and "untracked text object" not in warnings:
             warnings.append("untracked text object")

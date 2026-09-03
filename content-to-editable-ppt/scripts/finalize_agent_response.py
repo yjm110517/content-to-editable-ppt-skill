@@ -138,7 +138,13 @@ def _finalize_initial(
         validate_content_projection(handoff, projection)
         authority = content_authority_from_handoff(handoff)
         source = work_root / request["source_image"]
-        artifacts = compile_reconstruction_plan(plan, authority, request, read_source_metadata(source))
+        artifacts = compile_reconstruction_plan(
+            plan,
+            authority,
+            request,
+            read_source_metadata(source),
+            handoff["structured_data"],
+        )
         paths = {
             "layout": output / "layout.json",
             "crops": output / "crops.json",

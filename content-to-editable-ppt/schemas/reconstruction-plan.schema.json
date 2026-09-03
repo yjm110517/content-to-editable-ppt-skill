@@ -6,7 +6,7 @@
   "additionalProperties": false,
   "required": ["schema_version", "page", "source", "slide", "elements"],
   "properties": {
-    "schema_version": {"const": "1.0"},
+    "schema_version": {"enum": ["1.0", "1.1"]},
     "page": {
       "type": "object",
       "additionalProperties": false,
@@ -43,6 +43,8 @@
           {"$ref": "#/$defs/nativeShape"},
           {"$ref": "#/$defs/nativeConnector"},
           {"$ref": "#/$defs/rasterAsset"},
+          {"$ref": "#/$defs/nativeChart"},
+          {"$ref": "#/$defs/nativeTable"},
           {"$ref": "#/$defs/knownUnsupported"}
         ]
       }
@@ -145,6 +147,40 @@
       "required": ["line"],
       "properties": {"line": {"$ref": "#/$defs/line"}}
     },
+    "chartStyle": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["chart_type"],
+      "properties": {
+        "chart_type": {"enum": ["vertical_bar", "horizontal_bar", "line", "donut"]},
+        "show_legend": {"type": "boolean"},
+        "show_value": {"type": "boolean"},
+        "number_format": {"type": "string"},
+        "color_tokens": {"type": "array", "items": {"$ref": "#/$defs/color"}},
+        "font_face": {"type": "string", "minLength": 1}
+      }
+    },
+    "tableStyle": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["font_face", "font_size_pt", "color", "header_fill", "header_bold", "body_fill", "border_color", "border_width_pt", "align", "valign", "margin_in"],
+      "properties": {
+        "font_face": {"type": "string", "minLength": 1},
+        "font_size_pt": {"type": "number", "exclusiveMinimum": 0},
+        "color": {"$ref": "#/$defs/color"},
+        "header_fill": {"$ref": "#/$defs/color"},
+        "header_bold": {"type": "boolean"},
+        "body_fill": {"$ref": "#/$defs/color"},
+        "border_color": {"$ref": "#/$defs/color"},
+        "border_width_pt": {"type": "number", "exclusiveMinimum": 0},
+        "align": {"enum": ["left", "center", "right"]},
+        "valign": {"enum": ["top", "middle", "bottom"]},
+        "margin_in": {"oneOf": [{"type": "number", "minimum": 0}, {"type": "array", "minItems": 4, "maxItems": 4, "items": {"type": "number", "minimum": 0}}]},
+        "number_format": {"type": "string"},
+        "column_width_ratios": {"type": "array", "minItems": 1, "items": {"type": "number", "exclusiveMinimum": 0}},
+        "row_height_ratios": {"type": "array", "minItems": 1, "items": {"type": "number", "exclusiveMinimum": 0}}
+      }
+    },
     "nativeText": {
       "allOf": [
         {"$ref": "#/$defs/base"},
@@ -183,10 +219,24 @@
       ],
       "unevaluatedProperties": false
     },
+    "nativeChart": {
+      "allOf": [
+        {"$ref": "#/$defs/base"},
+        {"type": "object", "required": ["data_ref", "style"], "properties": {"representation": {"const": "native_chart"}, "data_ref": {"type": "string", "minLength": 1}, "style": {"$ref": "#/$defs/chartStyle"}}}
+      ],
+      "unevaluatedProperties": false
+    },
+    "nativeTable": {
+      "allOf": [
+        {"$ref": "#/$defs/base"},
+        {"type": "object", "required": ["data_ref", "style"], "properties": {"representation": {"const": "native_table"}, "data_ref": {"type": "string", "minLength": 1}, "style": {"$ref": "#/$defs/tableStyle"}}}
+      ],
+      "unevaluatedProperties": false
+    },
     "knownUnsupported": {
       "allOf": [
         {"$ref": "#/$defs/base"},
-        {"type": "object", "properties": {"representation": {"enum": ["native_chart", "native_table", "svg"]}}}
+        {"type": "object", "properties": {"representation": {"const": "svg"}}}
       ],
       "unevaluatedProperties": false
     }

@@ -25,7 +25,7 @@ def _core(documents: dict[str, dict[str, Any]]) -> None:
             if element["id"] in ids:
                 failures.append(_failure(base + ".id", "duplicate_id", "element id must be unique"))
             ids.add(element["id"])
-            if element["type"] == "text" and layout["schema_version"] == "1.4":
+            if element["type"] == "text" and layout["schema_version"] in {"1.4", "1.5"}:
                 for field in ("content_ref", "segment_order", "joiner"):
                     if field not in element:
                         failures.append(_failure(base + "." + field, "content_identity", "layout 1.4 text requires content identity fields"))

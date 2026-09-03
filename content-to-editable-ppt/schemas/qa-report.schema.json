@@ -6,7 +6,7 @@
   "additionalProperties": false,
   "required": ["schema_version", "status", "iteration", "hard_failures", "warnings", "metrics", "rendering", "provenance"],
   "properties": {
-    "schema_version": {"const": "1.3"},
+    "schema_version": {"enum": ["1.3", "1.4"]},
     "status": {"enum": ["pass", "fail"]},
     "iteration": {"type": "integer", "minimum": 1},
     "hard_failures": {"type": "array", "items": {"type": "string", "minLength": 1}, "uniqueItems": true},
@@ -31,6 +31,30 @@
         "missing_media": {"type": "integer", "minimum": 0},
         "font_violations": {"type": "integer", "minimum": 0},
         "rendered_page_count": {"type": "integer", "minimum": 0}
+      }
+    },
+    "data_integrity": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["objects", "mismatch_count"],
+      "properties": {
+        "objects": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "additionalProperties": false,
+            "required": ["element_id", "data_ref", "native_type_match", "data_match", "merge_match", "header_style_match"],
+            "properties": {
+              "element_id": {"type": "string", "minLength": 1},
+              "data_ref": {"type": "string", "minLength": 1},
+              "native_type_match": {"type": "boolean"},
+              "data_match": {"type": "boolean"},
+              "merge_match": {"type": ["boolean", "null"]},
+              "header_style_match": {"type": ["boolean", "null"]}
+            }
+          }
+        },
+        "mismatch_count": {"type": "integer", "minimum": 0}
       }
     },
     "rendering": {

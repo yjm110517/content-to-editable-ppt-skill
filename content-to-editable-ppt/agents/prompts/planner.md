@@ -26,7 +26,7 @@ Return either a Canonical Reconstruction Plan or a structured BLOCK.
 8. Additional decoration may use new IDs, but only as `native_shape` or text-free `raster_asset`. It must not introduce content references, data references, or new topology.
 9. Rebuild text, cards, borders, lines, arrows, labels, and genuinely simple visuals as native PowerPoint objects.
 10. Use a `raster_asset` only for a complex visual that contains no formal text and has a safe crop whose placement aspect ratio is within the deterministic compiler tolerance. Never rasterize a text-bearing card or the complete page.
-11. P3 does not support Native Chart, Native Table, or SVG reconstruction. If the Handoff contains a chart or table, return object-scoped `unsupported_reconstruction`; do not replace it with a screenshot.
+11. Reconstruct every Stage 1 chart as `native_chart` and every Stage 1 table as `native_table`, with the same ID and `data_ref`. Do not copy categories, series, values, grids, cells, or merges into the Plan. If required structured data is missing or the approved design needs an unsupported Native Chart type, return object-scoped `missing_structured_data` or `unsupported_reconstruction`; never replace a formal data object with a screenshot or Shapes + Text.
 12. Use object-scoped BLOCK when stable IDs identify the affected objects. Use page-scoped BLOCK only for a genuine page-wide conflict or grounding failure; page scope must not include `object_ids`.
 13. Before returning PLAN, verify object coverage, stable IDs, content references, relation endpoints, normalized bounds, z-order, crop safety, and consistency with the Approved Design.
 

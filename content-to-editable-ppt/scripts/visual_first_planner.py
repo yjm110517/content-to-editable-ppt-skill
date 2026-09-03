@@ -7,6 +7,9 @@ from schema_utils import ContractError, error
 from slide_size import validate_slide_ratio_compatible
 
 
+SUPPORTED_CHART_TYPES = {"vertical_bar", "horizontal_bar", "line", "donut"}
+
+
 def content_authority_from_handoff(handoff: dict[str, Any]) -> dict[str, Any]:
     return {
         "text_items": [
@@ -75,22 +78,18 @@ def validate_plan_against_handoff(
     authority_objects = {item["id"]: item for item in handoff["semantic_structure"]["objects"]}
     visual_objects = {item["id"]: item for item in handoff["stage2"]["visual_objects"]}
     relations = {item["id"]: item for item in handoff["semantic_structure"]["relations"]}
+    structured_data = {item["id"]: item for item in handoff["structured_data"]}
 
     expected_representations = {
         "text": {"native_text"},
         "shape": {"native_shape"},
         "connector": {"native_connector"},
+        "chart": {"native_chart"},
+        "table": {"native_table"},
         "visual_placeholder": {"native_shape", "raster_asset"},
     }
     for object_id, authority_object in authority_objects.items():
         kind = authority_object["kind"]
-        if kind in {"chart", "table"}:
-            failures.append(error(
-                "$.semantic_structure.objects",
-                f"{kind} object {object_id} requires P4 native reconstruction",
-                "unsupported_reconstruction",
-            ))
-            continue
         element = elements.get(object_id)
         if element is None:
             failures.append(error("$.elements", f"required Stage 1 object is missing: {object_id}", "grounding_incomplete"))
@@ -104,6 +103,20 @@ def validate_plan_against_handoff(
             continue
         if kind == "text" and element["content_ref"] != authority_object["content_ref"]:
             failures.append(error(f"$.elements.{object_id}.content_ref", "text content_ref must match Stage 1 Authority", "content_identity"))
+        if kind in {"chart", "table"}:
+            data_ref = authority_object["data_ref"]
+            data = structured_data.get(data_ref)
+            if data is None:
+                failures.append(error(f"$.semantic_structure.objects.{object_id}.data_ref", "required structured data is missing", "missing_structured_data"))
+            elif data["kind"] != kind:
+                failures.append(error(f"$.semantic_structure.objects.{object_id}.data_ref", "structured data kind does not match object kind", "data_type_mismatch"))
+            if element["data_ref"] != data_ref:
+                failures.append(error(f"$.elements.{object_id}.data_ref", "data_ref must match Stage 1 Authority", "data_identity_mismatch"))
+            if kind == "chart" and data and data.get("chart_type"):
+                if data["chart_type"] not in SUPPORTED_CHART_TYPES:
+                    failures.append(error(f"$.semantic_structure.objects.{object_id}.data_ref", "Stage 1 chart type is not supported by the current Builder", "unsupported_reconstruction"))
+                elif element["style"]["chart_type"] != data["chart_type"]:
+                    failures.append(error(f"$.elements.{object_id}.style.chart_type", "chart type must match Stage 1 Authority", "data_identity_mismatch"))
         if kind == "connector":
             relation = relations[authority_object["relation_ref"]]
             if element["from_id"] != relation["from_id"] or element["to_id"] != relation["to_id"]:

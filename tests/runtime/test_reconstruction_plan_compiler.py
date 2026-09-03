@@ -163,7 +163,7 @@ class ReconstructionPlanCompilerTests(unittest.TestCase):
             for name in ("layout.json", "crops.json", "asset_manifest.json"):
                 self.assertFalse((args.iteration_dir / name).exists())
 
-    def test_cli_preserves_reconstruction_plan_error_code(self) -> None:
+    def test_cli_preserves_reconstruction_plan_schema_error_code(self) -> None:
         with tempfile.TemporaryDirectory() as temporary:
             work, args = self._work_root(Path(temporary))
             candidate = plan()
@@ -182,7 +182,7 @@ class ReconstructionPlanCompilerTests(unittest.TestCase):
             )
             payload = json.loads(completed.stdout)
             self.assertEqual(4, completed.returncode)
-            self.assertEqual("unsupported_representation", payload["error"]["category"])
+            self.assertEqual("schema_error", payload["error"]["category"])
 
     @unittest.skipUnless(os.environ.get("IVT_RUN_POWERPOINT_SMOKE") == "1", "set IVT_RUN_POWERPOINT_SMOKE=1 to run PowerPoint smoke")
     def test_powerpoint_single_page_smoke(self) -> None:

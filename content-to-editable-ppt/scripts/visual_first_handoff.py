@@ -94,7 +94,7 @@ def project_slide(
     }
     structure = stage1_slide["semantic_structure"]
     reconstruction_handoff = {
-        "schema_version": "1.0",
+        "schema_version": "1.1" if stage1_authority["schema_version"] == "1.1" else "1.0",
         "deck_id": stage1_authority["deck_id"],
         "slide_id": slide_id,
         "order": stage1_slide["order"],

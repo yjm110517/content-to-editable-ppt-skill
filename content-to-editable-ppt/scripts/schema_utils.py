@@ -47,7 +47,7 @@ SCHEMA_FILES = {
 }
 
 SUPPORTED_SCHEMA_VERSIONS = {
-    "layout": {"1.3", "1.4"},
+    "layout": {"1.3", "1.4", "1.5"},
     "run_state": {"1.3", "1.4"},
     "runtime_manifest": {"1.0", "1.1"},
     "runtime_error": {"1.0"},
@@ -58,10 +58,12 @@ SUPPORTED_SCHEMA_VERSIONS = {
     "deck_build_request": {"1.0"},
     "powerpoint_roundtrip_report": {"1.0"},
     "reviewer_model_identity": {"1.0"},
-    "reconstruction_plan": {"1.0"},
-    "stage1_authority": {"1.0"},
+    "reconstruction_plan": {"1.0", "1.1"},
+    "stage1_authority": {"1.0", "1.1"},
     "stage2_handoff": {"1.0"},
-    "reconstruction_handoff": {"1.0"},
+    "reconstruction_handoff": {"1.0", "1.1"},
+    "build_summary": {"1.3", "1.4"},
+    "qa_report": {"1.3", "1.4"},
     "planner_response": {"1.4"},
     "asset_manifest": {"1.3", "1.4"},
 }
@@ -223,6 +225,11 @@ def _validate_stage1_authority(document: dict[str, Any], failures: list[dict[str
 
         for data_index, data in enumerate(structured_data):
             data_base = f"{base}.structured_data[{data_index}]"
+            if document["schema_version"] == "1.0" and (
+                (data["kind"] == "table" and "grid" in data)
+                or (data["kind"] == "chart" and any(field in data for field in ("chart_type", "category_axis_label", "value_axis_label", "unit")))
+            ):
+                failures.append(error(data_base, "Stage 1 Authority 1.0 does not support P4 structured data fields", "schema_version"))
             if data["kind"] == "chart":
                 category_count = len(data["categories"])
                 for series_index, series in enumerate(data["series"]):
@@ -232,7 +239,7 @@ def _validate_stage1_authority(document: dict[str, Any], failures: list[dict[str
                             "chart series length must match categories length",
                             "structured_data_shape",
                         ))
-            else:
+            elif "columns" in data:
                 column_count = len(data["columns"])
                 for row_index, row in enumerate(data["rows"]):
                     if len(row) != column_count:
@@ -241,6 +248,34 @@ def _validate_stage1_authority(document: dict[str, Any], failures: list[dict[str
                             "table row length must match columns length",
                             "structured_data_shape",
                         ))
+            else:
+                grid = data["grid"]
+                column_count = len(grid[0])
+                if data["header_row_count"] > len(grid):
+                    failures.append(error(data_base + ".header_row_count", "header row count exceeds grid rows", "structured_data_shape"))
+                for row_index, row in enumerate(grid):
+                    if len(row) != column_count:
+                        failures.append(error(f"{data_base}.grid[{row_index}]", "table grid rows must have equal length", "structured_data_shape"))
+                occupied: set[tuple[int, int]] = set()
+                for merge_index, merge in enumerate(data["merges"]):
+                    merge_base = f"{data_base}.merges[{merge_index}]"
+                    row, column = merge["row"], merge["column"]
+                    row_end, column_end = row + merge["row_span"], column + merge["column_span"]
+                    if merge["row_span"] == 1 and merge["column_span"] == 1:
+                        failures.append(error(merge_base, "table merge must span more than one cell", "structured_data_shape"))
+                    if row_end > len(grid) or column_end > column_count:
+                        failures.append(error(merge_base, "table merge exceeds grid bounds", "structured_data_shape"))
+                        continue
+                    if grid[row][column] is None:
+                        failures.append(error(merge_base, "table merge anchor must contain a value", "structured_data_shape"))
+                    for cell_row in range(row, row_end):
+                        for cell_column in range(column, column_end):
+                            key = (cell_row, cell_column)
+                            if key in occupied:
+                                failures.append(error(merge_base, "table merges must not overlap", "structured_data_shape"))
+                            occupied.add(key)
+                            if key != (row, column) and grid[cell_row][cell_column] is not None:
+                                failures.append(error(merge_base, "covered table merge cells must be null", "structured_data_shape"))
 
 
 def _validate_stage2_handoff(document: dict[str, Any], failures: list[dict[str, str]]) -> None:
@@ -320,15 +355,17 @@ def validate_semantics(kind: str, document: dict[str, Any]) -> None:
         elements = document["elements"]
         _unique(elements, "id", "$.elements", failures)
         element_ids = {item["id"] for item in elements}
-        supported = {"native_text", "native_shape", "native_connector", "raster_asset"}
+        supported = {"native_text", "native_shape", "native_connector", "raster_asset", "native_chart", "native_table"}
         for index, item in enumerate(elements):
             base = f"$.elements[{index}]"
             geometry = item["geometry"]
             if geometry["x"] + geometry["width"] > 1 or geometry["y"] + geometry["height"] > 1:
                 failures.append(error(base + ".geometry", "normalized geometry exceeds page bounds", "geometry_out_of_bounds"))
             representation = item["representation"]
+            if document["schema_version"] == "1.0" and representation in {"native_chart", "native_table"}:
+                failures.append(error(base + ".representation", "Reconstruction Plan 1.0 does not support native data objects", "schema_version"))
             if representation not in supported:
-                failures.append(error(base + ".representation", f"P1 does not support {representation}", "unsupported_representation"))
+                failures.append(error(base + ".representation", f"Runtime does not support {representation}", "unsupported_representation"))
             if representation == "native_connector":
                 for field in ("from_id", "to_id"):
                     if item[field] not in element_ids:
@@ -378,6 +415,17 @@ def validate_semantics(kind: str, document: dict[str, Any]) -> None:
                 for field in ("from_id", "to_id"):
                     if item.get(field) and item[field] not in element_ids:
                         failures.append(error(base + f".{field}", "unknown connection element id"))
+            if item["type"] == "table":
+                if document["schema_version"] != "1.5":
+                    failures.append(error(base + ".type", "table elements require layout schema 1.5", "schema_version"))
+                grid = item["grid"]
+                width_count = len(grid[0])
+                if any(len(row) != width_count for row in grid):
+                    failures.append(error(base + ".grid", "table grid rows must have equal length", "structured_data_shape"))
+                if len(item["column_widths"]) != width_count or len(item["row_heights"]) != len(grid):
+                    failures.append(error(base, "table dimensions must match grid", "structured_data_shape"))
+                if item["header_row_count"] > len(grid):
+                    failures.append(error(base + ".header_row_count", "table header rows exceed grid", "structured_data_shape"))
     elif kind == "crops":
         assets = document["assets"]
         _unique(assets, "id", "$.assets", failures)
@@ -429,6 +477,15 @@ def validate_semantics(kind: str, document: dict[str, Any]) -> None:
             failures.append(error("$.hard_failures", "must be empty when status is pass"))
         if document["status"] == "fail" and not document["hard_failures"]:
             failures.append(error("$.hard_failures", "must not be empty when status is fail"))
+        if document["schema_version"] == "1.4":
+            integrity = document.get("data_integrity")
+            if integrity is None:
+                failures.append(error("$.data_integrity", "qa report 1.4 requires data integrity evidence"))
+            elif integrity["mismatch_count"] != sum(
+                not all(item[field] is not False for field in ("native_type_match", "data_match", "merge_match", "header_style_match"))
+                for item in integrity["objects"]
+            ):
+                failures.append(error("$.data_integrity.mismatch_count", "must equal failed data integrity objects"))
     elif kind == "font_audit":
         if document["font_violations"] != sum(len(item["violations"]) for item in document["runs"]):
             failures.append(error("$.font_violations", "must equal the total run violation count"))

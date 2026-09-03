@@ -88,7 +88,7 @@ export async function buildPresentation(args) {
     const pptxBytes = await normalizePptx(Buffer.from(raw));
     await writeFile(stagedPptx, pptxBytes);
     const summary = {
-      schema_version: "1.3",
+      schema_version: layout.schema_version === "1.5" ? "1.4" : "1.3",
       run_id: args["run-id"],
       iteration: args.iteration,
       hashes: { layout_sha256: resolved.layout_sha256, asset_manifest_sha256: resolved.manifest_sha256, output_pptx_sha256: sha256Bytes(pptxBytes) },

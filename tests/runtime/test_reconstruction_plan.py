@@ -83,7 +83,7 @@ class ReconstructionPlanContractTests(unittest.TestCase):
     def test_known_unsupported_and_unknown_representations_are_distinct(self) -> None:
         known = valid_plan()
         known["elements"] = [{
-            "id": "chart", "role": "chart", "representation": "native_chart",
+            "id": "svg", "role": "illustration", "representation": "svg",
             "geometry": {"coordinate_space": "normalized", "x": 0.1, "y": 0.1, "width": 0.4, "height": 0.3}, "z_index": 1,
         }]
         validate_schema("reconstruction_plan", known, SCHEMA_DIR)
@@ -95,6 +95,16 @@ class ReconstructionPlanContractTests(unittest.TestCase):
         unknown["elements"][0]["representation"] = "foo_bar_xyz"
         with self.assertRaises(ContractError):
             validate_schema("reconstruction_plan", unknown, SCHEMA_DIR)
+
+        missing_data_ref = valid_plan()
+        missing_data_ref["schema_version"] = "1.1"
+        missing_data_ref["elements"] = [{
+            "id": "chart", "role": "chart", "representation": "native_chart",
+            "geometry": {"coordinate_space": "normalized", "x": 0.1, "y": 0.1, "width": 0.4, "height": 0.3}, "z_index": 1,
+            "style": {"chart_type": "vertical_bar"},
+        }]
+        with self.assertRaises(ContractError):
+            validate_schema("reconstruction_plan", missing_data_ref, SCHEMA_DIR)
 
     def test_raster_contract_requires_safe_text_free_request(self) -> None:
         plan = valid_plan()

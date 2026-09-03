@@ -3,6 +3,7 @@ import { buildChart } from "./build_chart.mjs";
 import { buildImage } from "./build_image.mjs";
 import { buildLine } from "./build_line.mjs";
 import { buildShape } from "./build_shape.mjs";
+import { buildTable } from "./build_table.mjs";
 import { buildText } from "./build_text.mjs";
 
 export function stableBuildOrder(elements) { return elements.map((element, index) => ({ element, index })).sort((left, right) => left.element.z_index - right.element.z_index || left.index - right.index); }
@@ -21,8 +22,9 @@ export async function buildSlideIntoPresentation({ pptx, slide, layout, assets }
     else if (element.type === "line") { buildLine(pptx, slide, element); connections.push({ element_id: element.id, from_id: element.from_id ?? null, to_id: element.to_id ?? null }); }
     else if (element.type === "image") await buildImage(slide, element, assets, usedAssets);
     else if (element.type === "chart") buildChart(pptx, slide, element);
+    else if (element.type === "table") buildTable(slide, element);
     else throw new BuildError("unsupported element type", { category: "unsupported_element", target: element.type });
-    elementMap.push({ element_id: element.id, type: element.type, object_names: [`ivt:${element.id}`], object_count: 1 });
+    elementMap.push({ element_id: element.id, type: element.type, object_names: [`ivt:${element.id}`], object_count: 1, ...(element.data_ref ? { data_ref: element.data_ref } : {}) });
   }
   const builtIds = new Set(elementMap.map((item) => item.element_id));
   const expectedIds = layout.elements.map((item) => item.id);

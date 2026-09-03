@@ -19,6 +19,7 @@ from pptx import Presentation
 
 from asset_common import AssetError, atomic_write_json, failure, load_contract, log_event, sha256_file, success
 from schema_utils import cross_validate, validate_build_ready, validate_schema, validate_semantics
+from pptx_native_signature import chart_layout_signature, chart_signature, table_layout_signature, table_signature
 
 
 COMPONENT = "verify_ppt"
@@ -86,6 +87,10 @@ def _matches_native_type(shape: ET.Element, element: dict[str, Any]) -> bool:
             return False
         geometry = shape.find(".//a:prstGeom", NS)
         return geometry is None or geometry.attrib.get("prst") != "line"
+    if expected_type == "chart":
+        return shape.tag == f"{{{NS['p']}}}graphicFrame" and shape.find(".//c:chart", {**NS, "c": "http://schemas.openxmlformats.org/drawingml/2006/chart"}) is not None
+    if expected_type == "table":
+        return shape.tag == f"{{{NS['p']}}}graphicFrame" and shape.find(".//a:tbl", NS) is not None
     return False
 
 
@@ -315,6 +320,60 @@ def verify_ppt(args: argparse.Namespace) -> dict[str, Any]:
     if invalid_exemptions:
         _failure(hard_failures, "INVALID_TEXT_EXEMPTIONS", str(invalid_exemptions))
 
+    data_integrity: list[dict[str, Any]] = []
+    with zipfile.ZipFile(args.ppt) as archive:
+        for element in layout["elements"]:
+            if element["type"] not in {"chart", "table"}:
+                continue
+            shapes = [shape for name, shape in inspection["objects"].items() if _base_id(name) == element["id"]]
+            native_match = bool(shapes) and all(_matches_native_type(shape, element) for shape in shapes)
+            data_match = False
+            merge_match: bool | None = None
+            header_style_match: bool | None = None
+            if native_match:
+                shape = shapes[0]
+                if element["type"] == "chart":
+                    actual_chart = chart_signature(archive, 1, shape)
+                    data_match = actual_chart == chart_layout_signature(element)
+                else:
+                    actual_table = table_signature(shape)
+                    expected_table = table_layout_signature(element)
+                    if actual_table is not None:
+                        data_match = actual_table["column_count"] == expected_table["column_count"] and [
+                            [cell["text"] for cell in row] for row in actual_table["rows"]
+                        ] == [
+                            [cell["text"] for cell in row] for row in expected_table["rows"]
+                        ]
+                        merge_match = [
+                            [(cell["row_span"], cell["column_span"]) for cell in row] for row in actual_table["rows"]
+                        ] == [
+                            [(cell["row_span"], cell["column_span"]) for cell in row] for row in expected_table["rows"]
+                        ]
+                        header_color = element["header_fill"].replace("#", "").upper()
+                        header_style_match = all(
+                            actual_cell["fill"] == header_color and (not element["header_bold"] or actual_cell["bold"])
+                            for actual_row, expected_row in zip(actual_table["rows"], expected_table["rows"])
+                            for actual_cell, expected_cell in zip(actual_row, expected_row)
+                            if expected_cell["header"]
+                        )
+            entry = {
+                "element_id": element["id"],
+                "data_ref": element["data_ref"],
+                "native_type_match": native_match,
+                "data_match": data_match,
+                "merge_match": merge_match,
+                "header_style_match": header_style_match,
+            }
+            data_integrity.append(entry)
+            if not native_match:
+                _failure(hard_failures, "NATIVE_DATA_OBJECT_MISMATCH", element["id"])
+            elif not data_match:
+                _failure(hard_failures, "DATA_OBJECT_MISMATCH", element["id"])
+            elif merge_match is False:
+                _failure(hard_failures, "TABLE_MERGE_MISMATCH", element["id"])
+            elif header_style_match is False:
+                _failure(hard_failures, "TABLE_HEADER_STYLE_MISMATCH", element["id"])
+
     if inspection["slide_count"] != 1:
         _failure(hard_failures, "SLIDE_COUNT", str(inspection["slide_count"]))
     if not expected:
@@ -333,11 +392,12 @@ def verify_ppt(args: argparse.Namespace) -> dict[str, Any]:
     skill_dir = Path(__file__).resolve().parents[1]
     package = json.loads((skill_dir / "scripts" / "package.json").read_text(encoding="utf-8"))
     report = {
-        "schema_version": "1.3",
+        "schema_version": "1.4" if layout["schema_version"] == "1.5" else "1.3",
         "status": "fail" if hard_failures else "pass",
         "iteration": iteration,
         "hard_failures": sorted(set(hard_failures)),
         "warnings": sorted(set(warnings)),
+        **({"data_integrity": {"objects": data_integrity, "mismatch_count": sum(not all(item[field] is not False for field in ("native_type_match", "data_match", "merge_match", "header_style_match")) for item in data_integrity)}} if layout["schema_version"] == "1.5" else {}),
         "metrics": {
             "slide_count": inspection["slide_count"],
             "required_text_count": len(required_text),
