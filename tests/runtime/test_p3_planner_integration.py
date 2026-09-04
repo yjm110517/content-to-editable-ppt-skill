@@ -85,6 +85,7 @@ class P3PlannerIntegrationTests(unittest.TestCase):
             self.assertEqual(1, manifest["iteration"])
             self.assertEqual("fresh", manifest["context_policy"])
             self.assertIsNone(manifest["parent_context_id"])
+            self.assertEqual("1.5.1", manifest["role_version"])
             for entry in manifest["inputs"]:
                 self.assertEqual(entry["sha256"], sha256_file(call_dir / "inputs" / entry["name"]))
 
@@ -114,6 +115,12 @@ class P3PlannerIntegrationTests(unittest.TestCase):
             self.assertEqual(0, finalized.returncode, finalized.stderr or finalized.stdout)
             self.assertFalse(output.exists())
             self.assertEqual("blocked", json.loads(finalized.stdout)["outputs"]["planner_status"])
+
+    def test_planner_prompt_distinguishes_candidates_from_canonical_output(self) -> None:
+        prompt = (ROOT / "content-to-editable-ppt" / "agents" / "prompts" / "planner.md").read_text(encoding="utf-8")
+        self.assertIn("Planner PLAN Candidate", prompt)
+        self.assertIn("Finalizer validates and canonicalizes", prompt)
+        self.assertNotIn("Return either a Canonical Reconstruction Plan or a structured BLOCK.", prompt)
 
     def test_finalizer_rejects_work_inputs_changed_after_agent_call(self) -> None:
         for filename in ("source.png", "reconstruction-handoff.json", "visual-spec.json"):

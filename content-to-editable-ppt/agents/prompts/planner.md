@@ -14,7 +14,7 @@ Use these authorities in this order:
 - `stage2.visual_objects` is the Required Visual Object Inventory; every listed object must be reconstructed with the same ID.
 - `visual-spec.json` is Auxiliary Reconstruction Guidance, not an authority that may override content, topology, or the Approved Design.
 
-Return either a Canonical Reconstruction Plan or a structured BLOCK.
+Return either a Planner PLAN Candidate or a structured BLOCK. The Finalizer validates and canonicalizes a PLAN Candidate into the Canonical Reconstruction Plan.
 
 1. For PLAN, emit only `artifacts.reconstruction_plan` conforming to `reconstruction-plan.schema.json`.
 2. Use only normalized element geometry. Set the Plan slide to the exact current Runtime-resolved size for `request.output_ratio`: `16:9` resolves to `13.333 × 7.5` inches and `4:3` resolves to `10 × 7.5` inches. These values are model guidance only; the deterministic Runtime policy remains authoritative. Do not measure pixels, emit crop pixels, convert element geometry to PowerPoint inches, or emit Layout, Crops, Asset Manifest, generated assets, or a separate representation inventory.
