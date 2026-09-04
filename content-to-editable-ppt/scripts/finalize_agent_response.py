@@ -11,6 +11,7 @@ from agent_common import SCHEMA_DIR, load_call_bundle, provenance_entry, stage_d
 from asset_common import AssetError, atomic_write_json, failure, load_contract, log_event, sha256_file, success
 from compile_reconstruction_plan import read_source_metadata
 from reconstruction_plan import compile_reconstruction_plan
+from revision_patch import validate_patch
 from schema_utils import ContractError, load_json, validate_schema, validate_semantics
 from shared_validator import validate_documents
 from visual_first_planner import (
@@ -27,6 +28,7 @@ def parser() -> argparse.ArgumentParser:
     result = argparse.ArgumentParser(description="Validate and atomically submit Planner or Reviewer output.")
     result.add_argument("--role", choices=("planner", "reviewer"), required=True)
     result.add_argument("--mode", choices=("initial", "revision", "review"), required=True)
+    result.add_argument("--revision-contract", choices=("legacy", "canonical"), default="legacy")
     result.add_argument("--call-dir", type=Path, required=True)
     result.add_argument("--planner-call-record", type=Path)
     result.add_argument("--iteration-dir", type=Path)
@@ -124,10 +126,18 @@ def _finalize_initial(
             slide_id=slide_id,
         )
         plan = canonicalize_plan_for_runtime(candidate_plan, request)
+        work_root = output.parent.parent
+        source = work_root / request["source_image"]
+        plan["schema_version"] = "1.2"
+        plan["provenance"] = {
+            "reconstruction_handoff_sha256": sha256_file(work_root / "reconstruction-handoff.json"),
+            "approved_design_sha256": sha256_file(source),
+            "previous_plan_sha256": None,
+            "revision_patch_sha256": None,
+        }
         # Canonical validation runs again after deterministic Runtime normalization.
         validate_schema("reconstruction_plan", plan, args.schema_dir)
         validate_semantics("reconstruction_plan", plan)
-        work_root = output.parent.parent
         projection_path = work_root / "source-content.json"
         if not projection_path.is_file():
             raise AssetError("source-content compatibility projection is missing", path=str(projection_path), code="missing_input", exit_code=3)
@@ -137,7 +147,6 @@ def _finalize_initial(
             raise AssetError("source-content compatibility projection is invalid", path=str(projection_path), code="content_projection_mismatch") from exc
         validate_content_projection(handoff, projection)
         authority = content_authority_from_handoff(handoff)
-        source = work_root / request["source_image"]
         artifacts = compile_reconstruction_plan(
             plan,
             authority,
@@ -196,6 +205,30 @@ def _verify_work_inputs(call_dir: Path, work_root: Path, input_hashes: dict[str,
 
 def _finalize_revision(args: argparse.Namespace, manifest: dict[str, Any], response: dict[str, Any], input_hashes: dict[str, str]) -> dict[str, Any]:
     iteration = args.iteration_dir.resolve()
+    if args.revision_contract == "canonical":
+        target = args.output.resolve() if args.output else iteration / "revision_patch.json"
+        if target != iteration / "revision_patch.json" or target.exists():
+            raise AssetError("canonical revision output must be a new iteration-dir/revision_patch.json", path=str(target), code="path_escape")
+        _verify_current_inputs(iteration, input_hashes, ["reconstruction-plan.json", "qa_report.json", "review_report.json", "review_evaluation.json"])
+        work_root = iteration.parent.parent
+        _verify_work_inputs(args.call_dir, work_root, input_hashes)
+        handoff = _load_call_input(args.call_dir, "reconstruction-handoff.json")
+        request = _load_call_input(args.call_dir, "request.json")
+        if response["outcome"] == "block":
+            validate_block_against_handoff(response["block"], handoff)
+            return {"planner_status": "blocked", "block": response["block"], "call_dir": str(args.call_dir)}
+        patch = response["artifacts"]["revision_patch"]
+        validate_schema("revision_patch", patch, args.schema_dir)
+        validate_semantics("revision_patch", patch)
+        base = load_contract("reconstruction_plan", iteration / "reconstruction-plan.json", args.schema_dir)
+        review = load_contract("review_report", iteration / "review_report.json", args.schema_dir)
+        evaluation = load_contract("review_evaluation", iteration / "review_evaluation.json", args.schema_dir)
+        try:
+            validate_patch(patch, base, handoff, review, evaluation, task_id=request["task_id"], base_sha256=sha256_file(iteration / "reconstruction-plan.json"), review_sha256=sha256_file(iteration / "review_report.json"), evaluation_sha256=sha256_file(iteration / "review_evaluation.json"))
+        except ContractError as exc:
+            raise _first_contract_error(exc) from exc
+        atomic_write_json(target, patch)
+        return {"planner_status": "patched", "revision_patch": str(target), "sha256": sha256_file(target)}
     target = args.output.resolve() if args.output else iteration / "review_patch.json"
     if target != iteration / "review_patch.json":
         raise AssetError("revision output must be iteration-dir/review_patch.json", path=str(target), code="path_escape")

@@ -22,6 +22,7 @@ SCHEMA_FILES = {
     "review_report": "review-report.schema.json",
     "review_evaluation": "review-evaluation.schema.json",
     "review_patch": "review-patch.schema.json",
+    "revision_patch": "revision-patch.schema.json",
     "run_state": "run-state.schema.json",
     "delivery_decision": "delivery-decision.schema.json",
     "build_summary": "build-summary.schema.json",
@@ -58,13 +59,13 @@ SUPPORTED_SCHEMA_VERSIONS = {
     "deck_build_request": {"1.0"},
     "powerpoint_roundtrip_report": {"1.0"},
     "reviewer_model_identity": {"1.0"},
-    "reconstruction_plan": {"1.0", "1.1"},
+    "reconstruction_plan": {"1.0", "1.1", "1.2"},
     "stage1_authority": {"1.0", "1.1"},
     "stage2_handoff": {"1.0"},
     "reconstruction_handoff": {"1.0", "1.1"},
     "build_summary": {"1.3", "1.4"},
     "qa_report": {"1.3", "1.4"},
-    "planner_response": {"1.4"},
+    "planner_response": {"1.4", "1.5"},
     "asset_manifest": {"1.3", "1.4"},
 }
 

@@ -45,6 +45,7 @@ def parser() -> argparse.ArgumentParser:
     result = argparse.ArgumentParser(description="Create an isolated Planner or Reviewer call package.")
     result.add_argument("--role", choices=("planner", "reviewer"), required=True)
     result.add_argument("--mode", choices=("initial", "revision", "review"), required=True)
+    result.add_argument("--revision-contract", choices=("legacy", "canonical"), default="legacy")
     result.add_argument("--work-root", type=Path, required=True)
     result.add_argument("--request", type=Path)
     result.add_argument("--source", type=Path)
@@ -85,6 +86,20 @@ def _inputs(args: argparse.Namespace) -> dict[str, Path]:
             "planner-response.schema.json": schema / "planner-response.schema.json",
         }
     if args.role == "planner" and args.mode == "revision":
+        if args.revision_contract == "canonical":
+            if args.reconstruction_handoff is None or args.iteration_dir is None:
+                raise AssetError("canonical revision requires --reconstruction-handoff and --iteration-dir", path="$", code="cli_error", exit_code=2)
+            iteration = args.iteration_dir
+            return {
+                "request.json": args.request, "source.png": args.source,
+                "reconstruction-handoff.json": args.reconstruction_handoff,
+                "visual-spec.json": args.work_root / "visual-spec.json",
+                "reconstruction-plan.json": iteration / "reconstruction-plan.json",
+                "qa_report.json": iteration / "qa_report.json", "review_report.json": iteration / "review_report.json",
+                "review_evaluation.json": iteration / "review_evaluation.json",
+                "revision-patch.schema.json": schema / "revision-patch.schema.json",
+                "planner-response.schema.json": schema / "planner-response.schema.json",
+            }
         if args.iteration_dir is None or args.content_authority is None:
             raise AssetError("revision requires --iteration-dir and --content-authority", path="$", code="cli_error", exit_code=2)
         iteration = args.iteration_dir
@@ -132,7 +147,7 @@ def main() -> int:
             raise AssetError("request must be directly inside work-root", path=str(request_path), code="path_escape")
         if args.source.resolve() != (work_root / request["source_image"]).resolve():
             raise AssetError("source does not match request source_image", path=str(args.source), code="input_mismatch")
-        if args.role == "planner" and args.mode == "revision":
+        if args.role == "planner" and args.mode == "revision" and args.revision_contract == "legacy":
             authority = args.content_authority.resolve() if args.content_authority else None
             if authority is None or authority.parent != work_root or authority.name != "source-content.json":
                 raise AssetError("Planner content authority must be work-root/source-content.json", path="--content-authority", code="path_escape")
@@ -160,6 +175,15 @@ def main() -> int:
                 raise AssetError("visual spec must be a UTF-8 JSON object", path=str(visual_spec_path), code="invalid_visual_spec") from exc
             if sha256_file(visual_spec_path) != handoff["provenance"]["visual_spec_sha256"]:
                 raise AssetError("Visual Spec changed after Handoff materialization", path=str(visual_spec_path), code="visual_spec_changed", exit_code=9)
+        if args.role == "planner" and args.mode == "revision" and args.revision_contract == "canonical":
+            if not args.slide_id:
+                raise AssetError("canonical revision requires --slide-id", path="--slide-id", code="cli_error", exit_code=2)
+            handoff_path = args.reconstruction_handoff.resolve() if args.reconstruction_handoff else None
+            if handoff_path != work_root / "reconstruction-handoff.json":
+                raise AssetError("canonical revision handoff must be work-root/reconstruction-handoff.json", path="--reconstruction-handoff", code="path_escape")
+            handoff = load_contract("reconstruction_handoff", handoff_path, args.schema_dir)
+            if handoff["slide_id"] != args.slide_id or sha256_file(args.source.resolve()) != handoff["provenance"]["approved_design_sha256"]:
+                raise AssetError("canonical revision handoff/source identity mismatch", path="$", code="input_mismatch", exit_code=9)
         expected_output = expected_call_dir(work_root, args.iteration, args.role, args.call_id)
         if args.output_dir.resolve() != expected_output:
             raise AssetError("output-dir must match .agent-calls/<iteration>/<role>/<call-id>", path=str(args.output_dir), code="path_escape")
@@ -180,9 +204,10 @@ def main() -> int:
                 if actual_paths[label] is None or actual_paths[label].resolve() != expected_path.resolve():
                     raise AssetError(f"{label} must be the current iteration artifact", path=f"--{label}", code="path_escape")
 
-        config, config_path, prompt_path, output_schema = load_role(args.role, args.schema_dir, mode=args.mode)
+        profile = "revision_canonical" if args.role == "planner" and args.mode == "revision" and args.revision_contract == "canonical" else args.mode
+        config, config_path, prompt_path, output_schema = load_role(args.role, args.schema_dir, mode=profile)
         inputs = _inputs(args)
-        if list(inputs) != config["input_profiles"][args.mode]:
+        if list(inputs) != config["input_profiles"][profile]:
             raise AssetError("implementation allowlist differs from role configuration", path=str(config_path), code="agent_config", exit_code=2)
         stage = stage_directory(expected_output)
         try:
@@ -204,12 +229,12 @@ def main() -> int:
                 "role_version": config["role_version"], "parameters": config["parameters"],
                 "config_sha256": canonical_yaml_hash(config_path),
                 "prompt_sha256": sha256_bytes(prompt), "output_schema_sha256": schema_hash,
-                "input_profile": args.mode,
+                "input_profile": profile, "revision_contract": args.revision_contract if args.mode == "revision" else None,
                 "selected_output_schema": output_schema.name,
                 "selected_output_schema_sha256": schema_hash,
                 "inputs": entries,
             }
-            if args.role == "planner" and args.mode == "initial":
+            if args.role == "planner" and args.mode in {"initial", "revision"} and args.slide_id:
                 manifest["slide_id"] = args.slide_id
             atomic_write_json(stage / "call_manifest.json", manifest)
             os.replace(stage, expected_output)

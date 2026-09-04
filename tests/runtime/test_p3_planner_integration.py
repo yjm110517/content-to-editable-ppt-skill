@@ -85,7 +85,7 @@ class P3PlannerIntegrationTests(unittest.TestCase):
             self.assertEqual(1, manifest["iteration"])
             self.assertEqual("fresh", manifest["context_policy"])
             self.assertIsNone(manifest["parent_context_id"])
-            self.assertEqual("1.5.1", manifest["role_version"])
+            self.assertEqual("1.6.0", manifest["role_version"])
             for entry in manifest["inputs"]:
                 self.assertEqual(entry["sha256"], sha256_file(call_dir / "inputs" / entry["name"]))
 
@@ -256,6 +256,7 @@ class P3PlannerIntegrationTests(unittest.TestCase):
                 atomic_write_json(work / "source-content.json", {
                     "text_items": [{"id": item["id"], "text": item["text"]} for item in current_handoff["content"]["text_items"]
                 ]})
+                atomic_write_json(work / "reconstruction-handoff.json", current_handoff)
                 Image.new("RGB", (1600, 900), "#DDEEFF").save(work / "source.png")
                 call_dir = work / ".agent-calls" / "01" / "planner" / "fixture"
                 (call_dir / "inputs").mkdir(parents=True)

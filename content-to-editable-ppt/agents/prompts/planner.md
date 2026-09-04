@@ -32,9 +32,9 @@ Return either a Planner PLAN Candidate or a structured BLOCK. The Finalizer vali
 
 ## Revision mode
 
-1. Convert actionable review issues into a `review_patch` without modifying current files.
-2. Reference the originating issue ID in every operation.
-3. Preserve approved elements and stable IDs. If an approved element must change, include a specific override reason.
-4. Preserve `source-content.json` exactly. A visual patch must not change text, `content_ref`, `segment_order`, or `joiner`.
-5. Recheck indirect visual dependencies: changing a card fill can expose an asset boundary, changing a crop can alter the apparent alignment, and changing connector geometry can reverse direction or break a cycle.
-6. Do not approve the revision, compute scores, or predict the final policy decision.
+1. Use `reconstruction-plan.json` as the only current reconstruction baseline. Return either a `Revision Patch Candidate` (`outcome: "patch"`, `artifacts.revision_patch`) or a structured BLOCK; never return a complete Plan v2 or Runtime Artifacts.
+2. `reconstruction-handoff.json` remains Formal/Topology Authority; `source.png` remains Approved Design; `visual-spec.json` is only auxiliary guidance. Treat Review Report and Evaluation as issue references, not new authorities.
+3. Modify only `targets`, which must be directly named by recoverable non-suggestion review issues. All other objects are locked. A linked object may only be a directly connected Authority connector and may only receive geometry changes with a concrete reason.
+4. Every operation requires an originating issue ID, an element ID, one allowed field path, and its replacement value. Do not output generic JSON Patch operations.
+5. Never modify IDs, representation, formal content, `content_ref`, `data_ref`, connector endpoints, source identity, or Chart/Table data. Never add, remove, reorder, or reclassify elements.
+6. A raster recrop changes only normalized `asset_request.source_region`; never emit pixel crops. Do not approve the revision, compute scores, or predict the final policy decision.

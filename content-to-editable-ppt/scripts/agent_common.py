@@ -136,14 +136,17 @@ def load_call_bundle(call_dir: Path, *, work_root: Path, role: str, mode: str, s
     if call_dir != expected:
         raise AssetError("call directory does not match manifest identity", path=str(call_dir), code="call_bundle")
 
-    config, config_path, prompt_path, output_schema_path = load_role(role, schema_dir, mode=mode)
-    validate_input_manifest(manifest, config["input_profiles"][mode])
+    profile = manifest.get("input_profile", mode)
+    if not isinstance(profile, str) or (profile != mode and not (role == "planner" and mode == "revision" and profile == "revision_canonical")):
+        raise AssetError("call manifest input profile is incompatible with mode", path=str(call_dir / "call_manifest.json"), code="call_bundle")
+    config, config_path, prompt_path, output_schema_path = load_role(role, schema_dir, mode=profile)
+    validate_input_manifest(manifest, config["input_profiles"][profile])
     expected_config_hash = canonical_yaml_hash(config_path)
     expected_prompt_hash = sha256_bytes(normalized_text_bytes(prompt_path))
     expected_schema_hash = sha256_file(output_schema_path)
     if manifest.get("config_sha256") != expected_config_hash or manifest.get("prompt_sha256") != expected_prompt_hash or manifest.get("output_schema_sha256") != expected_schema_hash:
         raise AssetError("agent role configuration changed after call preparation", path=str(call_dir), code="hash_conflict", exit_code=9)
-    if manifest.get("input_profile", mode) != mode or manifest.get("selected_output_schema", output_schema_path.name) != output_schema_path.name or manifest.get("selected_output_schema_sha256", expected_schema_hash) != expected_schema_hash:
+    if manifest.get("input_profile", mode) != profile or manifest.get("selected_output_schema", output_schema_path.name) != output_schema_path.name or manifest.get("selected_output_schema_sha256", expected_schema_hash) != expected_schema_hash:
         raise AssetError("call manifest selected profile/schema mismatch", path=str(call_dir / "call_manifest.json"), code="hash_conflict", exit_code=9)
     if sha256_file(call_dir / "system_prompt.md") != expected_prompt_hash:
         raise AssetError("system prompt hash mismatch", path=str(call_dir / "system_prompt.md"), code="hash_conflict", exit_code=9)
@@ -159,7 +162,7 @@ def load_call_bundle(call_dir: Path, *, work_root: Path, role: str, mode: str, s
         if digest != item.get("sha256"):
             raise AssetError("call input hash mismatch", path=str(path), code="hash_conflict", exit_code=9)
         input_hashes[name] = digest
-    base_inputs = set(config["input_profiles"][mode])
+    base_inputs = set(config["input_profiles"][profile])
     actual_inputs = set(input_hashes)
     if actual_inputs != base_inputs:
         raise AssetError("call input allowlist does not match role profile", path=str(call_dir), code="input_allowlist")

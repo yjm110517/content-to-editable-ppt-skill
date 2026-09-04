@@ -1,0 +1,23 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "revision-patch.schema.json",
+  "title": "Canonical Reconstruction Plan Revision Patch",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["schema_version", "task_id", "page_id", "from_iteration", "to_iteration", "base_plan_sha256", "based_on_review_sha256", "based_on_review_evaluation_sha256", "targets", "linked_elements", "operations", "revision_reason"],
+  "properties": {
+    "schema_version": {"const": "1.0"},
+    "task_id": {"type": "string", "minLength": 1},
+    "page_id": {"type": "string", "minLength": 1},
+    "from_iteration": {"type": "integer", "minimum": 1},
+    "to_iteration": {"type": "integer", "minimum": 2},
+    "base_plan_sha256": {"$ref": "#/$defs/hash"},
+    "based_on_review_sha256": {"$ref": "#/$defs/hash"},
+    "based_on_review_evaluation_sha256": {"$ref": "#/$defs/hash"},
+    "targets": {"type": "array", "minItems": 1, "uniqueItems": true, "items": {"type": "string", "minLength": 1}},
+    "linked_elements": {"type": "array", "uniqueItems": true, "items": {"type": "object", "additionalProperties": false, "required": ["element_id", "reason"], "properties": {"element_id": {"type": "string", "minLength": 1}, "reason": {"type": "string", "minLength": 1}}}},
+    "operations": {"type": "array", "minItems": 1, "items": {"type": "object", "additionalProperties": false, "required": ["issue_id", "element_id", "path", "value"], "properties": {"issue_id": {"type": "string", "minLength": 1}, "element_id": {"type": "string", "minLength": 1}, "path": {"type": "string", "pattern": "^/"}, "value": {}}}},
+    "revision_reason": {"type": "string", "minLength": 1}
+  },
+  "$defs": {"hash": {"type": "string", "pattern": "^[a-f0-9]{64}$"}}
+}

@@ -6,7 +6,18 @@
   "additionalProperties": false,
   "required": ["schema_version", "page", "source", "slide", "elements"],
   "properties": {
-    "schema_version": {"enum": ["1.0", "1.1"]},
+    "schema_version": {"enum": ["1.0", "1.1", "1.2"]},
+    "provenance": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["reconstruction_handoff_sha256", "approved_design_sha256", "previous_plan_sha256", "revision_patch_sha256"],
+      "properties": {
+        "reconstruction_handoff_sha256": {"type": "string", "pattern": "^[a-f0-9]{64}$"},
+        "approved_design_sha256": {"type": "string", "pattern": "^[a-f0-9]{64}$"},
+        "previous_plan_sha256": {"type": ["string", "null"], "pattern": "^[a-f0-9]{64}$"},
+        "revision_patch_sha256": {"type": ["string", "null"], "pattern": "^[a-f0-9]{64}$"}
+      }
+    },
     "page": {
       "type": "object",
       "additionalProperties": false,
@@ -50,6 +61,9 @@
       }
     }
   },
+  "allOf": [
+    {"if": {"properties": {"schema_version": {"const": "1.2"}}, "required": ["schema_version"]}, "then": {"required": ["provenance"]}, "else": {"not": {"required": ["provenance"]}}}
+  ],
   "$defs": {
     "color": {"type": "string", "pattern": "^#[0-9A-Fa-f]{6}(?:[0-9A-Fa-f]{2})?$"},
     "geometry": {
