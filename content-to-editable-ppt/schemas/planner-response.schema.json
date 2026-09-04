@@ -10,7 +10,7 @@
     "task_id": {"type": "string", "minLength": 1},
     "iteration": {"type": "integer", "minimum": 1},
     "mode": {"enum": ["initial", "revision"]},
-    "outcome": {"enum": ["plan", "block"]},
+    "outcome": {"enum": ["plan", "patch", "block"]},
     "artifacts": {"type": "object"},
     "block": {"$ref": "#/$defs/block"}
   },
