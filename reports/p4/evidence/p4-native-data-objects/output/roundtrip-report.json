@@ -1,0 +1,241 @@
+{
+  "original_pptx_sha256": "22bfa2eb2d3dd8d9291056cfc4c9753c042772ca5e1f7e4ea4c86324c6aba56e",
+  "roundtrip_pptx_sha256": "322c074eb92431e691e600883006fb7700e961cb422819b9a9029e58181e2bea",
+  "original_signatures": {
+    "ivt:chart-01": {
+      "type": "chart",
+      "signature": {
+        "chart_type": "barChart",
+        "bar_direction": "col",
+        "categories": [
+          "实验组",
+          "对照组"
+        ],
+        "series": [
+          {
+            "name": "后测",
+            "values": [
+              "79.5",
+              "73.78"
+            ]
+          }
+        ]
+      }
+    },
+    "ivt:table-01": {
+      "type": "table",
+      "signature": {
+        "column_count": 3,
+        "rows": [
+          [
+            {
+              "text": "组别",
+              "row_span": 1,
+              "column_span": 1,
+              "h_merge": false,
+              "v_merge": false,
+              "fill": "D9E7F7",
+              "bold": true
+            },
+            {
+              "text": "Mean",
+              "row_span": 1,
+              "column_span": 1,
+              "h_merge": false,
+              "v_merge": false,
+              "fill": "D9E7F7",
+              "bold": true
+            },
+            {
+              "text": "SD",
+              "row_span": 1,
+              "column_span": 1,
+              "h_merge": false,
+              "v_merge": false,
+              "fill": "D9E7F7",
+              "bold": true
+            }
+          ],
+          [
+            {
+              "text": "实验组",
+              "row_span": 1,
+              "column_span": 1,
+              "h_merge": false,
+              "v_merge": false,
+              "fill": "FFFFFF",
+              "bold": false
+            },
+            {
+              "text": "79.50",
+              "row_span": 1,
+              "column_span": 1,
+              "h_merge": false,
+              "v_merge": false,
+              "fill": "FFFFFF",
+              "bold": false
+            },
+            {
+              "text": "12.52",
+              "row_span": 1,
+              "column_span": 1,
+              "h_merge": false,
+              "v_merge": false,
+              "fill": "FFFFFF",
+              "bold": false
+            }
+          ],
+          [
+            {
+              "text": "对照组",
+              "row_span": 1,
+              "column_span": 1,
+              "h_merge": false,
+              "v_merge": false,
+              "fill": "FFFFFF",
+              "bold": false
+            },
+            {
+              "text": "73.78",
+              "row_span": 1,
+              "column_span": 1,
+              "h_merge": false,
+              "v_merge": false,
+              "fill": "FFFFFF",
+              "bold": false
+            },
+            {
+              "text": "17.93",
+              "row_span": 1,
+              "column_span": 1,
+              "h_merge": false,
+              "v_merge": false,
+              "fill": "FFFFFF",
+              "bold": false
+            }
+          ]
+        ]
+      }
+    }
+  },
+  "roundtrip_signatures": {
+    "ivt:chart-01": {
+      "type": "chart",
+      "signature": {
+        "chart_type": "barChart",
+        "bar_direction": "col",
+        "categories": [
+          "实验组",
+          "对照组"
+        ],
+        "series": [
+          {
+            "name": "后测",
+            "values": [
+              "79.5",
+              "73.78"
+            ]
+          }
+        ]
+      }
+    },
+    "ivt:table-01": {
+      "type": "table",
+      "signature": {
+        "column_count": 3,
+        "rows": [
+          [
+            {
+              "text": "组别",
+              "row_span": 1,
+              "column_span": 1,
+              "h_merge": false,
+              "v_merge": false,
+              "fill": "D9E7F7",
+              "bold": true
+            },
+            {
+              "text": "Mean",
+              "row_span": 1,
+              "column_span": 1,
+              "h_merge": false,
+              "v_merge": false,
+              "fill": "D9E7F7",
+              "bold": true
+            },
+            {
+              "text": "SD",
+              "row_span": 1,
+              "column_span": 1,
+              "h_merge": false,
+              "v_merge": false,
+              "fill": "D9E7F7",
+              "bold": true
+            }
+          ],
+          [
+            {
+              "text": "实验组",
+              "row_span": 1,
+              "column_span": 1,
+              "h_merge": false,
+              "v_merge": false,
+              "fill": "FFFFFF",
+              "bold": false
+            },
+            {
+              "text": "79.50",
+              "row_span": 1,
+              "column_span": 1,
+              "h_merge": false,
+              "v_merge": false,
+              "fill": "FFFFFF",
+              "bold": false
+            },
+            {
+              "text": "12.52",
+              "row_span": 1,
+              "column_span": 1,
+              "h_merge": false,
+              "v_merge": false,
+              "fill": "FFFFFF",
+              "bold": false
+            }
+          ],
+          [
+            {
+              "text": "对照组",
+              "row_span": 1,
+              "column_span": 1,
+              "h_merge": false,
+              "v_merge": false,
+              "fill": "FFFFFF",
+              "bold": false
+            },
+            {
+              "text": "73.78",
+              "row_span": 1,
+              "column_span": 1,
+              "h_merge": false,
+              "v_merge": false,
+              "fill": "FFFFFF",
+              "bold": false
+            },
+            {
+              "text": "17.93",
+              "row_span": 1,
+              "column_span": 1,
+              "h_merge": false,
+              "v_merge": false,
+              "fill": "FFFFFF",
+              "bold": false
+            }
+          ]
+        ]
+      }
+    }
+  },
+  "chart_signature_match": true,
+  "table_signature_match": true,
+  "overall_match": true
+}

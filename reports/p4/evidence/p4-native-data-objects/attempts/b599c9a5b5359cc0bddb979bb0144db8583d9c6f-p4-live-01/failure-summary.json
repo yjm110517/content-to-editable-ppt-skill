@@ -1,0 +1,9 @@
+{
+  "status": "failed",
+  "validation_commit": "b599c9a5b5359cc0bddb979bb0144db8583d9c6f",
+  "fixture": "P4-LIVE-01",
+  "stage": "Microsoft PowerPoint Render",
+  "failure": "The native chart Data Label display did not honor the Planner number_format 0.00; PowerPoint rendered 79.50 and 73.78 as rounded integers.",
+  "response_modified": false,
+  "required_follow_up": "Preserve the raw Planner response, fix the Shared Builder Data Label format mapping, commit the fix, and restart from a fresh Planner context."
+}
