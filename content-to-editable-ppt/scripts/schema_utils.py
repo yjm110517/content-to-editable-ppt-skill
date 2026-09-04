@@ -48,6 +48,7 @@ SCHEMA_FILES = {
 }
 
 SUPPORTED_SCHEMA_VERSIONS = {
+    "revision_patch": {"1.0"},
     "layout": {"1.3", "1.4", "1.5"},
     "run_state": {"1.3", "1.4"},
     "runtime_manifest": {"1.0", "1.1"},

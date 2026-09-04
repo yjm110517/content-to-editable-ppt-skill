@@ -137,9 +137,18 @@ def load_call_bundle(call_dir: Path, *, work_root: Path, role: str, mode: str, s
         raise AssetError("call directory does not match manifest identity", path=str(call_dir), code="call_bundle")
 
     profile = manifest.get("input_profile", mode)
+    if role == "planner" and mode == "revision":
+        contract = manifest.get("revision_contract", "legacy")
+        expected_profile = {"legacy": "revision", "canonical": "revision_canonical"}.get(contract)
+        if profile != expected_profile:
+            raise AssetError("frozen revision contract/profile mismatch", code="call_bundle", exit_code=9)
+    if manifest.get("context_policy") != "fresh" or manifest.get("parent_context_id") is not None:
+        raise AssetError("call must use a fresh context", code="call_bundle", exit_code=9)
     if not isinstance(profile, str) or (profile != mode and not (role == "planner" and mode == "revision" and profile == "revision_canonical")):
         raise AssetError("call manifest input profile is incompatible with mode", path=str(call_dir / "call_manifest.json"), code="call_bundle")
     config, config_path, prompt_path, output_schema_path = load_role(role, schema_dir, mode=profile)
+    if manifest.get("role_version") != config["role_version"] or manifest.get("parameters") != config["parameters"]:
+        raise AssetError("Manifest role version or parameters differ from frozen configuration", code="call_bundle", exit_code=9)
     validate_input_manifest(manifest, config["input_profiles"][profile])
     expected_config_hash = canonical_yaml_hash(config_path)
     expected_prompt_hash = sha256_bytes(normalized_text_bytes(prompt_path))
@@ -164,7 +173,7 @@ def load_call_bundle(call_dir: Path, *, work_root: Path, role: str, mode: str, s
         input_hashes[name] = digest
     base_inputs = set(config["input_profiles"][profile])
     actual_inputs = set(input_hashes)
-    if actual_inputs != base_inputs:
+    if actual_inputs != base_inputs or {item.name for item in (call_dir / "inputs").iterdir()} != base_inputs:
         raise AssetError("call input allowlist does not match role profile", path=str(call_dir), code="input_allowlist")
 
     record = load_json(call_dir / "call_record.json")
@@ -204,6 +213,10 @@ def load_call_bundle(call_dir: Path, *, work_root: Path, role: str, mode: str, s
         raise AssetError("unsupported reviewer response mode", path=mode, code="agent_config", exit_code=2)
     validate_schema(response_kind, response, schema_dir)
     validate_semantics(response_kind, response)
+    if role == "planner" and mode == "revision":
+        expected_version = "1.5" if profile == "revision_canonical" else "1.4"
+        if response["schema_version"] != expected_version:
+            raise AssetError("response version differs from frozen revision contract", code="contract_mismatch", exit_code=9)
     return manifest, record, response, input_hashes
 
 

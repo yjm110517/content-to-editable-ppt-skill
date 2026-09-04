@@ -184,6 +184,12 @@ def main() -> int:
             handoff = load_contract("reconstruction_handoff", handoff_path, args.schema_dir)
             if handoff["slide_id"] != args.slide_id or sha256_file(args.source.resolve()) != handoff["provenance"]["approved_design_sha256"]:
                 raise AssetError("canonical revision handoff/source identity mismatch", path="$", code="input_mismatch", exit_code=9)
+            if args.iteration_dir is None:
+                raise AssetError("canonical revision requires iteration-dir", code="missing_input")
+            from revision_context import load_revision_context
+            revision_context = load_revision_context(work_root, args.iteration_dir, args.schema_dir)
+            if revision_context.documents["base"]["page"]["iteration"] != args.iteration:
+                raise AssetError("baseline differs from call iteration", code="iteration_mismatch", exit_code=9)
         expected_output = expected_call_dir(work_root, args.iteration, args.role, args.call_id)
         if args.output_dir.resolve() != expected_output:
             raise AssetError("output-dir must match .agent-calls/<iteration>/<role>/<call-id>", path=str(args.output_dir), code="path_escape")
@@ -237,6 +243,8 @@ def main() -> int:
             if args.role == "planner" and args.mode in {"initial", "revision"} and args.slide_id:
                 manifest["slide_id"] = args.slide_id
             atomic_write_json(stage / "call_manifest.json", manifest)
+            if args.role == "planner" and args.mode == "revision" and args.revision_contract == "canonical":
+                revision_context.verify_unchanged()
             os.replace(stage, expected_output)
         except Exception:
             shutil.rmtree(stage, ignore_errors=True)
