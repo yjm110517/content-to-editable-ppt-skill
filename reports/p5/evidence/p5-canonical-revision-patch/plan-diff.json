@@ -1,0 +1,1 @@
+{"changed_elements":[{"changes":[{"after":0.35,"after_exists":true,"before":0.5,"before_exists":true,"path":"/geometry/y"}],"element_id":"card-02","paths":["/geometry/y"],"scope":"target"}],"schema_version":"1.0","unauthorized_changes":[],"unchanged_elements":["title-object","card-01","connector-01","hero"]}

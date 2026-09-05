@@ -1,0 +1,97 @@
+{
+  "schema_version": "1.3",
+  "run_id": "p5-live-01-attempt-03",
+  "iteration": 2,
+  "hashes": {
+    "layout_sha256": "6180377910212af307b8befaa63edeff976b702cf26c45b8c409d4bd6f9c8d08",
+    "asset_manifest_sha256": "d2e8157f80cf6be4c0a3a537e655558673a4156dc0d1505b3f1ee4d847ad35b1",
+    "output_pptx_sha256": "0a865a77de5268e25afd69f7a523df75c2207b388e46e6e617bc4cda18d716bb"
+  },
+  "output_pptx": "output.pptx",
+  "expected_element_count": 5,
+  "built_element_count": 5,
+  "missing_element_ids": [],
+  "unexpected_element_ids": [],
+  "build_order": [
+    "connector-01",
+    "card-01",
+    "card-02",
+    "hero",
+    "title-object"
+  ],
+  "element_map": [
+    {
+      "element_id": "title-object",
+      "type": "text",
+      "object_names": [
+        "ivt:title-object"
+      ],
+      "object_count": 1
+    },
+    {
+      "element_id": "card-01",
+      "type": "shape",
+      "object_names": [
+        "ivt:card-01"
+      ],
+      "object_count": 1
+    },
+    {
+      "element_id": "card-02",
+      "type": "shape",
+      "object_names": [
+        "ivt:card-02"
+      ],
+      "object_count": 1
+    },
+    {
+      "element_id": "connector-01",
+      "type": "line",
+      "object_names": [
+        "ivt:connector-01"
+      ],
+      "object_count": 1
+    },
+    {
+      "element_id": "hero",
+      "type": "image",
+      "object_names": [
+        "ivt:hero"
+      ],
+      "object_count": 1
+    }
+  ],
+  "assets": [
+    {
+      "asset_id": "hero",
+      "type": "png",
+      "sha256": "3b6e94de04d6f7ecde96375343a58cd4cd55df06722012648d8d24502e395c03",
+      "source_input_sha256": "3b6e94de04d6f7ecde96375343a58cd4cd55df06722012648d8d24502e395c03"
+    }
+  ],
+  "typography": {
+    "text_element_count": 1,
+    "run_count": 1,
+    "explicit_run_font_count": 0,
+    "inherited_run_font_count": 1,
+    "unresolved_font_count": 0,
+    "non_default_fit_elements": [],
+    "font_resolutions": [
+      {
+        "element_id": "title-object",
+        "run_index": 0,
+        "font_face": "Microsoft YaHei",
+        "font_size_pt": 28,
+        "source": "element"
+      }
+    ]
+  },
+  "connections": [
+    {
+      "element_id": "connector-01",
+      "from_id": "card-01",
+      "to_id": "card-02"
+    }
+  ],
+  "warnings": []
+}

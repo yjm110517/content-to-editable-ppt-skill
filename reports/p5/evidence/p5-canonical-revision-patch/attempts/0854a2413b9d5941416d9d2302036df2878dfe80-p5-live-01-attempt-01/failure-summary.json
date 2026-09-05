@@ -1,0 +1,1 @@
+{"call_id":"p5-live-01","failure_stage":"finalizer","planner_patch":{"element_id":"card-02","from_y":0.5,"to_y":0.42},"planner_result":"pass","resolution_commit":"2549f6e","root_cause":"planner-response schema did not accept outcome=patch","status":"failed_attempt_not_pass_evidence","validation_commit":"0854a2413b9d5941416d9d2302036df2878dfe80"}
