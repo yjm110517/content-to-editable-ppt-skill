@@ -240,6 +240,12 @@ def main() -> int:
                 "selected_output_schema_sha256": schema_hash,
                 "inputs": entries,
             }
+            if args.role == "planner" and args.mode == "revision" and args.revision_contract == "canonical":
+                manifest.update({
+                    "call_record_schema_version": "1.4",
+                    "sampling_evidence_policy": "observed-or-unavailable",
+                    "host_evidence_policy": "strict-live",
+                })
             if args.role == "planner" and args.mode in {"initial", "revision"} and args.slide_id:
                 manifest["slide_id"] = args.slide_id
             atomic_write_json(stage / "call_manifest.json", manifest)

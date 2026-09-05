@@ -36,8 +36,12 @@ QA. The P5 PowerPoint smoke uses a deterministic Planner response and real basel
 PowerPoint pipelines; it is not Fresh Planner Live evidence.
 
 Live closure additionally requires a new isolated model call with the frozen System Prompt,
-metadata, all ten complete inputs including the image, and a truthful transport-generated
-record. Do not populate unobserved model parameters from the Manifest. No evidence or
-phase status may claim Live PASS merely because automated tests or PowerPoint smokes pass.
+metadata, all ten complete inputs including the image, and a truthful host-generated call
+record 1.4. Configured sampling intent is recorded separately from per-parameter observation;
+an unavailable value must use `host_not_exposed` and must not contain a guessed value.
+Sampling metadata availability is not a Live gate. Fresh context, ordered input delivery,
+image modality, unchanged raw-response bytes and successful status remain strict evidence.
+No evidence or phase status may claim Live PASS merely because automated tests or
+PowerPoint smokes pass.
 
 This document describes the runtime contract, not a P5 closure declaration.

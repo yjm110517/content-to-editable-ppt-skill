@@ -48,6 +48,7 @@ SCHEMA_FILES = {
 }
 
 SUPPORTED_SCHEMA_VERSIONS = {
+    "agent_call_record": {"1.3", "1.4"},
     "revision_patch": {"1.0"},
     "layout": {"1.3", "1.4", "1.5"},
     "run_state": {"1.3", "1.4"},
@@ -558,12 +559,18 @@ def validate_semantics(kind: str, document: dict[str, Any]) -> None:
     elif kind == "agent_call_record":
         if document["status"] == "succeeded" and not document["context_id"]:
             failures.append(error("$.context_id", "successful calls require a context id"))
+        if document["context_id"].strip().lower() in {"unknown", "unavailable", "not_exposed", "placeholder"}:
+            failures.append(error("$.context_id", "context id cannot be an unavailable placeholder"))
         mode = document["model_selection_mode"]
         requested = document["requested_model"]
         if mode == "runtime-default" and requested is not None:
             failures.append(error("$.requested_model", "runtime-default calls cannot request a model"))
         if mode == "explicit" and requested is None:
             failures.append(error("$.requested_model", "explicit calls require a requested model"))
+        if document["schema_version"] == "1.4":
+            context = document["context_evidence"]
+            if context["context_id"] != document["context_id"] or context["parent_context_id"] is not None:
+                failures.append(error("$.context_evidence", "fresh context evidence must match the observed context and have no parent", "call_record"))
     elif kind == "review_evaluation":
         dimensions = [item["dimension"] for item in document["score_adjustments"]]
         if len(dimensions) != len(set(dimensions)):

@@ -179,6 +179,18 @@ def load_call_bundle(call_dir: Path, *, work_root: Path, role: str, mode: str, s
     record = load_json(call_dir / "call_record.json")
     validate_schema("agent_call_record", record, schema_dir)
     validate_semantics("agent_call_record", record)
+    canonical_revision = role == "planner" and mode == "revision" and manifest.get("revision_contract") == "canonical"
+    expected_record_version = "1.4" if canonical_revision else "1.3"
+    if record.get("schema_version") != expected_record_version:
+        raise AssetError("call record version differs from frozen call contract", path=str(call_dir / "call_record.json"), code="contract_mismatch", exit_code=9)
+    if canonical_revision and (
+        manifest.get("call_record_schema_version") != "1.4"
+        or manifest.get("sampling_evidence_policy") != "observed-or-unavailable"
+        or manifest.get("host_evidence_policy") != "strict-live"
+    ):
+        raise AssetError("canonical revision host evidence policy is not frozen", path=str(call_dir / "call_manifest.json"), code="contract_mismatch", exit_code=9)
+    if not canonical_revision and any(key in manifest for key in ("call_record_schema_version", "sampling_evidence_policy", "host_evidence_policy")):
+        raise AssetError("legacy call profiles cannot opt into canonical host evidence", path=str(call_dir / "call_manifest.json"), code="contract_mismatch", exit_code=9)
     comparisons = {
         "task_id": manifest["task_id"], "iteration": manifest["iteration"], "role": role,
         "role_version": config["role_version"],
@@ -186,15 +198,36 @@ def load_call_bundle(call_dir: Path, *, work_root: Path, role: str, mode: str, s
         "requested_model": manifest["requested_model"],
         "config_sha256": expected_config_hash, "prompt_sha256": expected_prompt_hash,
         "output_schema_sha256": expected_schema_hash, "input_sha256": input_hashes,
-        "parameters": manifest["parameters"], "call_id": manifest["call_id"], "parent_context_id": None,
+        "call_id": manifest["call_id"], "parent_context_id": None,
     }
+    comparisons["configured_parameters" if expected_record_version == "1.4" else "parameters"] = manifest["parameters"]
     for key, expected_value in comparisons.items():
         if record.get(key) != expected_value:
             raise AssetError(f"call record field does not match manifest: {key}", path=str(call_dir / "call_record.json"), code="call_record")
     if record["status"] != "succeeded":
         raise AssetError("agent call did not succeed", path=str(call_dir / "call_record.json"), code="agent_runtime", exit_code=5)
+    if expected_record_version == "1.4":
+        observations = record["parameter_observations"]
+        for name, configured in manifest["parameters"].items():
+            observation = observations[name]
+            if observation["status"] == "observed" and observation["value"] != configured:
+                raise AssetError(f"observed model parameter differs from configured value: {name}", path=str(call_dir / "call_record.json"), code="call_record", exit_code=9)
+        context = record["context_evidence"]
+        if context["status"] != "observed" or context["context_id"] != record["context_id"] or context["parent_context_id"] is not None:
+            raise AssetError("fresh context evidence does not match the call record", path=str(call_dir / "call_record.json"), code="call_record", exit_code=9)
+        expected_delivery = [
+            {"name": item["name"], "sha256": item["sha256"], "media_type": item["media_type"],
+             "modality": "image" if item["name"] == "source.png" else "document"}
+            for item in manifest["inputs"]
+        ]
+        if record["delivered_inputs"] != expected_delivery:
+            raise AssetError("observed input delivery differs from the frozen ordered input profile", path=str(call_dir / "call_record.json"), code="call_record", exit_code=9)
+        if record["raw_response_sha256"] != sha256_file(call_dir / "raw_response.json"):
+            raise AssetError("raw response hash differs from observed response evidence", path=str(call_dir / "call_record.json"), code="hash_conflict", exit_code=9)
     identity = record.get("resolved_model_identity")
     if identity is not None:
+        if expected_record_version == "1.4" and any(item["status"] != "observed" for item in record["parameter_observations"].values()):
+            raise AssetError("resolved model identity requires all sampling parameters to be observed", path=str(call_dir / "call_record.json"), code="call_record", exit_code=9)
         identity_sha = validate_model_identity(identity, expected_parameters=manifest["parameters"])
         if record.get("resolved_model_identity_sha256") != identity_sha:
             raise AssetError("resolved model identity hash mismatch", path=str(call_dir / "call_record.json"), code="call_record", exit_code=9)
@@ -221,6 +254,8 @@ def load_call_bundle(call_dir: Path, *, work_root: Path, role: str, mode: str, s
 
 
 def provenance_entry(record: dict[str, Any]) -> dict[str, Any]:
+    if record.get("schema_version") != "1.3":
+        raise AssetError("call record provenance format is not supported by the current Reviewer contract", code="contract_mismatch", exit_code=9)
     return {
         "model_selection_mode": record["model_selection_mode"],
         "requested_model": record["requested_model"],

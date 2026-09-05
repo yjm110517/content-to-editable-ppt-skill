@@ -35,6 +35,31 @@ class P5CallContractTests(unittest.TestCase):
         return call, load_json(call / "call_manifest.json")
 
     def respond(self, call, manifest, response):
+        if manifest.get("call_record_schema_version") == "1.4":
+            from asset_common import sha256_file
+            atomic_write_json(call / "raw_response.json", response)
+            atomic_write_json(call / "call_record.json", {
+                "schema_version": "1.4", "task_id": manifest["task_id"], "iteration": manifest["iteration"],
+                "role": manifest["role"], "role_version": manifest["role_version"],
+                "model_selection_mode": manifest["model_selection_mode"], "requested_model": manifest["requested_model"],
+                "config_sha256": manifest["config_sha256"], "prompt_sha256": manifest["prompt_sha256"],
+                "output_schema_sha256": manifest["output_schema_sha256"],
+                "input_sha256": {item["name"]: item["sha256"] for item in manifest["inputs"]},
+                "configured_parameters": manifest["parameters"],
+                "parameter_observations": {name: {"status": "unavailable", "reason": "host_not_exposed"}
+                                           for name in ("temperature", "top_p", "seed")},
+                "call_id": manifest["call_id"], "context_id": "fixture-fresh-context",
+                "parent_context_id": None, "status": "succeeded",
+                "context_evidence": {"status": "observed", "method": "history_free_context",
+                                     "context_id": "fixture-fresh-context", "parent_context_id": None},
+                "delivered_inputs": [
+                    {"name": item["name"], "sha256": item["sha256"], "media_type": item["media_type"],
+                     "modality": "image" if item["name"] == "source.png" else "document"}
+                    for item in manifest["inputs"]
+                ],
+                "raw_response_sha256": sha256_file(call / "raw_response.json"),
+            })
+            return
         from tests.runtime.test_p3_planner_integration import P3PlannerIntegrationTests
         P3PlannerIntegrationTests()._record_response(call, manifest, response)
         record = load_json(call / "call_record.json")
@@ -57,6 +82,9 @@ class P5CallContractTests(unittest.TestCase):
             call, manifest = self.prepare(work)
             self.assertEqual("canonical", manifest["revision_contract"])
             self.assertEqual("revision_canonical", manifest["input_profile"])
+            self.assertEqual("1.4", manifest["call_record_schema_version"])
+            self.assertEqual("observed-or-unavailable", manifest["sampling_evidence_policy"])
+            self.assertEqual("strict-live", manifest["host_evidence_policy"])
             self.assertEqual(10, len(manifest["inputs"]))
             self.respond(call, manifest, self.response(work))
             before = (call / "raw_response.json").read_bytes()
@@ -81,6 +109,82 @@ class P5CallContractTests(unittest.TestCase):
             args2 = apply_args(work, 2)
             args2.patch = args2.current_dir / "revision_patch.to-03.json"
             apply_revision(args2)
+
+    def test_canonical_call_record_allows_mixed_sampling_observations(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            work = self.work(Path(tmp))
+            call, manifest = self.prepare(work)
+            self.respond(call, manifest, self.response(work))
+            record = load_json(call / "call_record.json")
+            record["parameter_observations"]["temperature"] = {
+                "status": "observed", "value": 0.2, "source": "host_runtime_metadata"}
+            record["parameter_observations"]["seed"] = {
+                "status": "observed", "value": None, "source": "host_runtime_metadata"}
+            atomic_write_json(call / "call_record.json", record)
+            completed = self.finalize(work, call)
+            self.assertEqual(0, completed.returncode, completed.stdout + completed.stderr)
+
+    def test_canonical_call_record_allows_all_observed_sampling_parameters(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            work = self.work(Path(tmp))
+            call, manifest = self.prepare(work)
+            self.respond(call, manifest, self.response(work))
+            record = load_json(call / "call_record.json")
+            record["parameter_observations"] = {
+                name: {"status": "observed", "value": value, "source": "host_runtime_metadata"}
+                for name, value in manifest["parameters"].items()
+            }
+            atomic_write_json(call / "call_record.json", record)
+            completed = self.finalize(work, call)
+            self.assertEqual(0, completed.returncode, completed.stdout + completed.stderr)
+
+    def test_canonical_call_record_rejects_sampling_and_live_evidence_regressions(self):
+        cases = ("configured", "unavailable-value", "unavailable-reason", "observed-source", "observed-conflict",
+                 "context", "context-placeholder", "parent", "input-order", "input-hash", "image-modality",
+                 "response-hash", "response-changed", "downgrade")
+        for case in cases:
+            with self.subTest(case=case), tempfile.TemporaryDirectory() as tmp:
+                work = self.work(Path(tmp))
+                call, manifest = self.prepare(work)
+                self.respond(call, manifest, self.response(work))
+                record = load_json(call / "call_record.json")
+                if case == "configured":
+                    record["configured_parameters"]["temperature"] = 0.3
+                elif case == "unavailable-value":
+                    record["parameter_observations"]["temperature"]["value"] = 0.2
+                elif case == "unavailable-reason":
+                    record["parameter_observations"]["temperature"]["reason"] = "unknown"
+                elif case == "observed-source":
+                    record["parameter_observations"]["temperature"] = {"status": "observed", "value": 0.2}
+                elif case == "observed-conflict":
+                    record["parameter_observations"]["temperature"] = {
+                        "status": "observed", "value": 0.3, "source": "host_runtime_metadata"}
+                elif case == "context":
+                    record["context_evidence"]["context_id"] = "another-context"
+                elif case == "context-placeholder":
+                    record["context_id"] = "unavailable"
+                    record["context_evidence"]["context_id"] = "unavailable"
+                elif case == "parent":
+                    record["context_evidence"]["parent_context_id"] = "old-context"
+                elif case == "input-order":
+                    record["delivered_inputs"][0], record["delivered_inputs"][1] = record["delivered_inputs"][1], record["delivered_inputs"][0]
+                elif case == "input-hash":
+                    record["delivered_inputs"][0]["sha256"] = "0" * 64
+                elif case == "image-modality":
+                    next(item for item in record["delivered_inputs"] if item["name"] == "source.png")["modality"] = "document"
+                elif case == "response-hash":
+                    record["raw_response_sha256"] = "0" * 64
+                elif case == "response-changed":
+                    atomic_write_json(call / "raw_response.json", {"outcome": "changed"})
+                elif case == "downgrade":
+                    from tests.runtime.test_p3_planner_integration import P3PlannerIntegrationTests
+                    P3PlannerIntegrationTests()._record_response(call, manifest, self.response(work))
+                    record = load_json(call / "call_record.json")
+                    record["iteration"] = manifest["iteration"]
+                atomic_write_json(call / "call_record.json", record)
+                completed = self.finalize(work, call)
+                self.assertNotEqual(0, completed.returncode)
+                self.assertFalse(apply_args(work).patch.exists())
 
     def test_contract_and_response_version_crossing_is_rejected(self):
         for mode in ("cli", "version", "profile"):
